@@ -115,6 +115,10 @@ class ArrayHelper
                     unset($res[$k]);
                 } elseif ($v instanceof ReplaceArrayValue) {
                     $res[$k] = $v->value;
+                } elseif ($v instanceof IgnoreArrayValue) {
+                    if(!array_key_exists($k, $res)) {
+                        $res[$k] = $v->value;
+                    }
                 } elseif (is_int($k)) {
                     if (array_key_exists($k, $res)) {
                         $res[] = $v;
