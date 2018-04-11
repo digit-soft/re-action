@@ -1,0 +1,28 @@
+{
+    "name": "digit-soft/re-action",
+    "version": "0.1.0",
+    "description": "React PHP framework",
+    "keywords": ["digit-soft", "reactphp", "framework", "react php framework"],
+    "license": "MIT",
+    "support": {
+        "issues": "https://github.com/digit-soft/re-action/issues",
+        "source": "https://github.com/digit-soft/re-action"
+    },
+    "authors": [
+        {
+            "name": "Digit",
+            "email": "digit.vova@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "php": ">=7.0.0",
+        "react/promise": "~2"
+    },
+    "require-dev": {},
+    "autoload": {
+        "psr-4": {
+            "Reaction\\": "src/"
+        }
+    }
+}
