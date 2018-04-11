@@ -673,7 +673,7 @@ class ArrayHelper
     public static function htmlEncode($data, $valuesOnly = true, $charset = null)
     {
         if ($charset === null) {
-            $charset = App::app() ? App::app()->charset : 'UTF-8';
+            $charset = \Reaction::$app ? \Reaction::$app->charset : 'UTF-8';
         }
         $d = [];
         foreach ($data as $key => $value) {
@@ -834,7 +834,6 @@ class ArrayHelper
      * @param mixed $var The variable being evaluated.
      * @return bool whether $var is array-like
      * @see http://php.net/manual/en/function.is-array.php
-     * @since 2.0.8
      */
     public static function isTraversable($var)
     {
@@ -851,7 +850,6 @@ class ArrayHelper
      * @param bool $strict Whether to enable strict (`===`) comparison.
      * @throws InvalidArgumentException if `$haystack` or `$needles` is neither traversable nor an array.
      * @return bool `true` if `$needles` is a subset of `$haystack`, `false` otherwise.
-     * @since 2.0.7
      */
     public static function isSubset($needles, $haystack, $strict = false)
     {
@@ -910,7 +908,6 @@ class ArrayHelper
      * - `var.key` = only `$array['var']['key'] will be left in result.
      * - `!var.key` = `$array['var']['key'] will be removed from result.
      * @return array Filtered array
-     * @since 2.0.9
      */
     public static function filter($array, $filters)
     {
