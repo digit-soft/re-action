@@ -1,5 +1,7 @@
 <?php
 
+use Reaction\Helpers\ArrayHelper;
+
 /**
  * Class Reaction. Base static class
  */
@@ -106,7 +108,9 @@ class Reaction
      */
     protected static function initContainer($config = []) {
         $builder = new DI\ContainerBuilder();
-        $builder->useAnnotations(true)->useAutowiring(true);
+        $builder
+            ->useAnnotations(ArrayHelper::getValue($config, 'di.config.useAnnotations', false))
+            ->useAutowiring(ArrayHelper::getValue($config, 'di.config.useAutowiring', false));
         $builder->addDefinitions($config);
         static::$di = $builder->build();
     }
