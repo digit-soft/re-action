@@ -93,13 +93,16 @@ class ConfigReader extends BaseObject
         if(empty($this->names)) {
             $this->names = $this->generateNames();
         }
+        $_defaultConfPath_ = realpath(dirname(__FILE__) . '/../') . '/_config.default.php';
+        $this->names[] = $_defaultConfPath_;
         $_confData_ = [];
         foreach ($this->names as $_name_) {
-            $_fileName_ = $this->path . DIRECTORY_SEPARATOR . $_name_;
+            $_fileName_ = strpos($_name_, '/') === 0 ? $_name_ : $this->path . DIRECTORY_SEPARATOR . $_name_;
             if(!file_exists($_fileName_)) continue;
             /** @noinspection PhpIncludeInspection */
             $_confData_[] = include $_fileName_;
         }
+        print_r(ArrayHelper::merge(...$_confData_));
         if(empty($_confData_)) return [];
         elseif (count($_confData_) === 1) return reset($_confData_);
         return ArrayHelper::merge(...$_confData_);
