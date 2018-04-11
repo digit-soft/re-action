@@ -25,6 +25,7 @@
     "autoload": {
         "psr-4": {
             "Reaction\\": "src/"
-        }
+        },
+        "files": [ "src/Reaction.php" ]
     }
 }
