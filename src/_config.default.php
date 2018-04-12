@@ -35,13 +35,15 @@ return [
         $socketUri = $appConf['hostname'] . ':' . $appConf['port'];
         return $di->make(\React\Socket\Server::class, [ 'uri' => $socketUri, 'loop' => \DI\get(\React\EventLoop\LoopInterface::class) ]);
     })->scope(\DI\Scope::SINGLETON),
+    //Router
     \Reaction\Routes\RouterInterface::class => \DI\get(\Reaction\Routes\Router::class),
     \Reaction\Routes\Router::class => \DI\create()->scope(\DI\Scope::SINGLETON),
-    'stdoutStream' => \DI\create(\React\Stream\WritableResourceStream::class)
+    //Stdout writable stream
+    'stdoutWriteStream' => \DI\create(\React\Stream\WritableResourceStream::class)
         ->constructor(STDOUT, \DI\get(\React\EventLoop\LoopInterface::class))
         ->scope(\DI\Scope::SINGLETON),
     'stdoutLogger' => \DI\create(\Reaction\Base\Logger\StdioLogger::class)
-        ->constructor(\DI\get('stdoutStream'), \DI\get(\React\EventLoop\LoopInterface::class))
+        ->constructor(\DI\get('stdoutWriteStream'), \DI\get(\React\EventLoop\LoopInterface::class))
         ->scope(\DI\Scope::SINGLETON),
 
     /** Aliases for DI */
