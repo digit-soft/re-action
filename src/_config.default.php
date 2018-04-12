@@ -14,7 +14,7 @@ return [
         ],
         //Components
         'components' => [
-            'router' => 'app.router',
+            'router' => new \Reaction\Helpers\IgnoreArrayValue('app.router'),
         ],
     ],
     //Dependency injection config
