@@ -133,7 +133,27 @@ class ArrayHelper
             }
         }
 
-        return $res;
+        return static::cleanupMergedValues($res);
+    }
+
+    /**
+     * Cleanup merged array values from instances of IgnoreArrayValue, ReplaceArrayValue, UnsetArrayValue
+     * @param array $array
+     * @return array
+     */
+    private static function cleanupMergedValues($array = []) {
+        if(!is_array($array)) return $array;
+        foreach ($array as $key => $value) {
+            if($value instanceof IgnoreArrayValue || $value instanceof ReplaceArrayValue) {
+                $array[$key] = $value->value;
+            } elseif ($value instanceof UnsetArrayValue) {
+                unset($array[$key]);
+            } elseif (is_array($value)) {
+                $array[$key] = static::cleanupMergedValues($value);
+            }
+        }
+
+        return $array;
     }
 
     /**
