@@ -19,7 +19,8 @@
         "php": ">=7.0.0",
         "php-di/php-di": "~6.0",
         "doctrine/annotations": "~1.6",
-        "digit-soft/re-action-promise": "*"
+        "digit-soft/re-action-promise": "*",
+        "nikic/fast-route": "*"
     },
     "require-dev": {},
     "autoload": {
