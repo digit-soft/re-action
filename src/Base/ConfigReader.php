@@ -2,9 +2,12 @@
 
 namespace Reaction\Base;
 
-
 use Reaction\Helpers\ArrayHelper;
 
+/**
+ * Class ConfigReader. Reads content of file configs and merges those into one array
+ * @package Reaction\Base
+ */
 class ConfigReader extends BaseObject
 {
     /** @var string Config files dir path */
@@ -93,8 +96,9 @@ class ConfigReader extends BaseObject
         if(empty($this->names)) {
             $this->names = $this->generateNames();
         }
+        //Add default config
         $_defaultConfPath_ = realpath(dirname(__FILE__) . '/../') . '/_config.default.php';
-        $this->names[] = $_defaultConfPath_;
+        if(!in_array($_defaultConfPath_, $this->names)) $this->names[] = $_defaultConfPath_;
         $_confData_ = [];
         foreach ($this->names as $_name_) {
             $_fileName_ = strpos($_name_, '/') === 0 ? $_name_ : $this->path . DIRECTORY_SEPARATOR . $_name_;
@@ -102,7 +106,6 @@ class ConfigReader extends BaseObject
             /** @noinspection PhpIncludeInspection */
             $_confData_[] = include $_fileName_;
         }
-        print_r(ArrayHelper::merge(...$_confData_));
         if(empty($_confData_)) return [];
         elseif (count($_confData_) === 1) return reset($_confData_);
         return ArrayHelper::merge(...$_confData_);

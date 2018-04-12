@@ -9,8 +9,8 @@ return [
     ],
     //Dependency injection config
     'di.config' => [
-        'useAnnotations' => new \Reaction\Helpers\IgnoreArrayValue(true),
-        'useAutowiring' => new \Reaction\Helpers\IgnoreArrayValue(false),
+        'useAnnotations' => new \Reaction\Helpers\IgnoreArrayValue(false),
+        'useAutowiring' => new \Reaction\Helpers\IgnoreArrayValue(true),
     ],
 
     //Place for custom instances config
