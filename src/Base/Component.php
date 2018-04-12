@@ -48,6 +48,23 @@ class Component extends BaseObject implements EventEmitterInterface
     }
 
     /**
+     * Set components bulk
+     * @param array $components
+     */
+    public function setComponents(array $components = []) {
+        foreach ($components as $name => $definition) {
+            if(!is_string($name)) continue;
+            $config = $definition;
+            $params = [];
+            if(is_array($definition) && isset($definition['config']) && isset($definition['params'])) {
+                $config = $definition['config'];
+                $params = $definition['params'];
+            }
+            $this->setComponent($name, $config, $params);
+        }
+    }
+
+    /**
      * Get component by name
      * @param $name
      * @return mixed|\object
