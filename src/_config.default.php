@@ -3,32 +3,50 @@
 return [
     //Application config
     'app.config' => [
-        'charset' => new \Reaction\Helpers\IgnoreArrayValue('utf-8'),
-        'hostname' => new \Reaction\Helpers\IgnoreArrayValue('127.0.0.1'),
-        'port' => new \Reaction\Helpers\IgnoreArrayValue(4000),
+        'charset' => 'utf-8',
+        'hostname' => '127.0.0.1',
+        'port' => 4000,
         //Initial app aliases
         'aliases' => [
-            '@root' => new \Reaction\Helpers\IgnoreArrayValue(getcwd()),
-            '@runtime' => new \Reaction\Helpers\IgnoreArrayValue('@root/runtime'),
-            '@reaction' => new \Reaction\Helpers\IgnoreArrayValue(dirname(__FILE__)),
+            '@root' => getcwd(),
+            '@runtime' => '@root/runtime',
+            '@reaction' => dirname(__FILE__),
         ],
         //Components
         'components' => [
-            'router' => new \Reaction\Helpers\IgnoreArrayValue('app.router'),
+            'router' => 'app.router',
+            'logger' => 'app.logger',
         ],
     ],
     //Dependency injection config
     'di.config' => [
-        'useAnnotations' => new \Reaction\Helpers\IgnoreArrayValue(false),
-        'useAutowiring' => new \Reaction\Helpers\IgnoreArrayValue(true),
+        'useAnnotations' => false,
+        'useAutowiring' => true,
     ],
 
-    //Class definitions
+    /** Class definitions */
+    //Loop
+    \React\EventLoop\LoopInterface::class => \DI\factory(function ($di) {
+        return \React\EventLoop\Factory::create();
+    })->scope(\DI\Scope::SINGLETON),
+    //Socket server
+    \React\Socket\ServerInterface::class => \DI\factory(function (\DI\Container $di = null) {
+        $appConf = $di->get('app.config');
+        $socketUri = $appConf['hostname'] . ':' . $appConf['port'];
+        return $di->make(\React\Socket\Server::class, [ 'uri' => $socketUri, 'loop' => \DI\get(\React\EventLoop\LoopInterface::class) ]);
+    })->scope(\DI\Scope::SINGLETON),
     \Reaction\Routes\RouterInterface::class => \DI\get(\Reaction\Routes\Router::class),
     \Reaction\Routes\Router::class => \DI\create()->scope(\DI\Scope::SINGLETON),
+    'stdoutStream' => \DI\create(\React\Stream\WritableResourceStream::class)
+        ->constructor(STDOUT, \DI\get(\React\EventLoop\LoopInterface::class))
+        ->scope(\DI\Scope::SINGLETON),
+    'stdoutLogger' => \DI\create(\Reaction\Base\Logger\StdioLogger::class)
+        ->constructor(\DI\get('stdoutStream'), \DI\get(\React\EventLoop\LoopInterface::class))
+        ->scope(\DI\Scope::SINGLETON),
 
-    //Aliases for DI
+    /** Aliases for DI */
     'app.router' => \DI\get(\Reaction\Routes\RouterInterface::class),
+    'app.logger' => \DI\get('stdoutLogger'),
 
     //Place for custom instances config
 
