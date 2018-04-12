@@ -11,6 +11,7 @@ namespace Reaction;
  * @property \React\Http\Server                 $http
  * @property \React\Socket\Server               $socket
  * @property \Reaction\Routes\RouterInterface   $router
+ * @property \Psr\Log\AbstractLogger            $logger
  */
 interface BaseApplicationInterface
 {

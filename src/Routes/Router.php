@@ -12,6 +12,7 @@ use Psr\Http\Message\ServerRequestInterface;
 
 class Router extends BaseObject implements RouterInterface
 {
+    public $controllerNamespace = 'app\controller';
     public $dispatcherClass = '\FastRoute\simpleDispatcher';
     public $dispatcherOptions = [];
     ///** @var Application */
@@ -197,5 +198,9 @@ class Router extends BaseObject implements RouterInterface
         $info['method'] = isset($info['method']) ? strtoupper($info['method']) : 'GET';
 
         return $info;
+    }
+
+    public function findControllers() {
+
     }
 }
