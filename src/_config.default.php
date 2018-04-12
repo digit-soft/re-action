@@ -9,8 +9,8 @@ return [
         //Initial app aliases
         'aliases' => [
             '@root' => new \Reaction\Helpers\IgnoreArrayValue(getcwd()),
-            '@runtime' => '@root/runtime',
-            '@reaction' => dirname(__FILE__),
+            '@runtime' => new \Reaction\Helpers\IgnoreArrayValue('@root/runtime'),
+            '@reaction' => new \Reaction\Helpers\IgnoreArrayValue(dirname(__FILE__)),
         ],
         //Components
         'components' => [
