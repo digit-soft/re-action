@@ -2,12 +2,19 @@
 
 namespace Reaction;
 
+use DI\DependencyException;
+use Psr\Http\Message\RequestInterface;
 use React\EventLoop\LoopInterface;
+use React\Http\Response;
 use React\Http\Server as Http;
 use React\Socket\Server as Socket;
-use React\Socket\ServerInterface;
+use React\Socket\ServerInterface as SocketServerInterface;
 use Reaction\Base\Component;
 
+/**
+ * Class BaseApplication
+ * @package Reaction
+ */
 class BaseApplication extends Component implements BaseApplicationInterface
 {
     /** @var string */
@@ -35,13 +42,17 @@ class BaseApplication extends Component implements BaseApplicationInterface
 
     /**
      * Run application
+     * @throws DependencyException
+     * @throws Exceptions\InvalidConfigException
+     * @throws \DI\NotFoundException
      */
     public function run() {
-        $this->socket = \Reaction::create(\React\Socket\ServerInterface::class);
-        $this->middleware[] = function () {  };
-        $this->http = \Reaction::create(\React\Http\Server::class, ['requestHandler' => $this->middleware]);
-        //print_r($this->http);
-        //$this->http = new Http($this->middleware);
+        $this->middleware[] = function (RequestInterface $request) { return new Response(200, [], "test!\n" . time()); };
+        $this->socket = \Reaction::create(SocketServerInterface::class);
+        $this->http = \Reaction::create(Http::class, ['requestHandler' => $this->middleware]);
+        \Reaction::$di->set(Http::class, $this->http);
+        $this->http->listen($this->socket);
+        echo "Running server on $this->hostname:$this->port\n";
         $this->loop->run();
     }
 }

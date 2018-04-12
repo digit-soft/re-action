@@ -33,10 +33,24 @@ class Reaction
     }
 
     /**
-     * Create instance of class
+     * Create instance of class without throwing exceptions
      * @param string|array $type
      * @param array $params
-     * @return mixed
+     * @return mixed|null
+     */
+    public static function createNoExc($type, array $params = []) {
+        try {
+            return static::create($type, $params);
+        } catch (\Throwable $exception) {
+            return null;
+        }
+    }
+
+    /**
+     * Create instance of class
+     * @param string|array $type Class name or indexed parameters array with key "class"
+     * @param array $params Constructor parameters indexed array
+     * @return \object|mixed
      * @throws \DI\DependencyException
      * @throws \DI\NotFoundException
      * @throws \Reaction\Exceptions\InvalidConfigException
@@ -58,7 +72,11 @@ class Reaction
         }
 
         if(isset($class)) {
-            $object = static::$di->make($class, $params);
+            if(!empty($params)) {
+                $object = static::$di->make($class, $params);
+            } else {
+                $object = static::$di->get($class);
+            }
             if(!empty($config)) static::configure($object, $config);
             return $object;
         } else {
