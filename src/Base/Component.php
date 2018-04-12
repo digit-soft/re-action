@@ -5,7 +5,9 @@ namespace Reaction\Base;
 use Evenement\EventEmitterInterface;
 use Evenement\EventEmitterTrait;
 use Reaction\Exceptions\InvalidCallException;
+use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Exceptions\UnknownPropertyException;
+use Reaction\Helpers\ArrayHelper;
 
 /**
  * Class Component
@@ -19,21 +21,67 @@ class Component extends BaseObject implements EventEmitterInterface
     protected $_components = [];
 
     /**
+     * Set component
+     * @param string $name Component name
+     * @param array|string $config Params for Reaction::configure() if array
+     * or DI container entry name if string
+     * @param array  $params Constructor params for Reaction::create()
+     */
+    public function setComponent($name, $config = [], $params = []) {
+        $nameInDi = get_class($this) . '.' . $name;
+        if(empty($config)) {
+            $nameInDi = $name;
+        } if(is_string($config)) {
+            $nameInDi = $config;
+        //Write new definition to DI
+        } elseif(is_callable($config) || is_object($config)) {
+            \Reaction::$di->set($nameInDi, $config);
+        //Array as DI definition name
+        } elseif (is_array($config) && isset($config['class'])) {
+            $nameInDi = $config;
+        }
+
+        $this->_components[$name] = [
+            'di' => $nameInDi,
+            'params' => $params,
+        ];
+    }
+
+    /**
+     * Get component by name
+     * @param $name
+     * @return mixed|\object
+     * @throws InvalidConfigException
+     * @throws UnknownPropertyException
+     * @throws \DI\DependencyException
+     * @throws \DI\NotFoundException
+     */
+    public function getComponent($name) {
+        if(isset($this->_components[$name])) {
+            $definition = $this->_components[$name];
+            return \Reaction::create($definition['di'], $definition['params']);
+        }
+        throw new UnknownPropertyException('Getting unknown property: ' . get_class($this) . '::' . $name);
+    }
+
+    /**
      * Returns the value of an object property.
      *
      * Do not call this method directly as it is a PHP magic method that
      * will be implicitly called when executing `$value = $object->property;`.
      * @param string $name the property name
      * @return mixed the property value
+     * @throws InvalidConfigException
      * @throws UnknownPropertyException if the property is not defined
-     * @throws InvalidCallException if the property is write-only
+     * @throws \DI\DependencyException
+     * @throws \DI\NotFoundException
      * @see __set()
      */
     public function __get($name)
     {
         $getter = 'get' . $name;
         if(isset($this->_components[$name])) {
-            return $this->_components[$name];
+            return $this->getComponent($name);
         } elseif (method_exists($this, $getter)) {
             return $this->$getter();
         } elseif (method_exists($this, 'set' . $name)) {
