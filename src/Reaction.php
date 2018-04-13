@@ -14,6 +14,8 @@ class Reaction
     public static $di;
     /** @var \Reaction\BaseApplicationInterface */
     public static $app;
+    /** @var \Reaction\Base\ConfigReader */
+    public static $config;
 
     /** @var string */
     protected static $configsPath;
@@ -27,8 +29,8 @@ class Reaction
             throw new \Reaction\Exceptions\InvalidArgumentException("Missing \$configsPath option");
         }
         static::$configsPath = $configsPath;
-        $config = static::getConfigReader();
-        static::initContainer($config->data);
+        static::$config = static::getConfigReader();
+        static::initContainer();
         static::initApp();
     }
 
@@ -122,14 +124,16 @@ class Reaction
 
     /**
      * Initialize DI container
-     * @param array $config
      */
-    protected static function initContainer($config = []) {
+    protected static function initContainer() {
+        $definitions = static::$config->get('container');
+        $useAnnotations = static::$config->get('container.config.useAnnotations', false);
+        $useAutoWiring = static::$config->get('container.config.useAutowiring', false);
         $builder = new DI\ContainerBuilder();
         $builder
-            ->useAnnotations(ArrayHelper::getValue($config, 'di.config.useAnnotations', false))
-            ->useAutowiring(ArrayHelper::getValue($config, 'di.config.useAutowiring', false));
-        $builder->addDefinitions($config);
+            ->useAnnotations($useAnnotations)
+            ->useAutowiring($useAutoWiring);
+        $builder->addDefinitions($definitions);
         static::$di = $builder->build();
     }
 
@@ -137,6 +141,8 @@ class Reaction
      * Initialize application object
      */
     protected static function initApp() {
-        static::$app = static::create(\Reaction\BaseApplicationInterface::class);
+        $config = static::$config->get('app');
+        $config['class'] = \Reaction\BaseApplicationInterface::class;
+        static::$app = static::create($config);
     }
 }
