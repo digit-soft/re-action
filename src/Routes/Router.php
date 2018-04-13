@@ -2,18 +2,22 @@
 
 namespace Reaction\Routes;
 
+use Reaction\Annotations\Ctrl;
+use Reaction\Annotations\CtrlAction;
 use Reaction\Base\BaseObject;
-//use app\base\exceptions\InvalidArgumentException;
-//use app\run\Application;
 use FastRoute\BadRouteException;
 use FastRoute\Dispatcher;
+use Reaction\Helpers\ArrayHelper;
 use Reaction\Helpers\ClassFinder;
 use Reaction\Web\Response;
 use Psr\Http\Message\ServerRequestInterface;
 
 class Router extends BaseObject implements RouterInterface
 {
-    public $controllerNamespace = 'app\controller';
+    public $controllerNamespaces = [
+        'App\Controller',
+        'app\controller',
+    ];
     public $dispatcherClass = '\FastRoute\simpleDispatcher';
     public $dispatcherOptions = [];
     ///** @var Application */
@@ -131,8 +135,7 @@ class Router extends BaseObject implements RouterInterface
      * @param Controller $controller
      */
     public function addController(Controller $controller) {
-        if(!$controller->hasMethod('registerInRouter')) return;
-        $controller->registerInRouter($this);
+        $this->registerController($controller);
     }
 
     /**
@@ -201,13 +204,69 @@ class Router extends BaseObject implements RouterInterface
         return $info;
     }
 
-    public function findControllers() {
-        $classNames = ClassFinder::findClassesPsr4($this->controllerNamespace, true);
-        foreach ($classNames as $className) {
-            if(!method_exists($className, 'actionTest')) continue;
-            $class = new $className();
-            $annotations = \Reaction::$annotations->getMethod($class, 'actionTest');
+    /**
+     * Register controller in routes
+     * @param string|Controller $className
+     */
+    protected function registerController($className) {
+        $classAnnotations = \Reaction::$annotations->getClass($className);
+        if(isset($classAnnotations[Ctrl::class])) {
+            $this->registerControllerWithAnnotations($className, $classAnnotations[Ctrl::class]);
+        } else {
+            $this->registerControllerNoAnnotations($className);
         }
-        //\Reaction::$app->logger->info($classNames);
+    }
+
+    /**
+     * Register controller that uses Annotations
+     * @param string|Controller $className
+     * @param Ctrl $ctrlAnnotation
+     * @throws \ReflectionException
+     */
+    protected function registerControllerWithAnnotations($className, Ctrl $ctrlAnnotation) {
+        $actions = (new \ReflectionClass($className))->getMethods(\ReflectionMethod::IS_PUBLIC);
+        $actions = array_filter($actions, function ($value) {
+            return strpos($value->name, 'action') === 0 ? $value : false;
+        });
+        $actions = ArrayHelper::getColumn($actions, 'name', false);
+        if(empty($actions)) return;
+        $controller = is_string($className) ? new $className() : $className;
+        for($i = 0; $i < count($actions); $i++) {
+            $actionAnnotations = \Reaction::$annotations->getMethod($className, $actions[$i]);
+            if(!isset($actionAnnotations[CtrlAction::class])) continue;
+            /** @var CtrlAction $ctrlAction */
+            $ctrlAction = $actionAnnotations[CtrlAction::class];
+            $path = $ctrlAnnotation->group . ltrim($ctrlAction->path, '/');
+            $this->addRoute($ctrlAction->method, $path, [$controller, $actions[$i]]);
+            \Reaction::$app->logger->info($ctrlAction);
+        }
+    }
+
+    /**
+     * Register controller that does not use Annotations
+     * @param string|Controller $className
+     */
+    protected function registerControllerNoAnnotations($className) {
+        /** @var Controller $controller */
+        $controller = new $className();
+        $routes = $controller->routes();
+        $group = $controller->group();
+        if(empty($routes)) return;
+        foreach ($routes as $row) {
+            $method = $row['method'];
+            $route = $group . $row['route'];
+            $handlerName = $row['handler'];
+            $this->addRoute($method, $route, [$controller, $handlerName]);
+        }
+    }
+
+    /**
+     * Find controllers in given namespaces and register as routes
+     */
+    public function findControllers() {
+        $classNames = ClassFinder::findClassesPsr4($this->controllerNamespaces, true);
+        foreach ($classNames as $className) {
+            $this->registerController($className);
+        }
     }
 }
