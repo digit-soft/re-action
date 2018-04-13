@@ -10,6 +10,8 @@ class Reaction
     const APP_ENV_PROD = 'production';
     const APP_ENV_DEV  = 'development';
 
+    /** @var Composer\Autoload\ClassLoader */
+    public static $composer;
     /** @var \DI\Container */
     public static $di;
     /** @var \Reaction\BaseApplicationInterface */
@@ -24,7 +26,8 @@ class Reaction
      * Initialize whole application
      * @param string $configsPath
      */
-    public static function init($configsPath = null) {
+    public static function init(Composer\Autoload\ClassLoader $composer, $configsPath = null) {
+        static::$composer = $composer;
         if(!isset($configsPath)) {
             throw new \Reaction\Exceptions\InvalidArgumentException("Missing \$configsPath option");
         }
