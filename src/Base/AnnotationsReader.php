@@ -3,10 +3,11 @@
 namespace Reaction\Base;
 
 use Doctrine\Common\Annotations\AnnotationReader;
-use Doctrine\Common\Annotations\AnnotationRegistry;
+use Doctrine\Common\Annotations\CachedReader;
 use Doctrine\Common\Annotations\IndexedReader;
 use Doctrine\Common\Annotations\SimpleAnnotationReader;
-use Reaction\Annotations\CtrlAction;
+use Doctrine\Common\Cache\ArrayCache;
+use Reaction\Helpers\ClassFinder;
 
 /**
  * Class AnnotationsReader
@@ -61,7 +62,6 @@ class AnnotationsReader extends BaseObject
     {
         $reflector = $this->getMethodReflection($class, $method);
         $test = $this->reader->getMethodAnnotations($reflector);
-        \Reaction::$app->logger->info($test);
         return $this->reader->getMethodAnnotations($reflector);
     }
 
@@ -71,18 +71,16 @@ class AnnotationsReader extends BaseObject
      * @throws \DI\DependencyException
      * @throws \DI\NotFoundException
      * @throws \Reaction\Exceptions\InvalidConfigException
+     * @throws \Doctrine\Common\Annotations\AnnotationException
      */
     protected function getReader() {
         if(!isset($this->_reader)) {
             //$this->_reader = \Reaction::create($this->readerClass);
-            $this->_reader = new AnnotationReader();
-            AnnotationRegistry::registerLoader('class_exists');
-            //AnnotationRegistry::registerAutoloadNamespaces($this->annotationNamespaces);
-            //$test = new CtrlAction();
-            foreach ($this->annotationNamespaces as $annotationNamespace) {
-                //$this->_reader->addNamespace($annotationNamespace);
-            }
-            //Reaction::$app->logger->error($this->_reader);
+            $annotationClassNames = ClassFinder::findClassesPsr4($this->annotationNamespaces);
+            $this->_reader = new CachedReader(
+                new IndexedReader(new AnnotationReader()),
+                new ArrayCache()
+            );
         }
         return $this->_reader;
     }
