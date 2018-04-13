@@ -7,7 +7,7 @@ use Doctrine\Common\Annotations\CachedReader;
 use Doctrine\Common\Annotations\IndexedReader;
 use Doctrine\Common\Annotations\SimpleAnnotationReader;
 use Doctrine\Common\Cache\ArrayCache;
-use Reaction\Helpers\ClassFinder;
+use Reaction\Helpers\ClassFinderHelper;
 
 /**
  * Class AnnotationsReader
@@ -76,7 +76,7 @@ class AnnotationsReader extends BaseObject
     protected function getReader() {
         if(!isset($this->_reader)) {
             //$this->_reader = \Reaction::create($this->readerClass);
-            $annotationClassNames = ClassFinder::findClassesPsr4($this->annotationNamespaces);
+            $annotationClassNames = ClassFinderHelper::findClassesPsr4($this->annotationNamespaces);
             $this->_reader = new CachedReader(
                 new IndexedReader(new AnnotationReader()),
                 new ArrayCache()

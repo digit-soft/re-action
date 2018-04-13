@@ -6,7 +6,7 @@ namespace Reaction\Helpers;
  * Class ClassFinder
  * @package Reaction\Helpers
  */
-class ClassFinder
+class ClassFinderHelper
 {
     const DS = DIRECTORY_SEPARATOR; //Directory separator
     const CS = '\\';                //Class namespace separator

@@ -8,7 +8,7 @@ use Reaction\Base\BaseObject;
 use FastRoute\BadRouteException;
 use FastRoute\Dispatcher;
 use Reaction\Helpers\ArrayHelper;
-use Reaction\Helpers\ClassFinder;
+use Reaction\Helpers\ClassFinderHelper;
 use Reaction\Promise\Promise;
 use Reaction\Web\Response;
 use Psr\Http\Message\ServerRequestInterface;
@@ -145,7 +145,7 @@ class Router extends BaseObject implements RouterInterface
      * Find controllers in given namespaces and register as routes
      */
     public function registerControllers() {
-        $classNames = ClassFinder::findClassesPsr4($this->controllerNamespaces, true);
+        $classNames = ClassFinderHelper::findClassesPsr4($this->controllerNamespaces, true);
         foreach ($classNames as $className) {
             $this->registerController($className);
         }
