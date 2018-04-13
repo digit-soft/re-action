@@ -118,6 +118,19 @@ class Reaction
     }
 
     /**
+     * Translate function (Just a placeholder for later i18n implementation)
+     * @param string $domain
+     * @param string $message
+     * @param array  $params
+     * @return mixed
+     */
+    public static function t($domain, $message, $params = []) {
+        $_params = [];
+        foreach ($params as $key => $value) { $_params['{'.$key.'}'] = $value; }
+        return !empty($params) ? strtr($message, $_params) : $message;
+    }
+
+    /**
      * Get instance of config reader
      * @return \Reaction\Base\ConfigReader
      */
@@ -153,7 +166,7 @@ class Reaction
     }
 
     /**
-     *
+     * Initialize annotation reader
      */
     protected static function initAnnotationReader() {
         static::$annotations = new \Reaction\Base\AnnotationsReader();
