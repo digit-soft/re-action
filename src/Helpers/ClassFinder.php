@@ -14,10 +14,18 @@ class ClassFinder
     /**
      * Find class names inside given namespace
      * @param string|array $namespace
-     * @param bool         $recursively
+     * @param bool         $recursively Search recursively is namespace directory
+     * @param bool         $withoutAutoload Do not check class names through 'class_exist(name, true)'
      * @return array
      */
-    public static function findClassesPsr4($namespace, $recursively = false) {
+    public static function findClassesPsr4($namespace, $recursively = false, $withoutAutoload = false) {
+        $classNames = [];
+        if(is_array($namespace)) {
+            foreach ($namespace as $ns) {
+                $classNames = ArrayHelper::merge($classNames, static::findClassesPsr4($ns, $recursively, $withoutAutoload));
+            }
+            return $classNames;
+        }
         $namespace = trim($namespace, static::CS);
         list($nsPrefix, $namespacePaths) = static::getNamespacePaths($namespace);
         if(empty($namespacePaths)) return [];
@@ -45,11 +53,10 @@ class ClassFinder
             }
         }
 
-        $classNames = [];
         for ($i = 0; $i < count($files); $i++) {
             $fileStr = $files[$i];
             $className = $namespace . static::CS . str_replace(static::DS, static::CS, $fileStr);
-            if(class_exists($className)) $classNames[] = $className;
+            if($withoutAutoload || class_exists($className, true)) $classNames[] = $className;
         }
         return $classNames;
     }
