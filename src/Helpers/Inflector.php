@@ -3,9 +3,7 @@
 namespace Reaction\Helpers;
 
 /**
- * BaseInflector provides concrete implementation for [[Inflector]].
- *
- * Do not use BaseInflector. Use [[Inflector]] instead.
+ * Inflector pluralizes and singularizes English nouns. It also contains some other useful methods.
  *
  * Borrowed from yii2 framework
  */
