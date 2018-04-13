@@ -41,6 +41,7 @@ return [
         //Stdio logger
         'stdioLogger' => \DI\create(\Reaction\Base\Logger\StdioLogger::class)
             ->constructor(\DI\get('stdoutWriteStream'), \DI\get(\React\EventLoop\LoopInterface::class))
+            ->property('withLineNum', true)
             ->scope(\DI\Scope::SINGLETON),
 
         /** Aliases for DI */
