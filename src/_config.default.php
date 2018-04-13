@@ -9,7 +9,7 @@ return [
         //Initial app aliases
         'aliases' => [
             '@root' => getcwd(),
-            '@runtime' => '@root/runtime',
+            '@runtime' => '@root/Runtime',
             '@reaction' => dirname(__FILE__),
         ],
         //Components
