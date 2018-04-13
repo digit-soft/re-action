@@ -17,7 +17,6 @@ class Json
     /**
      * List of JSON Error messages assigned to constant names for better handling of version differences.
      * @var array
-     * @since 2.0.7
      */
     public static $jsonErrorMessages = [
         'JSON_ERROR_DEPTH' => 'The maximum stack depth has been exceeded.',
@@ -73,7 +72,6 @@ class Json
      *
      * @param mixed $value the data to be encoded
      * @return string the encoding result
-     * @since 2.0.4
      * @throws InvalidArgumentException if there is any encoding error
      */
     public static function htmlEncode($value)
@@ -106,7 +104,6 @@ class Json
      *
      * @param int $lastError error code from [json_last_error()](http://php.net/manual/en/function.json-last-error.php).
      * @throws InvalidArgumentException if there is any encoding/decoding error.
-     * @since 2.0.6
      */
     protected static function handleJsonError($lastError)
     {
@@ -182,7 +179,6 @@ class Json
      *   only the first error message for each attribute will be shown. Defaults to `false`.
      *
      * @return string the generated error summary
-     * @since 2.0.14
      */
     public static function errorSummary($models, $options = [])
     {
@@ -198,7 +194,6 @@ class Json
      * @param $showAllErrors boolean, if set to true every error message for each attribute will be shown otherwise
      * only the first error message for each attribute will be shown.
      * @return array of the validation errors
-     * @since 2.0.14
      */
     private static function collectErrors($models, $showAllErrors)
     {
