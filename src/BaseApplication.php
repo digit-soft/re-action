@@ -49,6 +49,7 @@ class BaseApplication extends Component implements BaseApplicationInterface
      * @throws \DI\NotFoundException
      */
     public function run() {
+        // TODO: Make more serious Exception handler :)
         $this->router->registerControllers();
         $this->router->publishRoutes();
         $this->middleware[] = [$this->router, 'dispatchRoute'];
@@ -57,7 +58,13 @@ class BaseApplication extends Component implements BaseApplicationInterface
         \Reaction::$di->set(Http::class, $this->http);
         $this->http->listen($this->socket);
         echo "Running server on $this->hostname:$this->port\n";
+        //Exception handler
+        $this->http->on('error', function (\Throwable $error) {
+            $message = get_class($error) . "\n" . $error->getMessage() . "\n" . $error->getTraceAsString();
+            $this->logger->alert($message);
+        });
         $this->loop->run();
+
     }
 
     /**
