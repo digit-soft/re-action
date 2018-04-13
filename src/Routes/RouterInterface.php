@@ -88,9 +88,14 @@ interface RouterInterface
     public function addController(Controller $controller);
 
     /**
-     * Register all defined routes
+     * Find controllers in given namespaces and register as routes
      */
-    public function registerRoutes();
+    public function registerControllers();
+
+    /**
+     * Register all defined routes in dispatcher
+     */
+    public function publishRoutes();
 
     /**
      * Dispatch requested route

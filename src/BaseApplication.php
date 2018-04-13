@@ -49,10 +49,9 @@ class BaseApplication extends Component implements BaseApplicationInterface
      * @throws \DI\NotFoundException
      */
     public function run() {
-        $this->middleware[] = function (RequestInterface $request) {
-            \Reaction::$app->logger->warning('test');
-            return new Response(200, [], "test!\n" . time());
-        };
+        $this->router->registerControllers();
+        $this->router->publishRoutes();
+        $this->middleware[] = [$this->router, 'dispatchRoute'];
         $this->socket = \Reaction::create(SocketServerInterface::class);
         $this->http = \Reaction::create(Http::class, ['requestHandler' => $this->middleware]);
         \Reaction::$di->set(Http::class, $this->http);

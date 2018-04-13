@@ -9,6 +9,7 @@ use FastRoute\BadRouteException;
 use FastRoute\Dispatcher;
 use Reaction\Helpers\ArrayHelper;
 use Reaction\Helpers\ClassFinder;
+use Reaction\Promise\Promise;
 use Reaction\Web\Response;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -29,6 +30,8 @@ class Router extends BaseObject implements RouterInterface
 
     /** @var Dispatcher */
     private $dispatcher;
+    /** @var array Registered controllers */
+    protected $controllers = [];
 
     /**
      * Add route handling
@@ -139,9 +142,19 @@ class Router extends BaseObject implements RouterInterface
     }
 
     /**
-     * Register all defined routes
+     * Find controllers in given namespaces and register as routes
      */
-    public function registerRoutes() {
+    public function registerControllers() {
+        $classNames = ClassFinder::findClassesPsr4($this->controllerNamespaces, true);
+        foreach ($classNames as $className) {
+            $this->registerController($className);
+        }
+    }
+
+    /**
+     * Register all defined routes in dispatcher
+     */
+    public function publishRoutes() {
         $routes = $this->routes;
         $this->dispatcher = $this->createDispatcher(function (\FastRoute\RouteCollector $r) use ($routes) {
             foreach ($routes as $routeRow) {
@@ -153,27 +166,45 @@ class Router extends BaseObject implements RouterInterface
     /**
      * Dispatch requested route
      * @param ServerRequestInterface $request
-     * @return Response
+     * @return Response|Promise
      */
     public function dispatchRoute(ServerRequestInterface $request) {
-        //throw new \Exception('test');
-        $requestInfo = $this->getRequestInfo($request);
-        $routeInfo = $this->dispatcher->dispatch($requestInfo['method'], $requestInfo['path']);
-        $response = new Response(200);
-        switch ($routeInfo[0]) {
-            case Dispatcher::NOT_FOUND:
-                $response = new Response(404, ['Content-Type' => 'text/plain'],  'Not found');
-                break;
-            case Dispatcher::METHOD_NOT_ALLOWED:
-                $message = strtr('Method Not Allowed. Only "{methods}"', ['{methods}' => implode(', ', $routeInfo[1])]);
-                $response = new Response(405, ['Content-Type' => 'text/plain'],  $message);
-                break;
-            case Dispatcher::FOUND:
-                $params = $routeInfo[2] ?? [];
-                $response = $routeInfo[1]($request, ... array_values($params));
-                break;
-        }
-        return $response;
+        $self = $this;
+        return (new Promise(function ($r, $c) use ($self, &$request) {
+            $response = new Response(200);
+            $requestInfo = $self->getRequestInfo($request);
+            try {
+                $routeInfo = $self->dispatcher->dispatch($requestInfo['method'], $requestInfo['path']);
+            } catch (\Throwable $exception) {
+                \Reaction::$app->logger->error(get_class($exception) . "\n" . $exception->getMessage() . "\n" . $exception->getTraceAsString());
+                $routeInfo = [Dispatcher::NOT_FOUND];
+            }
+            switch ($routeInfo[0]) {
+                case Dispatcher::NOT_FOUND:
+                    $response = new Response(404, ['Content-Type' => 'text/plain'],  'Not found');
+                    break;
+                case Dispatcher::METHOD_NOT_ALLOWED:
+                    $message = strtr('Method Not Allowed. Only "{methods}"', ['{methods}' => implode(', ', $routeInfo[1])]);
+                    $response = new Response(405, ['Content-Type' => 'text/plain'],  $message);
+                    break;
+                case Dispatcher::FOUND:
+                    $params = $routeInfo[2] ?? [];
+                    $response = $routeInfo[1]($request, ...array_values($params));
+                    break;
+            }
+            $r($response);
+        }))->then(function ($response) {
+            //Fallback if return value is string
+            if(is_string($response)) return new Response(200, [], $response);
+            return $response;
+        })->otherwise(function ($error) {
+            if($error instanceof \Throwable) {
+                $message = get_class($error) . "\n" . $error->getMessage() . "\n" . $error->getTraceAsString();
+            } else {
+                $message = $error;
+            }
+            \Reaction::$app->logger->error($message);
+        });
     }
 
     /**
@@ -209,6 +240,9 @@ class Router extends BaseObject implements RouterInterface
      * @param string|Controller $className
      */
     protected function registerController($className) {
+        $_className = is_string($className) ? $className : get_class($className);
+        if(in_array($_className, $this->controllers)) return;
+        $this->controllers[] = $_className;
         $classAnnotations = \Reaction::$annotations->getClass($className);
         if(isset($classAnnotations[Ctrl::class])) {
             $this->registerControllerWithAnnotations($className, $classAnnotations[Ctrl::class]);
@@ -236,9 +270,8 @@ class Router extends BaseObject implements RouterInterface
             if(!isset($actionAnnotations[CtrlAction::class])) continue;
             /** @var CtrlAction $ctrlAction */
             $ctrlAction = $actionAnnotations[CtrlAction::class];
-            $path = $ctrlAnnotation->group . ltrim($ctrlAction->path, '/');
+            $path = $ctrlAnnotation->group . '/' . ltrim($ctrlAction->path, '/');
             $this->addRoute($ctrlAction->method, $path, [$controller, $actions[$i]]);
-            \Reaction::$app->logger->info($ctrlAction);
         }
     }
 
@@ -257,16 +290,6 @@ class Router extends BaseObject implements RouterInterface
             $route = $group . $row['route'];
             $handlerName = $row['handler'];
             $this->addRoute($method, $route, [$controller, $handlerName]);
-        }
-    }
-
-    /**
-     * Find controllers in given namespaces and register as routes
-     */
-    public function findControllers() {
-        $classNames = ClassFinder::findClassesPsr4($this->controllerNamespaces, true);
-        foreach ($classNames as $className) {
-            $this->registerController($className);
         }
     }
 }
