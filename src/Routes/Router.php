@@ -7,6 +7,7 @@ use Reaction\Base\BaseObject;
 //use app\run\Application;
 use FastRoute\BadRouteException;
 use FastRoute\Dispatcher;
+use Reaction\Helpers\ClassFinder;
 use Reaction\Web\Response;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -201,6 +202,12 @@ class Router extends BaseObject implements RouterInterface
     }
 
     public function findControllers() {
-
+        $classNames = ClassFinder::findClassesPsr4($this->controllerNamespace, true);
+        foreach ($classNames as $className) {
+            if(!method_exists($className, 'actionTest')) continue;
+            $class = new $className();
+            $annotations = \Reaction::$annotations->getMethod($class, 'actionTest');
+        }
+        //\Reaction::$app->logger->info($classNames);
     }
 }

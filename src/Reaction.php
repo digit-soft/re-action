@@ -18,6 +18,8 @@ class Reaction
     public static $app;
     /** @var \Reaction\Base\ConfigReader */
     public static $config;
+    /** @var \Reaction\Base\AnnotationsReader */
+    public static $annotations;
 
     /** @var string */
     protected static $configsPath;
@@ -33,6 +35,7 @@ class Reaction
         }
         static::$configsPath = $configsPath;
         static::$config = static::getConfigReader();
+        static::initAnnotationReader();
         static::initContainer();
         static::initApp();
     }
@@ -147,5 +150,12 @@ class Reaction
         $config = static::$config->get('app');
         $config['class'] = \Reaction\BaseApplicationInterface::class;
         static::$app = static::create($config);
+    }
+
+    /**
+     *
+     */
+    protected static function initAnnotationReader() {
+        static::$annotations = new \Reaction\Base\AnnotationsReader();
     }
 }
