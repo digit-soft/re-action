@@ -31,6 +31,9 @@ return [
             $socketUri = $appConf['hostname'] . ':' . $appConf['port'];
             return $di->make(\React\Socket\Server::class, [ 'uri' => $socketUri, 'loop' => \DI\get(\React\EventLoop\LoopInterface::class) ]);
         })->scope(\DI\Scope::SINGLETON),
+        //Application
+        \Reaction\BaseApplicationInterface::class => \DI\get(\Reaction\BaseApplication::class),
+        \Reaction\BaseApplication::class => \DI\create()->scope(\DI\Scope::SINGLETON),
         //Router
         'Reaction\Routes\RouterInterface' => \DI\get(\Reaction\Routes\Router::class),
         'Reaction\Routes\Router' => \DI\create()->scope(\DI\Scope::SINGLETON),
