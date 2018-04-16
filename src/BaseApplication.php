@@ -52,7 +52,7 @@ class BaseApplication extends Component implements BaseApplicationInterface
         // TODO: Make more serious Exception handler :)
         $this->router->registerControllers();
         $this->router->publishRoutes();
-        $this->middleware[] = [$this->router, 'dispatchRoute'];
+        $this->addMiddleware([$this->router, 'dispatchRoute']);
         $this->socket = \Reaction::create(SocketServerInterface::class);
         $this->http = \Reaction::create(Http::class, ['requestHandler' => $this->middleware]);
         \Reaction::$di->set(Http::class, $this->http);
@@ -64,7 +64,18 @@ class BaseApplication extends Component implements BaseApplicationInterface
             $this->logger->alert($message);
         });
         $this->loop->run();
+    }
 
+    /**
+     * Add middleware to application
+     * @param callable|array $middleware
+     */
+    public function addMiddleware($middleware) {
+        if(!is_callable($middleware) && !is_array($middleware)) {
+            throw new InvalidArgumentException("Middleware must be a valid callable");
+        } else {
+            $this->middleware[] = $middleware;
+        }
     }
 
     /**

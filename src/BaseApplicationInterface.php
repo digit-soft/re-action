@@ -21,6 +21,12 @@ interface BaseApplicationInterface
     public function run();
 
     /**
+     * Add middleware to application
+     * @param callable|array $middleware
+     */
+    public function addMiddleware($middleware);
+
+    /**
      * Translates a path alias into an actual path.
      *
      * The translation is done according to the following procedure:
