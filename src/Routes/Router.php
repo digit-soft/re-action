@@ -16,8 +16,7 @@ use Psr\Http\Message\ServerRequestInterface;
 class Router extends BaseObject implements RouterInterface
 {
     public $controllerNamespaces = [
-        'App\Controller',
-        'app\controller',
+        'App\Controllers',
     ];
     public $dispatcherClass = '\FastRoute\simpleDispatcher';
     public $dispatcherOptions = [];
