@@ -23,7 +23,8 @@
         "react/http": "~0.8",
         "digit-soft/re-action-promise": "*",
         "nikic/fast-route": "*",
-        "psr/log": "*"
+        "psr/log": "*",
+        "ezyang/htmlpurifier": "~4.10"
     },
     "require-dev": {},
     "autoload": {
