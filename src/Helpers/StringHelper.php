@@ -113,7 +113,6 @@ class StringHelper
      * @param int $count How many words from original string to include into truncated string.
      * @param string $suffix String to append to the end of truncated string.
      * @param bool $asHtml Whether to treat the string being truncated as HTML and preserve proper HTML tags.
-     * This parameter is available since version 2.0.1.
      * @return string the truncated string.
      */
     public static function truncateWords($string, $count, $suffix = '...', $asHtml = false)
@@ -138,7 +137,6 @@ class StringHelper
      * @param string $suffix String to append to the end of the truncated string.
      * @param string|bool $encoding
      * @return string
-     * @since 2.0.1
      */
     protected static function truncateHtml($string, $count, $suffix, $encoding = false)
     {
@@ -252,7 +250,6 @@ class StringHelper
      *   - callable - will be called for each value instead of trim. Takes the only argument - value.
      * @param bool $skipEmpty Whether to skip empty strings between delimiters. Default is false.
      * @return array
-     * @since 2.0.4
      */
     public static function explode($string, $delimiter = ',', $trim = true, $skipEmpty = false)
     {
@@ -279,7 +276,6 @@ class StringHelper
 
     /**
      * Counts words in a string.
-     * @since 2.0.8
      *
      * @param string $string
      * @return int
@@ -294,7 +290,6 @@ class StringHelper
      * of current locale is comma.
      * @param int|float|string $value
      * @return string
-     * @since 2.0.11
      */
     public static function normalizeNumber($value)
     {
@@ -319,7 +314,6 @@ class StringHelper
      * @see https://tools.ietf.org/html/rfc4648#page-7
      * @param string $input the string to encode.
      * @return string encoded string.
-     * @since 2.0.12
      */
     public static function base64UrlEncode($input)
     {
@@ -332,7 +326,6 @@ class StringHelper
      * @see https://tools.ietf.org/html/rfc4648#page-7
      * @param string $input encoded string.
      * @return string decoded string.
-     * @since 2.0.12
      */
     public static function base64UrlDecode($input)
     {
@@ -345,7 +338,6 @@ class StringHelper
      * The decimal separator will always be `.`.
      * @param float|int $number a floating point number or integer.
      * @return string the string representation of the number.
-     * @since 2.0.13
      */
     public static function floatToString($number)
     {
@@ -366,7 +358,6 @@ class StringHelper
      * - filePath: bool, whether slashes in string only matches slashes in the given pattern. Defaults to `false`.
      *
      * @return bool whether the string matches pattern or not.
-     * @since 2.0.14
      */
     public static function matchWildcard($pattern, $string, $options = [])
     {
