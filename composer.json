@@ -18,7 +18,8 @@
     "require": {
         "php": ">=7.0.0",
         "php-di/php-di": "~6.0",
-        "doctrine/common": "*",
+        "doctrine/annotations": "*",
+        "doctrine/cache": "*",
         "react/http": "~0.8",
         "digit-soft/re-action-promise": "*",
         "nikic/fast-route": "*",
