@@ -153,6 +153,14 @@ class Container extends Component
 
         $definition = $this->_definitions[$class];
 
+        if ($definition instanceof Value) {
+            $definition = $this->invoke($definition->callback, [$this]);
+            if (is_array($definition) && count($definition) === 2 && array_values($definition) === $definition) {
+                $params = empty($params) ? $definition[1] : $params;
+                $definition = $definition[0];
+            }
+        }
+
         if (is_callable($definition, true)) {
             $params = $this->resolveDependencies($this->mergeParams($class, $params));
             $object = call_user_func($definition, $this, $params, $config);
@@ -467,6 +475,8 @@ class Container extends Component
                     $class = $reflection->getName();
                     throw new InvalidConfigException("Missing required parameter \"$name\" when instantiating \"$class\".");
                 }
+            } elseif ($dependency instanceof Value && $dependency->callback !== null) {
+                $dependencies[$index] = $this->invoke($dependency->callback, [$this]);
             }
         }
 
@@ -485,7 +495,7 @@ class Container extends Component
      * $formatString = function($string, \yii\i18n\Formatter $formatter) {
      *    // ...
      * }
-     * Yii::$container->invoke($formatString, ['string' => 'Hello World!']);
+     * Reaction::$di->invoke($formatString, ['string' => 'Hello World!']);
      * ```
      *
      * This will pass the string `'Hello World!'` as the first param, and a formatter instance created
@@ -626,6 +636,9 @@ class Container extends Component
     public function setDefinitions(array $definitions)
     {
         foreach ($definitions as $class => $definition) {
+            if($definition instanceof Definition) {
+                $definition = $this->extractDefinition($definition);
+            }
             if (is_array($definition) && count($definition) === 2 && array_values($definition) === $definition) {
                 $this->set($class, $definition[0], $definition[1]);
                 continue;
@@ -648,6 +661,9 @@ class Container extends Component
     public function setSingletons(array $singletons)
     {
         foreach ($singletons as $class => $definition) {
+            if($definition instanceof Definition) {
+                $definition = $this->extractDefinition($definition);
+            }
             if (is_array($definition) && count($definition) === 2 && array_values($definition) === $definition) {
                 $this->setSingleton($class, $definition[0], $definition[1]);
                 continue;
@@ -655,5 +671,17 @@ class Container extends Component
 
             $this->setSingleton($class, $definition);
         }
+    }
+
+    /**
+     * Extract array data from Definition instance
+     * @param Definition $definition
+     * @return array
+     */
+    protected function extractDefinition(Definition $definition) {
+        if(!($definition instanceof Definition) || !$definition->isValid()) {
+            return [];
+        }
+        return $definition->dumpArrayDefinition();
     }
 }

@@ -1,9 +1,7 @@
 <?php
 
-namespace app\base\di;
+namespace Reaction\DI;
 
-use Reaction\DI\Container;
-use Reaction\DI\ServiceLocator;
 use Reaction\Exceptions\InvalidConfigException;
 
 /**
