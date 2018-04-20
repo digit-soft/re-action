@@ -125,4 +125,10 @@ interface BaseApplicationInterface
      * @return string
      */
     public function getRuntimePath();
+
+    /**
+     * Just for autocomplete. Method located in Component class
+     * @return string
+     */
+    public function getBasePath();
 }
