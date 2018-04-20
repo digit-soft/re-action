@@ -13,6 +13,7 @@ return [
         //Initial app aliases
         'aliases' => [
             '@root' => getcwd(),
+            '@app' => getcwd(),
             '@runtime' => '@root/Runtime',
             '@views' => '@root/Views',
             '@reaction' => dirname(__FILE__),

@@ -19,9 +19,15 @@ use Reaction\Exceptions\InvalidArgumentException;
 class BaseApplication extends Component implements BaseApplicationInterface
 {
     /** @var string */
+    public $envType = self::APP_ENV_DEV;
+    /** @var string */
     public $charset = 'UTF-8';
     /** @var string Default language */
-    public $language = 'en';
+    public $language = 'en-US';
+    /** @var string Source language */
+    public $sourceLanguage = 'en-US';
+    /** @var string Default timezone */
+    public $timeZone = 'UTC';
     /** @var string */
     public $hostname;
     /** @var integer */

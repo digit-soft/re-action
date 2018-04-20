@@ -6,8 +6,11 @@ namespace Reaction;
 /**
  * Interface BaseApplicationInterface
  * @package Reaction
+ * @property string $envType
+ * @property string $timeZone
  * @property string $charset
  * @property string $language
+ * @property string $sourceLanguage
  * @property \React\EventLoop\LoopInterface     $loop
  * @property \React\Http\Server                 $http
  * @property \React\Socket\Server               $socket
@@ -16,6 +19,9 @@ namespace Reaction;
  */
 interface BaseApplicationInterface
 {
+    const APP_ENV_PROD  = 'production';
+    const APP_ENV_DEV   = 'development';
+
     /**
      * Run application
      */
