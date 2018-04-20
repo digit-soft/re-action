@@ -121,6 +121,14 @@ class Reaction
     }
 
     /**
+     * Returns a string representing the current version of framework.
+     * @return string the version of Reaction framework
+     */
+    public static function getVersion() {
+        return '0.2.1';
+    }
+
+    /**
      * Get instance of config reader
      * @return \Reaction\Base\ConfigReader
      */
