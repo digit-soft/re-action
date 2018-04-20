@@ -661,9 +661,9 @@ class ArrayHelper
             throw new InvalidArgumentException('The length of $sortFlag parameter must be the same as that of $keys.');
         }
         $args = [];
-        foreach ($keys as $i => $key) {
+        foreach ($keys as $i => $_key) {
             $flag = $sortFlag[$i];
-            $args[] = static::getColumn($array, $key);
+            $args[] = static::getColumn($array, $_key);
             $args[] = $direction[$i];
             $args[] = $flag;
         }
@@ -935,33 +935,8 @@ class ArrayHelper
         $result = [];
         $forbiddenVars = [];
 
-        foreach ($filters as $var) {
-            $keys = explode('.', $var);
-            $globalKey = $keys[0];
-            $localKey = isset($keys[1]) ? $keys[1] : null;
-
-            if ($globalKey[0] === '!') {
-                $forbiddenVars[] = [
-                    substr($globalKey, 1),
-                    $localKey,
-                ];
-                continue;
-            }
-
-            if (!array_key_exists($globalKey, $array)) {
-                continue;
-            }
-            if ($localKey === null) {
-                $result[$globalKey] = $array[$globalKey];
-                continue;
-            }
-            if (!isset($array[$globalKey][$localKey])) {
-                continue;
-            }
-            if (!array_key_exists($globalKey, $result)) {
-                $result[$globalKey] = [];
-            }
-            $result[$globalKey][$localKey] = $array[$globalKey][$localKey];
+        foreach ($filters as $filter) {
+            static::applyArrayFilter($array, $filter, $result, $forbiddenVars);
         }
 
         foreach ($forbiddenVars as $var) {
@@ -972,5 +947,42 @@ class ArrayHelper
         }
 
         return $result;
+    }
+
+    /**
+     * Helper method for ArrayHelper::filter()
+     * @param array $array
+     * @param string $filter
+     * @param array $result
+     * @param array $forbiddenVars
+     * @internal
+     */
+    protected static function applyArrayFilter($array, $filter, array &$result, array &$forbiddenVars) {
+        $keys = explode('.', $filter);
+        $globalKey = $keys[0];
+        $localKey = isset($keys[1]) ? $keys[1] : null;
+
+        if ($globalKey[0] === '!') {
+            $forbiddenVars[] = [
+                substr($globalKey, 1),
+                $localKey,
+            ];
+            return;
+        }
+
+        if (!array_key_exists($globalKey, $array)) {
+            return;
+        }
+        if ($localKey === null) {
+            $result[$globalKey] = $array[$globalKey];
+            return;
+        }
+        if (!isset($array[$globalKey][$localKey])) {
+            return;
+        }
+        if (!array_key_exists($globalKey, $result)) {
+            $result[$globalKey] = [];
+        }
+        $result[$globalKey][$localKey] = $array[$globalKey][$localKey];
     }
 }
