@@ -1,4 +1,8 @@
 <?php
+
+use Reaction\DI\Definition;
+use Reaction\DI\Instance;
+
 /** Default config */
 return [
     //Application config
@@ -10,51 +14,46 @@ return [
         'aliases' => [
             '@root' => getcwd(),
             '@runtime' => '@root/Runtime',
+            '@views' => '@root/Views',
             '@reaction' => dirname(__FILE__),
         ],
         //Components
         'components' => [
-            'router' => 'app.router',
-            'logger' => 'app.logger',
+            'router' => 'Reaction\Routes\RouterInterface',
+            'logger' => 'stdioLogger',
         ],
     ],
     //DI definitions
     'container' => [
-        /** Class definitions */
-        //Loop
-        'React\EventLoop\LoopInterface' => \DI\factory(function ($di) {
-            return \React\EventLoop\Factory::create();
-        })->scope(\DI\Scope::SINGLETON),
-        //Socket server
-        'React\Socket\ServerInterface' => \DI\factory(function (\DI\Container $di = null) {
-            $appConf = Reaction::$config->get('app');
-            $socketUri = $appConf['hostname'] . ':' . $appConf['port'];
-            return $di->make(\React\Socket\Server::class, [ 'uri' => $socketUri, 'loop' => \DI\get(\React\EventLoop\LoopInterface::class) ]);
-        })->scope(\DI\Scope::SINGLETON),
-        //Application
-        \Reaction\BaseApplicationInterface::class => \DI\get(\Reaction\BaseApplication::class),
-        \Reaction\BaseApplication::class => \DI\create()->scope(\DI\Scope::SINGLETON),
-        //Router
-        'Reaction\Routes\RouterInterface' => \DI\get(\Reaction\Routes\Router::class),
-        'Reaction\Routes\Router' => \DI\create()->scope(\DI\Scope::SINGLETON),
-        //Stdout writable stream
-        'stdoutWriteStream' => \DI\create(\React\Stream\WritableResourceStream::class)
-            ->constructor(STDOUT, \DI\get(\React\EventLoop\LoopInterface::class))
-            ->scope(\DI\Scope::SINGLETON),
-        //Stdio logger
-        'stdioLogger' => \DI\create(\Reaction\Base\Logger\StdioLogger::class)
-            ->constructor(\DI\get('stdoutWriteStream'), \DI\get(\React\EventLoop\LoopInterface::class))
-            ->property('withLineNum', true)
-            ->scope(\DI\Scope::SINGLETON),
+        'definitions' => [
 
-        /** Aliases for DI */
-        'app.router' => \DI\get(\Reaction\Routes\RouterInterface::class),
-        'app.logger' => \DI\get('stdioLogger'),
-    ],
-    //DI config
-    'container.config' => [
-        'useAnnotations' => false,
-        'useAutowiring' => true,
+        ],
+        'singletons' => [
+            //React event loop
+            'React\EventLoop\LoopInterface' => function() { return \React\EventLoop\Factory::create(); },
+            //React socket server
+            'React\Socket\ServerInterface' => [
+                ['class' => \React\Socket\Server::class],
+                ['0.0.0.0:4000', Instance::of(\React\EventLoop\LoopInterface::class)],
+            ],
+            //React http server
+            \React\Http\Server::class => [
+                'class' => \React\Http\Server::class,
+            ],
+            //Application
+            'Reaction\BaseApplicationInterface' => \Reaction\BaseApplication::class,
+            //'Reaction\BaseApplication' => \Reaction\BaseApplication::class,
+            //Router
+            'Reaction\Routes\RouterInterface' => \Reaction\Routes\Router::class,
+            //'Reaction\Routes\Router' => \DI\create()->scope(\DI\Scope::SINGLETON),
+            //Stdout writable stream
+            'stdoutWriteStream' => Definition::of(\React\Stream\WritableResourceStream::class)
+                ->withParams([STDOUT, Instance::of(\React\EventLoop\LoopInterface::class)]),
+            //Stdio logger
+            'stdioLogger' => Definition::of(\Reaction\Base\Logger\StdioLogger::class)
+                ->withParams([Instance::of('stdoutWriteStream'), Instance::of(\React\EventLoop\LoopInterface::class)])
+                ->withConfig(['withLineNum' => true]),
+        ],
     ],
 
 ];
