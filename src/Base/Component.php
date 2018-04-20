@@ -22,10 +22,11 @@ class Component extends BaseObject implements EventEmitterInterface
 
     /**
      * Set component
-     * @param string $name Component name
+     * @param string       $name Component name
      * @param array|string $config Params for Reaction::configure() if array
      * or DI container entry name if string
-     * @param array  $params Constructor params for Reaction::create()
+     * @param array        $params Constructor params for Reaction::create()
+     * @throws InvalidConfigException
      */
     public function setComponent($name, $config = [], $params = []) {
         $nameInDi = get_class($this) . '.' . $name;
@@ -70,8 +71,7 @@ class Component extends BaseObject implements EventEmitterInterface
      * @return mixed|\object
      * @throws InvalidConfigException
      * @throws UnknownPropertyException
-     * @throws \DI\DependencyException
-     * @throws \DI\NotFoundException
+     * @throws \ReflectionException
      */
     public function getComponent($name) {
         if(isset($this->_components[$name])) {
@@ -90,8 +90,7 @@ class Component extends BaseObject implements EventEmitterInterface
      * @return mixed the property value
      * @throws InvalidConfigException
      * @throws UnknownPropertyException if the property is not defined
-     * @throws \DI\DependencyException
-     * @throws \DI\NotFoundException
+     * @throws \ReflectionException
      * @see __set()
      */
     public function __get($name)
