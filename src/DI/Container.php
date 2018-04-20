@@ -210,7 +210,7 @@ class Container extends Component
      *
      * // register a class with configuration. The configuration
      * // will be applied when the class is instantiated by get()
-     * $container->set('yii\db\Connection', [
+     * $container->set('Reaction\Db\Connection', [
      *     'dsn' => 'mysql:host=127.0.0.1;dbname=demo',
      *     'username' => 'root',
      *     'password' => '',
@@ -220,7 +220,7 @@ class Container extends Component
      * // register an alias name with class configuration
      * // In this case, a "class" element is required to specify the class
      * $container->set('db', [
-     *     'class' => 'yii\db\Connection',
+     *     'class' => 'Reaction\Db\Connection',
      *     'dsn' => 'mysql:host=127.0.0.1;dbname=demo',
      *     'username' => 'root',
      *     'password' => '',
@@ -230,7 +230,7 @@ class Container extends Component
      * // register a PHP callable
      * // The callable will be executed when $container->get('db') is called
      * $container->set('db', function ($container, $params, $config) {
-     *     return new \yii\db\Connection($config);
+     *     return new \Reaction\Db\Connection($config);
      * });
      * ```
      *
@@ -492,7 +492,7 @@ class Container extends Component
      * For example, the following callback may be invoked using the Container to resolve the formatter dependency:
      *
      * ```php
-     * $formatString = function($string, \yii\i18n\Formatter $formatter) {
+     * $formatString = function($string, \Reaction\I18n\Formatter $formatter) {
      *    // ...
      * }
      * Reaction::$di->invoke($formatString, ['string' => 'Hello World!']);

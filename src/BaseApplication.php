@@ -54,8 +54,7 @@ class BaseApplication extends Component implements BaseApplicationInterface
         $this->router->publishRoutes();
         $this->addMiddleware([$this->router, 'dispatchRoute']);
         $this->socket = \Reaction::create(SocketServerInterface::class);
-        $this->http = \Reaction::create(Http::class, ['requestHandler' => $this->middleware]);
-        \Reaction::$di->set(Http::class, $this->http);
+        $this->http = \Reaction::create(Http::class, [$this->middleware]);
         $this->http->listen($this->socket);
         echo "Running server on $this->hostname:$this->port\n";
         //Exception handler
