@@ -111,9 +111,10 @@ class Reaction
      * @param string $domain
      * @param string $message
      * @param array  $params
+     * @param string $language
      * @return mixed
      */
-    public static function t($domain, $message, $params = []) {
+    public static function t($domain, $message, $params = [], $language = null) {
         $_params = [];
         foreach ($params as $key => $value) { $_params['{'.$key.'}'] = $value; }
         return !empty($params) ? strtr($message, $_params) : $message;
