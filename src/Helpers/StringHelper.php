@@ -122,7 +122,7 @@ class StringHelper
         }
 
         $words = preg_split('/(\s+)/u', trim($string), null, PREG_SPLIT_DELIM_CAPTURE);
-        if (count($words) / 2 > $count) {
+        if (!empty($words) && count($words) / 2 > $count) {
             return implode('', array_slice($words, 0, ($count * 2) - 1)) . $suffix;
         }
 
@@ -161,6 +161,7 @@ class StringHelper
                     $token->data = $prefixSpace[1] . self::truncateWords(ltrim($token->data), $count - $totalCount, '');
                     $currentCount = self::countWords($token->data);
                 } else {
+                    $encoding = !is_string($encoding) && \Reaction::$app && \Reaction::$app->charset ? \Reaction::$app->charset : $encoding;
                     $token->data = self::truncate($token->data, $count - $totalCount, '', $encoding);
                     $currentCount = mb_strlen($token->data, $encoding);
                 }
@@ -282,7 +283,8 @@ class StringHelper
      */
     public static function countWords($string)
     {
-        return count(preg_split('/\s+/u', $string, null, PREG_SPLIT_NO_EMPTY));
+        $result = preg_split('/\s+/u', $string, null, PREG_SPLIT_NO_EMPTY);
+        return !empty($result) ? count($result) : 0;
     }
 
     /**
