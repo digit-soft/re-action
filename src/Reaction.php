@@ -1,6 +1,6 @@
 <?php
 
-use Reaction\Helpers\ArrayHelper;
+use Reaction\Exceptions\InvalidConfigException;
 
 /**
  * Class Reaction. Base static class
@@ -12,7 +12,7 @@ class Reaction
 
     /** @var Composer\Autoload\ClassLoader */
     public static $composer;
-    /** @var \DI\Container */
+    /** @var \Reaction\DI\Container */
     public static $di;
     /** @var \Reaction\BaseApplicationInterface */
     public static $app;
@@ -57,49 +57,38 @@ class Reaction
     /**
      * Create instance of class
      * @param string|array $type Class name or indexed parameters array with key "class"
-     * @param array $params Constructor parameters indexed array
-     * @return \object|mixed
-     * @throws \DI\DependencyException
-     * @throws \DI\NotFoundException
-     * @throws \Reaction\Exceptions\InvalidConfigException
+     * @param array        $params Constructor parameters indexed array
+     * @return object|mixed
+     * @throws InvalidConfigException
+     * @throws ReflectionException
      */
     public static function create($type, array $params = []) {
-        $class = null;
-        $config = [];
-
         if (is_string($type)) {
-            $class = $type;
+            return static::$di->get($type, $params);
         } elseif (is_array($type) && isset($type['class'])) {
             $class = $type['class'];
             unset($type['class']);
-            $config = $type;
+            return static::$di->get($class, $params, $type);
         } elseif (is_callable($type, true)) {
-            return static::call($type, $params);
+            return static::$di->invoke($type, $params);
         } elseif (is_array($type)) {
-            throw new \Reaction\Exceptions\InvalidConfigException('Object configuration must be an array containing a "class" element.');
+            throw new InvalidConfigException('Object configuration must be an array containing a "class" element.');
         }
 
-        if(isset($class)) {
-            if(!empty($params)) {
-                $object = static::$di->make($class, $params);
-            } else {
-                $object = static::$di->get($class);
-            }
-            if(!empty($config)) static::configure($object, $config);
-            return $object;
-        } else {
-            throw new \Reaction\Exceptions\InvalidConfigException('Unsupported configuration type: ' . gettype($type));
-        }
+        throw new InvalidConfigException('Unsupported configuration type: ' . gettype($type));
     }
 
     /**
      * Call closure with parameters using DI
      * @param callable $callable
-     * @param array $params
+     * @param array    $params
      * @return mixed
+     * @throws InvalidConfigException
+     * @throws ReflectionException
+     * @throws \Reaction\Exceptions\NotInstantiableException
      */
-    public static function call($callable, $params = []) {
-        return static::$di->call($callable, $params);
+    public static function invoke($callable, $params = []) {
+        return static::$di->invoke($callable, $params);
     }
 
     /**
@@ -145,15 +134,8 @@ class Reaction
      * Initialize DI container
      */
     protected static function initContainer() {
-        $definitions = static::$config->get('container');
-        $useAnnotations = static::$config->get('container.config.useAnnotations', false);
-        $useAutoWiring = static::$config->get('container.config.useAutowiring', false);
-        $builder = new DI\ContainerBuilder();
-        $builder
-            ->useAnnotations($useAnnotations)
-            ->useAutowiring($useAutoWiring);
-        $builder->addDefinitions($definitions);
-        static::$di = $builder->build();
+        $config = static::$config->get('container');
+        static::$di = new \Reaction\DI\Container($config);
     }
 
     /**
