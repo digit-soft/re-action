@@ -21,6 +21,15 @@ class Component extends BaseObject implements EventEmitterInterface
     protected $_components = [];
 
     /**
+     * Check attached event listeners for particular event
+     * @param string $event
+     * @return bool
+     */
+    public function hasEventListeners($event) {
+        return !empty($this->listeners[$event]) || !empty($this->onceListeners[$event]);
+    }
+
+    /**
      * Set component
      * @param string       $name Component name
      * @param array|string $config Params for Reaction::configure() if array
