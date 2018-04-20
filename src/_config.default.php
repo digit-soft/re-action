@@ -22,6 +22,7 @@ return [
         'components' => [
             'router' => 'Reaction\Routes\RouterInterface',
             'logger' => 'stdioLogger',
+            'formatter' => 'formatterDefault',
         ],
     ],
     //DI definitions
@@ -54,6 +55,17 @@ return [
             'stdioLogger' => Definition::of(\Reaction\Base\Logger\StdioLogger::class)
                 ->withParams([Instance::of('stdoutWriteStream'), Instance::of(\React\EventLoop\LoopInterface::class)])
                 ->withConfig(['withLineNum' => true]),
+            //I18n Formatter
+            'formatterDefault' => Definition::of(\Reaction\I18n\Formatter::class)->withConfig([
+                'locale' => 'uk-UA',
+                'dateFormat' => 'php:d F Y',
+                'datetimeFormat' => 'php:d F Y - H:i:s',
+                'timeFormat' => 'php:H:i:s',
+                'timeZone' => 'Europe/Kiev',
+                'decimalSeparator' => '.',
+                'thousandSeparator' => ' ',
+                'currencyCode' => 'UAH',
+            ]),
         ],
     ],
 

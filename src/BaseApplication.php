@@ -251,4 +251,22 @@ class BaseApplication extends Component implements BaseApplicationInterface
     public function setAliases($aliases) {
         foreach ($aliases as $alias => $path) { $this->setAlias($alias, $path); }
     }
+
+    /**
+     * Get path for '@views'
+     * @return string
+     */
+    public function getViewPath()
+    {
+        return $this->getAlias('@views');
+    }
+
+    /**
+     * Get path for '@runtime'
+     * @return string
+     */
+    public function getRuntimePath()
+    {
+        return $this->getAlias('@runtime');
+    }
 }

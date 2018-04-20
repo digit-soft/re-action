@@ -1,6 +1,7 @@
 <?php
 
 namespace Reaction;
+use Reaction\I18n\Formatter;
 
 
 /**
@@ -16,6 +17,7 @@ namespace Reaction;
  * @property \React\Socket\Server               $socket
  * @property \Reaction\Routes\RouterInterface   $router
  * @property \Psr\Log\AbstractLogger            $logger
+ * @property \Reaction\I18n\Formatter           $formatter
  */
 interface BaseApplicationInterface
 {
@@ -111,4 +113,16 @@ interface BaseApplicationInterface
      * @param array $aliases
      */
     public function setAliases($aliases);
+
+    /**
+     * Get path for '@views'
+     * @return string
+     */
+    public function getViewPath();
+
+    /**
+     * Get path for '@runtime'
+     * @return string
+     */
+    public function getRuntimePath();
 }
