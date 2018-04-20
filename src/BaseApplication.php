@@ -20,6 +20,8 @@ class BaseApplication extends Component implements BaseApplicationInterface
 {
     /** @var string */
     public $charset = 'UTF-8';
+    /** @var string Default language */
+    public $language = 'en';
     /** @var string */
     public $hostname;
     /** @var integer */
