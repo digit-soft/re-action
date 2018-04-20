@@ -25,7 +25,7 @@ class Definition
     public function __construct($className = null)
     {
         if (isset($className)) {
-            $this->className = $className;
+            $this->ofClass($className);
         }
     }
 
@@ -51,6 +51,8 @@ class Definition
         $this->config = $config;
         if (isset($config['class'])) {
             $this->className = $config['class'];
+        } elseif(isset($this->className)) {
+            $this->config['class'] = $this->className;
         }
         return $this;
     }
