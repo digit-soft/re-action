@@ -19,6 +19,24 @@ class Component extends BaseObject implements EventEmitterInterface
 
     /** @var array Components of Component ^_^ */
     protected $_components = [];
+    /** @var string Base path of component */
+    protected $_basePath;
+
+
+    /**
+     * Returns the root directory of the component.
+     * It defaults to the directory containing the component class file.
+     * @return string the root directory of the component.
+     */
+    public function getBasePath()
+    {
+        if ($this->_basePath === null) {
+            $class = new \ReflectionClass($this);
+            $this->_basePath = dirname($class->getFileName());
+        }
+
+        return $this->_basePath;
+    }
 
     /**
      * Check attached event listeners for particular event

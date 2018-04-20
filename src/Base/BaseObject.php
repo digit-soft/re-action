@@ -10,7 +10,7 @@ use Reaction\Exceptions\UnknownPropertyException;
  * Class BaseObject. Base object class
  * @package Reaction\Base
  */
-class BaseObject
+class BaseObject implements Configurable
 {
     /**
      * Constructor.
