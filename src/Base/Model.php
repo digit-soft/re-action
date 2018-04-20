@@ -3,6 +3,7 @@
 namespace Reaction\Base;
 /** TODO: VALIDATORS, EXCEPTIONS!!! */
 
+use Reaction\BaseApplicationInterface;
 use Reaction\Exceptions\InvalidArgumentException;
 use Reaction\Exceptions\InvalidConfigException;
 use ArrayAccess;
@@ -10,10 +11,10 @@ use ArrayIterator;
 use ArrayObject;
 use IteratorAggregate;
 use ReflectionClass;
-use Yii;
+use Reaction;
 use Reaction\Helpers\Inflector;
-use app\base\validators\RequiredValidator;
-use app\base\validators\Validator;
+use Reaction\Validators\RequiredValidator;
+use Reaction\Validators\Validator;
 
 /**
  * Model is the base class for data models.
@@ -35,7 +36,7 @@ use app\base\validators\Validator;
  *
  * For more details and usage information on Model, see the [guide article on models](guide:structure-models).
  *
- * @property \app\base\validators\Validator[] $activeValidators The validators applicable to the current
+ * @property \Reaction\Validators\Validator[] $activeValidators The validators applicable to the current
  * [[scenario]]. This property is read-only.
  * @property array $attributes Attribute values (name => value).
  * @property array $errors An array of errors for all attributes. Empty array is returned if no error. The
@@ -46,11 +47,10 @@ use app\base\validators\Validator;
  * @property ArrayIterator $iterator An iterator for traversing the items in the list. This property is
  * read-only.
  * @property string $scenario The scenario that this model is in. Defaults to [[SCENARIO_DEFAULT]].
- * @property ArrayObject|\app\base\validators\Validator[] $validators All the validators declared in the model.
+ * @property ArrayObject|\Reaction\Validators\Validator[] $validators All the validators declared in the model.
  * This property is read-only.
  *
- * @author Qiang Xue <qiang.xue@gmail.com>
- * @since 2.0
+ * Borrowed from yii2
  */
 class Model extends Component implements StaticInstanceInterface, IteratorAggregate, ArrayAccess, Arrayable
 {
@@ -125,7 +125,7 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
      * can be accessed as `$this->$attribute`. Note the `$` before `attribute`; this is taking the value of the variable
      * `$attribute` and using it as the name of the property to access.
      *
-     * Yii also provides a set of [[Validator::builtInValidators|built-in validators]].
+     * Reaction also provides a set of [[Validator::builtInValidators|built-in validators]].
      * Each one has an alias name which can be used when specifying a validation rule.
      *
      * Below are some examples:
@@ -184,6 +184,26 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
     public function scenarios()
     {
         $scenarios = [self::SCENARIO_DEFAULT => []];
+        $this->fillScenariosKeys($scenarios);
+
+        $this->fillScenariosAttributes($scenarios);
+
+        foreach ($scenarios as $scenario => $attributes) {
+            if (!empty($attributes)) {
+                $scenarios[$scenario] = array_keys($attributes);
+            }
+        }
+
+        return $scenarios;
+    }
+
+    /**
+     * Fill scenarios keys for ::scenarios()
+     * @param array $scenarios
+     * @throws InvalidConfigException
+     * @internal
+     */
+    protected function fillScenariosKeys(array &$scenarios) {
         foreach ($this->getValidators() as $validator) {
             foreach ($validator->on as $scenario) {
                 $scenarios[$scenario] = [];
@@ -192,8 +212,15 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
                 $scenarios[$scenario] = [];
             }
         }
-        $names = array_keys($scenarios);
+    }
 
+    /**
+     * Fill scenarios with attributes
+     * @param array $scenarios
+     * @throws InvalidConfigException
+     */
+    protected function fillScenariosAttributes(array &$scenarios) {
+        $names = array_keys($scenarios);
         foreach ($this->getValidators() as $validator) {
             if (empty($validator->on) && empty($validator->except)) {
                 foreach ($names as $name) {
@@ -217,14 +244,6 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
                 }
             }
         }
-
-        foreach ($scenarios as $scenario => $attributes) {
-            if (!empty($attributes)) {
-                $scenarios[$scenario] = array_keys($attributes);
-            }
-        }
-
-        return $scenarios;
     }
 
     /**
@@ -432,7 +451,7 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
      * Returns the validators applicable to the current [[scenario]].
      * @param string $attribute the name of the attribute whose applicable validators should be returned.
      * If this is null, the validators for ALL attributes in the model will be returned.
-     * @return \app\base\validators\Validator[] the validators applicable to the current [[scenario]].
+     * @return \Reaction\Validators\Validator[] the validators applicable to the current [[scenario]].
      */
     public function getActiveValidators($attribute = null)
     {
@@ -667,7 +686,6 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
      * The array values should be error messages. If an attribute has multiple errors,
      * these errors must be given in terms of an array.
      * You may use the result of [[getErrors()]] as the value for this parameter.
-     * @since 2.0.2
      */
     public function addErrors(array $items)
     {
@@ -763,8 +781,8 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
      */
     public function onUnsafeAttribute($name, $value)
     {
-        if (App::envType() !== App::ENV_PROD) {
-            App::app()->logger->debug("Failed to set unsafe attribute '$name' in '" . get_class($this) . "'.", __METHOD__);
+        if (\Reaction::$app->envType !== BaseApplicationInterface::APP_ENV_PROD) {
+            \Reaction::$app->logger->debug("Failed to set unsafe attribute '$name' in '" . get_class($this) . "'.", __METHOD__);
         }
     }
 
