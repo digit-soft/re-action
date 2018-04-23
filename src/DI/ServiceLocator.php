@@ -47,11 +47,11 @@ class ServiceLocator extends Component
     /**
      * @var array shared component instances indexed by their IDs
      */
-    private $_components = [];
+    protected $_components = [];
     /**
      * @var array component definitions indexed by their IDs
      */
-    private $_definitions = [];
+    protected $_definitions = [];
 
 
     /**
@@ -197,6 +197,11 @@ class ServiceLocator extends Component
         if ($definition === null) {
             unset($this->_definitions[$id]);
             return;
+        }
+
+        //Extract definition from DI Definition
+        if($definition instanceof Definition) {
+            $definition = $definition->dumpArrayDefinition();
         }
 
         if (is_object($definition) || is_callable($definition, true)) {
