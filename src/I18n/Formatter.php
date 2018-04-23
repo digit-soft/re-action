@@ -447,29 +447,31 @@ class Formatter extends Component
     /**
      * Formats the value as an HTML-encoded plain text.
      * @param string $value the value to be formatted.
+     * @param string $encoding
      * @return string the formatted result.
      */
-    public function asText($value)
+    public function asText($value, $encoding = null)
     {
         if ($value === null) {
             return $this->nullDisplay;
         }
 
-        return Html::encode($value);
+        return Html::encode($value, true, $encoding);
     }
 
     /**
      * Formats the value as an HTML-encoded plain text with newlines converted into breaks.
      * @param string $value the value to be formatted.
+     * @param string $encoding
      * @return string the formatted result.
      */
-    public function asNtext($value)
+    public function asNtext($value, $encoding = null)
     {
         if ($value === null) {
             return $this->nullDisplay;
         }
 
-        return nl2br(Html::encode($value));
+        return nl2br(Html::encode($value, true, $encoding));
     }
 
     /**
@@ -477,15 +479,16 @@ class Formatter extends Component
      * Each text paragraph is enclosed within a `<p>` tag.
      * One or multiple consecutive empty lines divide two paragraphs.
      * @param string $value the value to be formatted.
+     * @param string $encoding
      * @return string the formatted result.
      */
-    public function asParagraphs($value)
+    public function asParagraphs($value, $encoding = null)
     {
         if ($value === null) {
             return $this->nullDisplay;
         }
 
-        return str_replace('<p></p>', '', '<p>' . preg_replace('/\R{2,}/u', "</p>\n<p>", Html::encode($value)) . '</p>');
+        return str_replace('<p></p>', '', '<p>' . preg_replace('/\R{2,}/u', "</p>\n<p>", Html::encode($value, true, $encoding)) . '</p>');
     }
 
     /**
@@ -508,16 +511,17 @@ class Formatter extends Component
     /**
      * Formats the value as a mailto link.
      * @param string $value the value to be formatted.
-     * @param array $options the tag options in terms of name-value pairs. See [[Html::mailto()]].
+     * @param array  $options the tag options in terms of name-value pairs. See [[Html::mailto()]].
+     * @param string $encoding
      * @return string the formatted result.
      */
-    public function asEmail($value, $options = [])
+    public function asEmail($value, $options = [], $encoding = null)
     {
         if ($value === null) {
             return $this->nullDisplay;
         }
 
-        return Html::mailto(Html::encode($value), $value, $options);
+        return Html::mailto(Html::encode($value, true, $encoding), $value, $options);
     }
 
     /**
@@ -537,11 +541,12 @@ class Formatter extends Component
 
     /**
      * Formats the value as a hyperlink.
-     * @param mixed $value the value to be formatted.
-     * @param array $options the tag options in terms of name-value pairs. See [[Html::a()]].
+     * @param mixed  $value the value to be formatted.
+     * @param array  $options the tag options in terms of name-value pairs. See [[Html::a()]].
+     * @param string $encoding
      * @return string the formatted result.
      */
-    public function asUrl($value, $options = [])
+    public function asUrl($value, $options = [], $encoding = null)
     {
         if ($value === null) {
             return $this->nullDisplay;
@@ -551,7 +556,7 @@ class Formatter extends Component
             $url = 'http://' . $url;
         }
 
-        return Html::a(Html::encode($value), $url, $options);
+        return Html::a(Html::encode($value, true, $encoding), $url, $options);
     }
 
     /**
