@@ -197,10 +197,11 @@ class StringHelper
      *
      * @param string $string Input string
      * @param string $with Part to search inside the $string
-     * @param bool $caseSensitive Case sensitive search. Default is true. When case sensitive is enabled, $with must exactly match the starting of the string in order to get a true value.
+     * @param bool   $caseSensitive Case sensitive search. Default is true. When case sensitive is enabled, $with must exactly match the starting of the string in order to get a true value.
+     * @param string $encoding String encoding
      * @return bool Returns true if first input starts with second input, false otherwise
      */
-    public static function startsWith($string, $with, $caseSensitive = true)
+    public static function startsWith($string, $with, $caseSensitive = true, $encoding = null)
     {
         if (!$bytes = static::byteLength($with)) {
             return true;
@@ -209,7 +210,9 @@ class StringHelper
             return strncmp($string, $with, $bytes) === 0;
 
         }
-        $encoding = \Reaction::$app ? \Reaction::$app->charset : 'UTF-8';
+        if (!isset($encoding)) {
+            $encoding = \Reaction::$app ? \Reaction::$app->charset : 'UTF-8';
+        }
         return mb_strtolower(mb_substr($string, 0, $bytes, '8bit'), $encoding) === mb_strtolower($with, $encoding);
     }
 
@@ -220,9 +223,10 @@ class StringHelper
      * @param string $string Input string to check
      * @param string $with Part to search inside of the $string.
      * @param bool $caseSensitive Case sensitive search. Default is true. When case sensitive is enabled, $with must exactly match the ending of the string in order to get a true value.
+     * @param string $encoding String encoding
      * @return bool Returns true if first input ends with second input, false otherwise
      */
-    public static function endsWith($string, $with, $caseSensitive = true)
+    public static function endsWith($string, $with, $caseSensitive = true, $encoding = null)
     {
         if (!$bytes = static::byteLength($with)) {
             return true;
@@ -235,8 +239,9 @@ class StringHelper
 
             return substr_compare($string, $with, -$bytes, $bytes) === 0;
         }
-
-        $encoding = \Reaction::$app ? \Reaction::$app->charset : 'UTF-8';
+        if (!isset($encoding)) {
+            $encoding = \Reaction::$app ? \Reaction::$app->charset : 'UTF-8';
+        }
         return mb_strtolower(mb_substr($string, -$bytes, mb_strlen($string, '8bit'), '8bit'), $encoding) === mb_strtolower($with, $encoding);
     }
 
