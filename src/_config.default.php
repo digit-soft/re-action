@@ -23,12 +23,37 @@ return [
             'router' => 'Reaction\Routes\RouterInterface',
             'logger' => 'stdioLogger',
             'formatter' => 'formatterDefault',
+            'security' => 'securityDefault',
+        ],
+        'requestConfig' => [
+            'components' => [
+                'helpers' => [
+                    'class' => 'Reaction\Helpers\Request\HelpersGroup',
+                    'components' => [
+                        'inflector' => 'Reaction\Helpers\Request\Inflector',
+                        'string' => 'Reaction\Helpers\Request\StringHelper',
+                        'array' => 'Reaction\Helpers\Request\ArrayHelper',
+                        'json' => 'Reaction\Helpers\Request\JsonHelper',
+                        'ip' => 'Reaction\Helpers\Request\IpHelper',
+                        'html' => 'Reaction\Helpers\Request\HtmlHelper',
+                        'htmlPurifier' => 'Reaction\Helpers\Request\HtmlPurifier',
+                        'file' => 'Reaction\Helpers\Request\FileHelper',
+                    ],
+                ],
+                'i18n' => [
+                    'class' => 'Reaction\I18n\Request\I18nGroup',
+                    'components' => [
+                        'formatter' => 'Reaction\I18n\Request\Formatter',
+                    ],
+                ],
+            ],
         ],
     ],
     //DI definitions
     'container' => [
         'definitions' => [
-
+            'Reaction\Web\RequestInterface' => 'Reaction\Web\Request',
+            'Reaction\Web\RequestServiceInterface' => 'Reaction\Web\RequestService',
         ],
         'singletons' => [
             //React event loop
@@ -66,6 +91,10 @@ return [
                 'thousandSeparator' => ' ',
                 'currencyCode' => 'UAH',
             ]),
+            //Security component
+            'securityDefault' => [
+                'class' => 'Reaction\Base\Security',
+            ]
         ],
     ],
 
