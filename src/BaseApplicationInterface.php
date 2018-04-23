@@ -12,6 +12,7 @@ use Reaction\I18n\Formatter;
  * @property string $charset
  * @property string $language
  * @property string $sourceLanguage
+ * @property array  $requestConfig
  * @property \React\EventLoop\LoopInterface     $loop
  * @property \React\Http\Server                 $http
  * @property \React\Socket\Server               $socket

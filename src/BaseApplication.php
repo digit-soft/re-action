@@ -10,13 +10,15 @@ use React\Http\Server as Http;
 use React\Socket\Server as Socket;
 use React\Socket\ServerInterface as SocketServerInterface;
 use Reaction\Base\Component;
+use Reaction\DI\ServiceLocator;
 use Reaction\Exceptions\InvalidArgumentException;
+use Reaction\Middleware\RequestReplacer;
 
 /**
  * Class BaseApplication
  * @package Reaction
  */
-class BaseApplication extends Component implements BaseApplicationInterface
+class BaseApplication extends ServiceLocator implements BaseApplicationInterface
 {
     /** @var string */
     public $envType = self::APP_ENV_DEV;
@@ -38,8 +40,11 @@ class BaseApplication extends Component implements BaseApplicationInterface
     public $http;
     /** @var Socket */
     public $socket;
+    /** @var array Request config */
+    public $requestConfig = [];
 
     protected $middleware = [];
+
     protected $aliases = [];
 
     /**
@@ -48,6 +53,7 @@ class BaseApplication extends Component implements BaseApplicationInterface
     public function init()
     {
         $this->loop = \Reaction::create(\React\EventLoop\LoopInterface::class);
+        $this->middleware[] = new RequestReplacer();
     }
 
     /**
