@@ -11,19 +11,13 @@ use Reaction\Exceptions\HttpException;
 class MethodNotAllowedException extends HttpException
 {
     /**
-     * @return string the user-friendly name of this exception
+     * Constructor.
+     * @param string $message error message
+     * @param int $code error code
+     * @param \Exception $previous The previous exception used for the exception chaining.
      */
-    public function getName()
+    public function __construct($message = null, $code = 0, \Exception $previous = null)
     {
-        return 'Method Not Allowed';
-    }
-
-    /**
-     * Get HTTP status code
-     * @return int
-     */
-    public function getHttpCode()
-    {
-        return 405;
+        parent::__construct(405, $message, $code, $previous);
     }
 }

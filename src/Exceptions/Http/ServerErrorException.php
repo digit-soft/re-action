@@ -5,10 +5,10 @@ namespace Reaction\Exceptions\Http;
 use Reaction\Exceptions\HttpException;
 
 /**
- * Class ForbiddenException
+ * Class ServerErrorException
  * @package Reaction\Exceptions\Http
  */
-class ForbiddenException extends HttpException
+class ServerErrorException extends HttpException
 {
     /**
      * Constructor.
@@ -18,6 +18,6 @@ class ForbiddenException extends HttpException
      */
     public function __construct($message = null, $code = 0, \Exception $previous = null)
     {
-        parent::__construct(403, $message, $code, $previous);
+        parent::__construct(500, $message, $code, $previous);
     }
 }

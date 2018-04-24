@@ -11,19 +11,13 @@ use Reaction\Exceptions\HttpException;
 class BadRequestException extends HttpException
 {
     /**
-     * @return string the user-friendly name of this exception
+     * Constructor.
+     * @param string $message error message
+     * @param int $code error code
+     * @param \Exception $previous The previous exception used for the exception chaining.
      */
-    public function getName()
+    public function __construct($message = null, $code = 0, \Exception $previous = null)
     {
-        return 'Bad Request';
-    }
-
-    /**
-     * Get HTTP status code
-     * @return int
-     */
-    public function getHttpCode()
-    {
-        return 400;
+        parent::__construct(400, $message, $code, $previous);
     }
 }

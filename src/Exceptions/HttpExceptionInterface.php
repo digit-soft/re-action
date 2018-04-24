@@ -4,13 +4,9 @@ namespace Reaction\Exceptions;
 
 /**
  * Interface HttpExceptionInterface
- * @package app\base\exceptions
+ * @package Reaction\Exceptions
+ * @property int $statusCode
  */
 interface HttpExceptionInterface extends \Throwable
 {
-    /**
-     * Get HTTP status code
-     * @return integer
-     */
-    public function getHttpCode();
 }
