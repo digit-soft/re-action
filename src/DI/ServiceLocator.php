@@ -130,14 +130,14 @@ class ServiceLocator extends Component
                 return $this->_components[$id] = $definition;
             }
             $params = [];
-            if(is_array($definition) && isset($definition[0]) && is_array($definition[0])) {
-                $params = $definition[0];
+            if(is_array($definition) && isset($definition[0])) {
+                $config = is_array($definition[0]) ? $definition[0] : ['class' => $definition[0]];
                 unset($definition[0]);
                 if(isset($definition[1])) {
-                    $config = $definition[1];
+                    $params = (array)$definition[1];
                     unset($definition[1]);
-                    $definition = ArrayHelper::merge($definition, $config);
                 }
+                $definition = ArrayHelper::merge($definition, $config);
             }
             return $this->_components[$id] = \Reaction::create($definition, $params);
         } elseif ($throwException) {
