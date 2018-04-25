@@ -2,23 +2,26 @@
 
 namespace Reaction;
 
+use Reaction\Web\Sessions\SessionHandlerInterface;
+
 /**
  * Interface BaseApplicationInterface
  * @package Reaction
- * @property bool $debug
- * @property string $envType
- * @property string $timeZone
- * @property string $charset
- * @property string $language
- * @property string $sourceLanguage
- * @property array  $requestConfig
- * @property \React\EventLoop\LoopInterface     $loop
- * @property \React\Http\Server                 $http
- * @property \React\Socket\Server               $socket
- * @property \Reaction\Routes\RouterInterface   $router
- * @property \Reaction\Base\Security            $security
- * @property \Psr\Log\AbstractLogger            $logger
- * @property \Reaction\I18n\Formatter           $formatter
+ * @property bool                             $debug
+ * @property string                           $envType
+ * @property string                           $timeZone
+ * @property string                           $charset
+ * @property string                           $language
+ * @property string                           $sourceLanguage
+ * @property array                            $requestConfig
+ * @property \React\EventLoop\LoopInterface   $loop
+ * @property \React\Http\Server               $http
+ * @property \React\Socket\Server             $socket
+ * @property \Reaction\Routes\RouterInterface $router
+ * @property \Reaction\Base\Security          $security
+ * @property \Psr\Log\AbstractLogger          $logger
+ * @property \Reaction\I18n\Formatter         $formatter
+ * @property SessionHandlerInterface          $sessionHandler
  */
 interface BaseApplicationInterface
 {
