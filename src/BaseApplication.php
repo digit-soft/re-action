@@ -3,13 +3,10 @@
 namespace Reaction;
 
 use DI\DependencyException;
-use Psr\Http\Message\RequestInterface;
 use React\EventLoop\LoopInterface;
-use React\Http\Response;
 use React\Http\Server as Http;
 use React\Socket\Server as Socket;
 use React\Socket\ServerInterface as SocketServerInterface;
-use Reaction\Base\Component;
 use Reaction\DI\ServiceLocator;
 use Reaction\Exceptions\InvalidArgumentException;
 use Reaction\Middleware\RequestReplacer;
@@ -22,6 +19,8 @@ class BaseApplication extends ServiceLocator implements BaseApplicationInterface
 {
     /** @var string */
     public $envType = self::APP_ENV_DEV;
+    /** @var bool */
+    public $debug = false;
     /** @var string */
     public $charset = 'UTF-8';
     /** @var string Default language */
@@ -75,6 +74,11 @@ class BaseApplication extends ServiceLocator implements BaseApplicationInterface
         $this->http->on('error', function (\Throwable $error) {
             $message = get_class($error) . "\n" . $error->getMessage() . "\n" . $error->getTraceAsString();
             $this->logger->alert($message);
+            if (!empty($error->getPrevious())) {
+                $this->logger->info("Previous\n" . $error->getPrevious()->getMessage()
+                    . "\n" . $error->getPrevious()->getFile()
+                    . " #" . $error->getPrevious()->getLine());
+            }
         });
         $this->loop->run();
     }

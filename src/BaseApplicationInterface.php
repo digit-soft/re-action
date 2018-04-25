@@ -5,6 +5,7 @@ namespace Reaction;
 /**
  * Interface BaseApplicationInterface
  * @package Reaction
+ * @property bool $debug
  * @property string $envType
  * @property string $timeZone
  * @property string $charset
