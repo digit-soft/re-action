@@ -129,6 +129,30 @@ class Reaction
     }
 
     /**
+     * Shortcut function to check that Application is using DEVELOPMENT environment
+     * @return bool
+     */
+    public static function isDev() {
+        return empty(Reaction::$app) || Reaction::$app->envType === \Reaction\BaseApplicationInterface::APP_ENV_DEV;
+    }
+
+    /**
+     * Shortcut function to check that Application is using PRODUCTION environment
+     * @return bool
+     */
+    public static function isProd() {
+        return Reaction::$app && Reaction::$app->envType === \Reaction\BaseApplicationInterface::APP_ENV_PROD;
+    }
+
+    /**
+     * Shortcut function to check that Application is in DEBUG mode
+     * @return bool
+     */
+    public static function isDebug() {
+        return Reaction::$app && Reaction::$app->debug;
+    }
+
+    /**
      * Get instance of config reader
      * @return \Reaction\Base\ConfigReader
      */
