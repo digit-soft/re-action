@@ -87,7 +87,7 @@ class ExceptionHandler extends BaseObject
         $basePath = \Reaction::$app->getAlias('@views/error');
         $tplName = 'general.php';
         if($exception instanceof HttpExceptionInterface) {
-            $code = $exception->getHttpCode();
+            $code = $exception->statusCode;
         } else {
             $code = $exception->getCode();
         }
