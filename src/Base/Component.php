@@ -17,8 +17,6 @@ class Component extends BaseObject implements EventEmitterInterface
 {
     use EventEmitterTrait;
 
-    /** @var array Components of Component ^_^ */
-    protected $_components = [];
     /** @var string Base path of component */
     protected $_basePath;
 
