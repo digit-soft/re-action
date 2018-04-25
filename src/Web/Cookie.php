@@ -102,7 +102,6 @@ class Cookie extends BaseObject
             $strings[] = $key . '=' . $val;
         }
 
-        \Reaction::$app->logger->alert($data[$name]);
         return implode('; ', $strings);
     }
 }
