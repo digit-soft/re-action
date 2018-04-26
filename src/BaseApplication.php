@@ -39,8 +39,6 @@ class BaseApplication extends ServiceLocator implements BaseApplicationInterface
     public $http;
     /** @var Socket */
     public $socket;
-    /** @var array Request config */
-    public $requestConfig = [];
 
     protected $middleware = [];
 

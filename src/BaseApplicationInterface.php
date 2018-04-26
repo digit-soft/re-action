@@ -13,13 +13,13 @@ use Reaction\Web\Sessions\SessionHandlerInterface;
  * @property string                           $charset
  * @property string                           $language
  * @property string                           $sourceLanguage
- * @property array                            $requestConfig
  * @property \React\EventLoop\LoopInterface   $loop
  * @property \React\Http\Server               $http
  * @property \React\Socket\Server             $socket
  * @property \Reaction\Routes\RouterInterface $router
  * @property \Reaction\Base\Security          $security
  * @property \Psr\Log\AbstractLogger          $logger
+ * TODO: Check that app level formatter is needed
  * @property \Reaction\I18n\Formatter         $formatter
  * @property SessionHandlerInterface          $sessionHandler
  */
