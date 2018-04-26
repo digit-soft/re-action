@@ -17,9 +17,16 @@ class SessionHandlerAbstract extends Component implements SessionHandlerInterfac
      */
     public $loop;
     /**
-     * @var integer Session lifetime in seconds for garbage collector
+     * @var integer Session lifetime in seconds for garbage collector.
+     * After that time GC will remove data from storage and archive it for '$sessionLifetime' seconds
+     * @see $sessionLifetime
      */
     public $gcLifetime = 8600;
+    /**
+     * @var integer Session lifetime in seconds (default 7 days).
+     * Time for archive session life from where it can be restored
+     */
+    public $sessionLifetime = 604800;
     /**
      * @var integer GC timer interval in seconds
      */
@@ -52,7 +59,7 @@ class SessionHandlerAbstract extends Component implements SessionHandlerInterfac
     /**
      * Read session data and returns serialized|encoded data
      * @param string $sessionId
-     * @return ExtendedPromiseInterface
+     * @return ExtendedPromiseInterface  with session data
      */
     public function read($sessionId)
     {
@@ -62,18 +69,18 @@ class SessionHandlerAbstract extends Component implements SessionHandlerInterfac
     /**
      * Write session data to storage
      * @param string $sessionId
-     * @param array  $sessionData
-     * @return ExtendedPromiseInterface
+     * @param array  $data
+     * @return ExtendedPromiseInterface  with session data
      */
-    public function write($sessionId, $sessionData)
+    public function write($sessionId, $data)
     {
-        // TODO: Implement write() method.
+        return $this->writeToStorage($sessionId, $data);
     }
 
     /**
      * Destroy a session
      * @param string $sessionId The session ID being destroyed.
-     * @return ExtendedPromiseInterface
+     * @return ExtendedPromiseInterface  with bool when finished
      */
     public function destroy($sessionId)
     {
@@ -84,7 +91,7 @@ class SessionHandlerAbstract extends Component implements SessionHandlerInterfac
      * Regenerate session id
      * @param string              $sessionIdOld
      * @param AppRequestInterface $request
-     * @return ExtendedPromiseInterface With new session ID (string)
+     * @return ExtendedPromiseInterface  with new session ID (string)
      */
     public function regenerateId($sessionIdOld, AppRequestInterface $request)
     {
@@ -138,14 +145,14 @@ class SessionHandlerAbstract extends Component implements SessionHandlerInterfac
     /**
      * Update timestamp of a session
      * @param string $sessionId The session id
-     * @param string $sessionData
+     * @param string $data
      * The encoded session data. This data is the
      * result of the PHP internally encoding
      * the $_SESSION superglobal to a serialized
      * string and passing it as this parameter.
-     * @return bool
+     * @return ExtendedPromiseInterface  with bool when finished
      */
-    public function updateTimestamp($sessionId, $sessionData)
+    public function updateTimestamp($sessionId, $data)
     {
         // TODO: Implement updateTimestamp() method.
     }
@@ -158,21 +165,6 @@ class SessionHandlerAbstract extends Component implements SessionHandlerInterfac
     public function checkSessionId($sessionId)
     {
         return true;
-    }
-
-    /**
-     * Get real archive path
-     * @return string
-     * @throws \Reaction\Exceptions\Exception
-     */
-    public function getArchivePath() {
-        if (!isset($this->_archivePath)) {
-            $this->_archivePath = \Reaction::$app->getAlias($this->archivePath);
-            if (!file_exists($this->_archivePath)) {
-                FileHelper::createDirectory($this->_archivePath, 0777);
-            }
-        }
-        return $this->_archivePath;
     }
 
     /**
@@ -210,10 +202,10 @@ class SessionHandlerAbstract extends Component implements SessionHandlerInterfac
     /**
      * Archive session and free main storage
      * @param string $sessionId
-     * @param array  $sessionData
+     * @param array  $data
      * @return ExtendedPromiseInterface  with bool
      */
-    public function archiveSessionData($sessionId, $sessionData)
+    public function archiveSessionData($sessionId, $data)
     {
         $filePath = $this->getArchivePath() . DIRECTORY_SEPARATOR . $sessionId;
 
@@ -228,5 +220,30 @@ class SessionHandlerAbstract extends Component implements SessionHandlerInterfac
     public function restoreSessionData($sessionId)
     {
         // TODO: Implement restoreSessionData() method.
+    }
+
+    /**
+     * Get real archive path
+     * @return string
+     * @throws \Reaction\Exceptions\Exception
+     */
+    public function getArchivePath() {
+        if (!isset($this->_archivePath)) {
+            $this->_archivePath = \Reaction::$app->getAlias($this->archivePath);
+            if (!file_exists($this->_archivePath)) {
+                FileHelper::createDirectory($this->_archivePath, 0777);
+            }
+        }
+        return $this->_archivePath;
+    }
+
+    /**
+     * Write session data to storage and return last stored data
+     * @param string $sessionId
+     * @param array  $data
+     * @return ExtendedPromiseInterface  with session data
+     */
+    protected function writeToStorage($sessionId, $data) {
+
     }
 }

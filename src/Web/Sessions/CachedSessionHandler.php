@@ -57,16 +57,16 @@ class CachedSessionHandler extends SessionHandlerAbstract
     /**
      * Write session data to storage
      * @param string $sessionId
-     * @param array  $sessionData
+     * @param array  $data
      * @return ExtendedPromiseInterface
      */
-    public function write($sessionId, $sessionData)
+    public function write($sessionId, $data)
     {
         $self = $this;
         $key = $this->keyPrefix . $sessionId;
         $record = [ ];
         $record[$this->timestampKey] = time();
-        $record[$this->dataKey] = $sessionData;
+        $record[$this->dataKey] = $data;
         return $this->writeDataToCache($key, $record);
     }
 
@@ -93,14 +93,14 @@ class CachedSessionHandler extends SessionHandlerAbstract
     /**
      * Update timestamp of a session
      * @param string $sessionId The session id
-     * @param string $sessionData
+     * @param string $data
      * The encoded session data. This data is the
      * result of the PHP internally encoding
      * the $_SESSION superglobal to a serialized
      * string and passing it as this parameter.
      * @return bool
      */
-    public function updateTimestamp($sessionId, $sessionData)
+    public function updateTimestamp($sessionId, $data)
     {
         // TODO: Implement updateTimestamp() method.
     }
