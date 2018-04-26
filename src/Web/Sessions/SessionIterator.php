@@ -16,19 +16,19 @@ class SessionIterator implements \Iterator
      */
     private $_key;
     /**
-     * @var array session data
+     * @var RequestSessionInterface session data
      */
     private $_session;
 
 
     /**
      * Constructor.
-     * @param array $sessionData
+     * @param RequestSessionInterface $session
      */
-    public function __construct(&$sessionData = [])
+    public function __construct($session)
     {
-        $this->_session = &$sessionData;
-        $this->_keys = array_keys($this->_session);
+        $this->_session = $session;
+        $this->_keys = array_keys($this->_session->data);
     }
 
     /**
@@ -57,7 +57,7 @@ class SessionIterator implements \Iterator
      */
     public function current()
     {
-        return isset($this->_session[$this->_key]) ? $this->_session[$this->_key] : null;
+        return isset($this->_session->data[$this->_key]) ? $this->_session->data[$this->_key] : null;
     }
 
     /**
@@ -68,7 +68,7 @@ class SessionIterator implements \Iterator
     {
         do {
             $this->_key = next($this->_keys);
-        } while (!isset($this->_session[$this->_key]) && $this->_key !== false);
+        } while (!isset($this->_session->data[$this->_key]) && $this->_key !== false);
     }
 
     /**
