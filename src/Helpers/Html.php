@@ -9,7 +9,7 @@ use Reaction\Exceptions\InvalidArgumentException;
 use Reaction\Base\Model;
 use yii\db\ActiveRecordInterface;
 use Reaction\Validators\StringValidator;
-use Reaction\Web\RequestInterface;
+use Reaction\Web\AppRequestInterface;
 
 /**
  * Html provides a set of static methods for generating commonly used HTML tags.
@@ -302,11 +302,11 @@ class Html
 
     /**
      * Generates the meta tags containing CSRF token information.
-     * @param RequestInterface $request
+     * @param AppRequestInterface $request
      * @return string the generated meta tags
-     * @see RequestInterface::enableCsrfValidation
+     * @see AppRequestInterface::enableCsrfValidation
      */
-    public static function csrfMetaTags(RequestInterface $request)
+    public static function csrfMetaTags(AppRequestInterface $request)
     {
         $encoding = $request->charset;
         if ($request->enableCsrfValidation) {
@@ -319,12 +319,12 @@ class Html
 
     /**
      * Generates a form start tag.
-     * @param array|string $action the form action URL. This parameter will be processed by [[Url::to()]].
+     * @param array|string        $action the form action URL. This parameter will be processed by [[Url::to()]].
      * @param string       $method the form submission method, such as "post", "get", "put", "delete" (case-insensitive).
      * Since most browsers only support "post" and "get", if other methods are given, they will
      * be simulated using "post", and a hidden input will be added which contains the actual method type.
      * See [[\yii\web\Request::methodParam]] for more details.
-     * @param array        $options the tag options in terms of name-value pairs. These will be rendered as
+     * @param array               $options the tag options in terms of name-value pairs. These will be rendered as
      * the attributes of the resulting tag. The values will be HTML-encoded using [[encode()]].
      * If a value is null, the corresponding attribute will not be rendered.
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
@@ -333,7 +333,7 @@ class Html
      *
      *  - `csrf`: whether to generate the CSRF hidden input. Defaults to true.
      *
-     * @param RequestInterface $request
+     * @param AppRequestInterface $request
      * @return string the generated form start tag.
      * @see endForm()
      */
@@ -342,9 +342,9 @@ class Html
         $action = Url::to($action);
 
         $hiddenInputs = [];
-        $encoding = $request instanceof RequestInterface ? $request->charset : 'UTF-8';
+        $encoding = $request instanceof AppRequestInterface ? $request->charset : 'UTF-8';
 
-        if ($request instanceof RequestInterface) {
+        if ($request instanceof AppRequestInterface) {
             if (strcasecmp($method, 'get') && strcasecmp($method, 'post')) {
                 // simulate PUT, DELETE, etc. via POST
                 $hiddenInputs[] = static::hiddenInput($request->methodParam, $method, [], $encoding);

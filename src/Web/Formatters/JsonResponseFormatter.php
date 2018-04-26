@@ -115,7 +115,7 @@ class JsonResponseFormatter extends Component implements ResponseFormatterInterf
             if ($this->prettyPrint) {
                 $options |= JSON_PRETTY_PRINT;
             }
-            return $request instanceof Reaction\Web\RequestInterface
+            return $request instanceof Reaction\Web\AppRequestInterface
                 ? $request->helpers->json->encode($bodyRaw, $options)
                 : Json::encode($bodyRaw, $options);
         }
@@ -134,7 +134,7 @@ class JsonResponseFormatter extends Component implements ResponseFormatterInterf
         if (is_array($bodyRaw)
             && isset($bodyRaw['data'], $bodyRaw['callback'])
         ) {
-            $data = $request instanceof Reaction\Web\RequestInterface
+            $data = $request instanceof Reaction\Web\AppRequestInterface
                 ? $request->helpers->json->htmlEncode($bodyRaw['data'])
                 : Json::htmlEncode($bodyRaw['data']);
             return sprintf('%s(%s);', $bodyRaw['callback'], $data);
