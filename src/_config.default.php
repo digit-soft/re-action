@@ -25,6 +25,7 @@ return [
             'formatter' => 'formatterDefault',
             'security' => 'securityDefault',
             'sessionHandler' => 'sessionHandlerDefault',
+            'fs' => 'fileSystemDefault',
         ],
     ],
     //Request config
@@ -70,6 +71,10 @@ return [
         'singletons' => [
             //React event loop
             'React\EventLoop\LoopInterface' => function() { return \React\EventLoop\Factory::create(); },
+            'React\Filesystem\FilesystemInterface' => function (\Reaction\DI\Container $di) {
+                $loop = $di->get('React\EventLoop\LoopInterface');
+                return \React\Filesystem\Filesystem::create($loop);
+            },
             //React socket server
             'React\Socket\ServerInterface' => [
                 ['class' => \React\Socket\Server::class],
@@ -114,6 +119,10 @@ return [
             //Session handler
             'sessionHandlerDefault' => [
                 'class' => 'Reaction\Web\Sessions\SessionHandlerInterface',
+            ],
+            //Session handler
+            'fileSystemDefault' => [
+                'class' => 'React\Filesystem\FilesystemInterface',
             ],
         ],
     ],
