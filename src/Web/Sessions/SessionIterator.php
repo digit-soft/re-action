@@ -1,0 +1,83 @@
+<?php
+
+namespace Reaction\Web\Sessions;
+
+/**
+ * SessionIterator implements an [[\Iterator|iterator]] for traversing session variables managed by [[Session]].
+ */
+class SessionIterator implements \Iterator
+{
+    /**
+     * @var array list of keys in the map
+     */
+    private $_keys;
+    /**
+     * @var mixed current key
+     */
+    private $_key;
+    /**
+     * @var array session data
+     */
+    private $_session;
+
+
+    /**
+     * Constructor.
+     * @param array $sessionData
+     */
+    public function __construct(&$sessionData = [])
+    {
+        $this->_session = &$sessionData;
+        $this->_keys = array_keys($this->_session);
+    }
+
+    /**
+     * Rewinds internal array pointer.
+     * This method is required by the interface [[\Iterator]].
+     */
+    public function rewind()
+    {
+        $this->_key = reset($this->_keys);
+    }
+
+    /**
+     * Returns the key of the current array element.
+     * This method is required by the interface [[\Iterator]].
+     * @return mixed the key of the current array element
+     */
+    public function key()
+    {
+        return $this->_key;
+    }
+
+    /**
+     * Returns the current array element.
+     * This method is required by the interface [[\Iterator]].
+     * @return mixed the current array element
+     */
+    public function current()
+    {
+        return isset($this->_session[$this->_key]) ? $this->_session[$this->_key] : null;
+    }
+
+    /**
+     * Moves the internal pointer to the next array element.
+     * This method is required by the interface [[\Iterator]].
+     */
+    public function next()
+    {
+        do {
+            $this->_key = next($this->_keys);
+        } while (!isset($this->_session[$this->_key]) && $this->_key !== false);
+    }
+
+    /**
+     * Returns whether there is an element at current position.
+     * This method is required by the interface [[\Iterator]].
+     * @return bool
+     */
+    public function valid()
+    {
+        return $this->_key !== false;
+    }
+}
