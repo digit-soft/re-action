@@ -3,14 +3,13 @@
 namespace Reaction\Cache;
 
 use React\EventLoop\LoopInterface;
-use React\EventLoop\TimerInterface;
+use React\EventLoop\Timer\TimerInterface;
 use React\Promise\ExtendedPromiseInterface;
 use Reaction\Helpers\ArrayHelper;
 
 /**
  * Class ExpiringCache
  * @package Reaction\Cache
- * @property LoopInterface $loop
  */
 abstract class ExpiringCache extends ExtendedCache implements ExpiringCacheInterface
 {
