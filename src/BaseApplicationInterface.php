@@ -2,6 +2,7 @@
 
 namespace Reaction;
 
+use React\Filesystem\FilesystemInterface;
 use Reaction\Web\Sessions\SessionHandlerInterface;
 
 /**
@@ -22,6 +23,7 @@ use Reaction\Web\Sessions\SessionHandlerInterface;
  * TODO: Check that app level formatter is needed
  * @property \Reaction\I18n\Formatter         $formatter
  * @property SessionHandlerInterface          $sessionHandler
+ * @property FilesystemInterface              $fs
  */
 interface BaseApplicationInterface
 {
