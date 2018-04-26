@@ -74,7 +74,7 @@ class Theme extends Component
      */
     public $pathMap;
 
-    private $_baseUrl;
+    protected $_baseUrl;
 
 
     /**
