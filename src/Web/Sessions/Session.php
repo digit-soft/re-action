@@ -2,6 +2,7 @@
 
 namespace Reaction\Web\Sessions;
 
+use React\Promise\ExtendedPromiseInterface;
 use Reaction;
 use Reaction\Exceptions\InvalidArgumentException;
 use Reaction\Exceptions\InvalidConfigException;
@@ -62,6 +63,7 @@ use Reaction\Web\RequestComponent;
  * @property bool|null $useCookies The value indicating whether cookies should be used to store session IDs.
  * @property bool $useCustomStorage Whether to use custom storage. This property is read-only.
  * @property bool $useTransparentSessionID Whether transparent sid support is enabled or not, defaults to
+ * @property array $data Session data
  */
 class Session extends RequestComponent implements \IteratorAggregate, \ArrayAccess, \Countable, RequestSessionInterface
 {
@@ -70,9 +72,13 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
      */
     public $flashParam = '__flash';
     /**
-     * @var \SessionHandlerInterface|array an object implementing the SessionHandlerInterface or a configuration array. If set, will be used to provide persistency instead of build-in methods.
+     * @var SessionHandlerInterface|array an object implementing the SessionHandlerInterface or a configuration array. If set, will be used to provide persistency instead of build-in methods.
      */
     public $handler = 'sessionHandler';
+    /**
+     * @var string Cookie name with session ID
+     */
+    public $cookieName = '_sess';
 
     /**
      * @var array parameter-value pairs to override default session cookie parameters that are used for session_set_cookie_params() function
@@ -85,10 +91,16 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
      */
     protected $frozenSessionData;
 
+    /** @var string|null */
+    protected $_cookieName;
     /** @var string Current session ID */
     protected $_sessionId;
     /** @var bool Flag indicates that session is active */
     protected $_isActive = false;
+    /** @var array Session data copy */
+    protected $_data = [];
+    /** @var array Session data before changes */
+    protected $_dataPrev;
 
 
     /**
@@ -98,6 +110,7 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     public function init()
     {
         parent::init();
+        $this->cookieParams['expire'] += time();
         register_shutdown_function([$this, 'close']);
         if ($this->getIsActive()) {
             Reaction::$app->logger->warning('Session is already started');
@@ -111,12 +124,10 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     public function open()
     {
         if ($this->getIsActive()) {
-            return;
+            return Reaction\Promise\resolve(true);
         }
 
         $this->registerSessionHandler();
-
-        $this->setCookieParamsInternal();
 
         //TODO: Remove
         Reaction::isDebug() ? session_start() : @session_start();
@@ -264,7 +275,7 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
         if ($this->getIsActive()) {
             // add @ to inhibit possible warning due to race condition
             // https://github.com/yiisoft/yii2/pull/1812
-            if (YII_DEBUG && !headers_sent()) {
+            if (Reaction::isDebug() && !headers_sent()) {
                 session_regenerate_id($deleteOldSession);
             } else {
                 @session_regenerate_id($deleteOldSession);
@@ -279,7 +290,15 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
      */
     public function getName()
     {
-        return session_name();
+        if (!isset($this->_cookieName)) {
+            if (strlen($this->_cookieName) < 32 && $this->request->enableCookieValidation) {
+                $key = $this->request->cookieValidationKey;
+                $bytesLn = Reaction\Helpers\StringHelper::byteLength($key);
+                $strLn = mb_strlen($key);
+                $this->_cookieName = $this->cookieName . Reaction::$app->security->hashData($bytesLn  . ':' . $strLn, $key);
+            }
+        }
+        return $this->_cookieName;
     }
 
     /**
@@ -291,34 +310,9 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     public function setName($value)
     {
         $this->freeze();
-        session_name($value);
+        $this->cookieName = $value;
+        $this->_cookieName = null;
         $this->unfreeze();
-    }
-
-    /**
-     * Gets the current session save path.
-     * This is a wrapper for [PHP session_save_path()](http://php.net/manual/en/function.session-save-path.php).
-     * @return string the current session save path, defaults to '/tmp'.
-     */
-    public function getSavePath()
-    {
-        return session_save_path();
-    }
-
-    /**
-     * Sets the current session save path.
-     * This is a wrapper for [PHP session_save_path()](http://php.net/manual/en/function.session-save-path.php).
-     * @param string $value the current session save path. This can be either a directory name or a [path alias](guide:concept-aliases).
-     * @throws InvalidArgumentException if the path is not a valid directory
-     */
-    public function setSavePath($value)
-    {
-        $path = Yii::getAlias($value);
-        if (is_dir($path)) {
-            session_save_path($path);
-        } else {
-            throw new InvalidArgumentException("Session save path is not a valid directory: $value");
-        }
     }
 
     /**
@@ -341,22 +335,6 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     public function setCookieParams(array $value)
     {
         $this->_cookieParams = $value;
-    }
-
-    /**
-     * Sets the session cookie parameters.
-     * This method is called by [[open()]] when it is about to open the session.
-     * @throws InvalidArgumentException if the parameters are incomplete.
-     * @see http://us2.php.net/manual/en/function.session-set-cookie-params.php
-     */
-    private function setCookieParamsInternal()
-    {
-        $data = $this->getCookieParams();
-        if (isset($data['lifetime'], $data['path'], $data['domain'], $data['secure'], $data['httponly'])) {
-            session_set_cookie_params($data['lifetime'], $data['path'], $data['domain'], $data['secure'], $data['httponly']);
-        } else {
-            throw new InvalidArgumentException('Please make sure cookieParams contains these elements: lifetime, path, domain, secure and httponly.');
-        }
     }
 
     /**
@@ -403,68 +381,6 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     }
 
     /**
-     * @return float the probability (percentage) that the GC (garbage collection) process is started on every session initialization, defaults to 1 meaning 1% chance.
-     */
-    public function getGCProbability()
-    {
-        return (float) (ini_get('session.gc_probability') / ini_get('session.gc_divisor') * 100);
-    }
-
-    /**
-     * @param float $value the probability (percentage) that the GC (garbage collection) process is started on every session initialization.
-     * @throws InvalidArgumentException if the value is not between 0 and 100.
-     */
-    public function setGCProbability($value)
-    {
-        $this->freeze();
-        if ($value >= 0 && $value <= 100) {
-            // percent * 21474837 / 2147483647 ≈ percent * 0.01
-            ini_set('session.gc_probability', floor($value * 21474836.47));
-            ini_set('session.gc_divisor', 2147483647);
-        } else {
-            throw new InvalidArgumentException('GCProbability must be a value between 0 and 100.');
-        }
-        $this->unfreeze();
-    }
-
-    /**
-     * @return bool whether transparent sid support is enabled or not, defaults to false.
-     */
-    public function getUseTransparentSessionID()
-    {
-        return ini_get('session.use_trans_sid') == 1;
-    }
-
-    /**
-     * @param bool $value whether transparent sid support is enabled or not.
-     */
-    public function setUseTransparentSessionID($value)
-    {
-        $this->freeze();
-        ini_set('session.use_trans_sid', $value ? '1' : '0');
-        $this->unfreeze();
-    }
-
-    /**
-     * @return int the number of seconds after which data will be seen as 'garbage' and cleaned up.
-     * The default value is 1440 seconds (or the value of "session.gc_maxlifetime" set in php.ini).
-     */
-    public function getTimeout()
-    {
-        return (int) ini_get('session.gc_maxlifetime');
-    }
-
-    /**
-     * @param int $value the number of seconds after which data will be seen as 'garbage' and cleaned up
-     */
-    public function setTimeout($value)
-    {
-        $this->freeze();
-        ini_set('session.gc_maxlifetime', $value);
-        $this->unfreeze();
-    }
-
-    /**
      * Session open handler.
      * This method should be overridden if [[useCustomStorage]] returns true.
      * @internal Do not call this method directly.
@@ -493,11 +409,15 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
      * This method should be overridden if [[useCustomStorage]] returns true.
      * @internal Do not call this method directly.
      * @param string $id session ID
-     * @return string the session data
+     * @return ExtendedPromiseInterface with array the session data
      */
-    public function readSession($id)
+    public function readSession($id = null)
     {
-        return '';
+        $id = !isset($id) && isset($this->_sessionId) ? $this->_sessionId : $id;
+        if (!isset($id)) {
+            return Reaction\Promise\reject(new Reaction\Exceptions\ErrorException('Param "$id" must be specified in "' . __METHOD__ . '"'));
+        }
+        return $this->handler->read($id);
     }
 
     /**
@@ -505,12 +425,19 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
      * This method should be overridden if [[useCustomStorage]] returns true.
      * @internal Do not call this method directly.
      * @param string $id session ID
-     * @param string $data session data
-     * @return bool whether session write is successful
+     * @param array  $data session data
+     * @return ExtendedPromiseInterface with bool whether session write is successful
      */
-    public function writeSession($id, $data)
+    public function writeSession($data = null, $id = null)
     {
-        return true;
+        $id = !isset($id) && isset($this->_sessionId) ? $this->_sessionId : $id;
+        if (!isset($id)) {
+            return Reaction\Promise\reject(new Reaction\Exceptions\ErrorException('Param "$id" must be specified in "' . __METHOD__ . '"'));
+        }
+        if (!isset($data)) {
+            $data = $this->_data;
+        }
+        return $this->handler->write($id, $data);
     }
 
     /**
@@ -518,23 +445,15 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
      * This method should be overridden if [[useCustomStorage]] returns true.
      * @internal Do not call this method directly.
      * @param string $id session ID
-     * @return bool whether session is destroyed successfully
+     * @return ExtendedPromiseInterface with bool whether session is destroyed successfully
      */
-    public function destroySession($id)
+    public function destroySession($id = null)
     {
-        return true;
-    }
-
-    /**
-     * Session GC (garbage collection) handler.
-     * This method should be overridden if [[useCustomStorage]] returns true.
-     * @internal Do not call this method directly.
-     * @param int $maxLifetime the number of seconds after which data will be seen as 'garbage' and cleaned up.
-     * @return bool whether session is GCed successfully
-     */
-    public function gcSession($maxLifetime)
-    {
-        return true;
+        $id = !isset($id) && isset($this->_sessionId) ? $this->_sessionId : $id;
+        if (!isset($id)) {
+            return Reaction\Promise\reject(new Reaction\Exceptions\ErrorException('Param "$id" must be specified in "' . __METHOD__ . '"'));
+        }
+        return $this->handler->destroy($id);
     }
 
     /**
@@ -545,7 +464,7 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     public function getIterator()
     {
         $this->open();
-        return new SessionIterator();
+        return new SessionIterator($this->_data);
     }
 
     /**
@@ -555,7 +474,7 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     public function getCount()
     {
         $this->open();
-        return count($_SESSION);
+        return count($this->_data);
     }
 
     /**
@@ -578,48 +497,48 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     public function get($key, $defaultValue = null)
     {
         $this->open();
-        return isset($_SESSION[$key]) ? $_SESSION[$key] : $defaultValue;
+        return isset($this->_data[$key]) ? $this->_data[$key] : $defaultValue;
     }
 
     /**
      * Adds a session variable.
      * If the specified name already exists, the old value will be overwritten.
      * @param string $key session variable name
-     * @param mixed $value session variable value
+     * @param mixed  $value session variable value
+     * @return ExtendedPromiseInterface with bool
      */
     public function set($key, $value)
     {
         $this->open();
-        $_SESSION[$key] = $value;
+        $this->_data[$key] = $value;
+        return $this->handler->write($this->_sessionId, $this->_data);
     }
 
     /**
      * Removes a session variable.
      * @param string $key the name of the session variable to be removed
-     * @return mixed the removed value, null if no such session variable.
+     * @return ExtendedPromiseInterface the removed value, null if no such session variable.
      */
     public function remove($key)
     {
         $this->open();
-        if (isset($_SESSION[$key])) {
-            $value = $_SESSION[$key];
-            unset($_SESSION[$key]);
-
-            return $value;
+        if (isset($this->_data[$key])) {
+            unset($this->_data[$key]);
         }
-
-        return null;
+        return $this->writeSession();
     }
 
     /**
      * Removes all session variables.
+     * @return ExtendedPromiseInterface with bool when write process ends
      */
     public function removeAll()
     {
         $this->open();
-        foreach (array_keys($_SESSION) as $key) {
-            unset($_SESSION[$key]);
+        foreach (array_keys($this->data) as $key) {
+            unset($this->data[$key]);
         }
+        return $this->writeSession();
     }
 
     /**
@@ -629,7 +548,7 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     public function has($key)
     {
         $this->open();
-        return isset($_SESSION[$key]);
+        return isset($this->data[$key]);
     }
 
     /**
@@ -642,15 +561,15 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
         if (is_array($counters)) {
             foreach ($counters as $key => $count) {
                 if ($count > 0) {
-                    unset($counters[$key], $_SESSION[$key]);
+                    unset($counters[$key], $this->data[$key]);
                 } elseif ($count == 0) {
                     $counters[$key]++;
                 }
             }
-            $_SESSION[$this->flashParam] = $counters;
+            $this->data[$this->flashParam] = $counters;
         } else {
             // fix the unexpected problem that flashParam doesn't return an array
-            unset($_SESSION[$this->flashParam]);
+            unset($this->data[$this->flashParam]);
         }
     }
 
@@ -677,7 +596,7 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
             } elseif ($counters[$key] < 0) {
                 // mark for deletion in the next request
                 $counters[$key] = 1;
-                $_SESSION[$this->flashParam] = $counters;
+                $this->data[$this->flashParam] = $counters;
             }
 
             return $value;
@@ -719,10 +638,10 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
         $counters = $this->get($this->flashParam, []);
         $flashes = [];
         foreach (array_keys($counters) as $key) {
-            if (array_key_exists($key, $_SESSION)) {
-                $flashes[$key] = $_SESSION[$key];
+            if (array_key_exists($key, $this->data)) {
+                $flashes[$key] = $this->data[$key];
                 if ($delete) {
-                    unset($counters[$key], $_SESSION[$key]);
+                    unset($counters[$key], $this->data[$key]);
                 } elseif ($counters[$key] < 0) {
                     // mark for deletion in the next request
                     $counters[$key] = 1;
@@ -732,7 +651,7 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
             }
         }
 
-        $_SESSION[$this->flashParam] = $counters;
+        $this->data[$this->flashParam] = $counters;
 
         return $flashes;
     }
@@ -758,8 +677,8 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     {
         $counters = $this->get($this->flashParam, []);
         $counters[$key] = $removeAfterAccess ? -1 : 0;
-        $_SESSION[$key] = $value;
-        $_SESSION[$this->flashParam] = $counters;
+        $this->data[$key] = $value;
+        $this->data[$this->flashParam] = $counters;
     }
 
     /**
@@ -779,14 +698,14 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     {
         $counters = $this->get($this->flashParam, []);
         $counters[$key] = $removeAfterAccess ? -1 : 0;
-        $_SESSION[$this->flashParam] = $counters;
-        if (empty($_SESSION[$key])) {
-            $_SESSION[$key] = [$value];
+        $th[$this->flashParam] = $counters;
+        if (empty($this->data[$key])) {
+            $this->data[$key] = [$value];
         } else {
-            if (is_array($_SESSION[$key])) {
-                $_SESSION[$key][] = $value;
+            if (is_array($this->data[$key])) {
+                $this->data[$key][] = $value;
             } else {
-                $_SESSION[$key] = [$_SESSION[$key], $value];
+                $this->data[$key] = [$this->data[$key], $value];
             }
         }
     }
@@ -805,9 +724,9 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     public function removeFlash($key)
     {
         $counters = $this->get($this->flashParam, []);
-        $value = isset($_SESSION[$key], $counters[$key]) ? $_SESSION[$key] : null;
-        unset($counters[$key], $_SESSION[$key]);
-        $_SESSION[$this->flashParam] = $counters;
+        $value = isset($this->data[$key], $counters[$key]) ? $this->data[$key] : null;
+        unset($counters[$key], $this->data[$key]);
+        $this->data[$this->flashParam] = $counters;
 
         return $value;
     }
@@ -826,9 +745,9 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     {
         $counters = $this->get($this->flashParam, []);
         foreach (array_keys($counters) as $key) {
-            unset($_SESSION[$key]);
+            unset($this->data[$key]);
         }
-        unset($_SESSION[$this->flashParam]);
+        unset($this->data[$this->flashParam]);
     }
 
     /**
@@ -850,7 +769,7 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     {
         $this->open();
 
-        return isset($_SESSION[$offset]);
+        return isset($this->data[$offset]);
     }
 
     /**
@@ -862,7 +781,7 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     {
         $this->open();
 
-        return isset($_SESSION[$offset]) ? $_SESSION[$offset] : null;
+        return isset($this->data[$offset]) ? $this->data[$offset] : null;
     }
 
     /**
@@ -873,7 +792,7 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     public function offsetSet($offset, $item)
     {
         $this->open();
-        $_SESSION[$offset] = $item;
+        $this->data[$offset] = $item;
     }
 
     /**
@@ -883,19 +802,43 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     public function offsetUnset($offset)
     {
         $this->open();
-        unset($_SESSION[$offset]);
+        unset($this->data[$offset]);
+    }
+
+    /**
+     * Setter for data
+     * @param array $data
+     */
+    public function setData(array $data) {
+        $data = (array)$data;
+        return $this->changeDataInternal($data);
+    }
+
+    /**
+     * Getter for data
+     * @return array
+     */
+    public function getData() {
+        return $this->_data;
+    }
+
+    /**
+     * @internal
+     * @param array $data
+     */
+    protected function changeDataInternal(array $data) {
+        $this->_data = $data;
     }
 
     /**
      * If session is started it's not possible to edit session ini settings. In PHP7.2+ it throws exception.
      * This function saves session data to temporary variable and stop session.
-     * @since 2.0.14
      */
     protected function freeze()
     {
         if ($this->getIsActive()) {
-            if (isset($_SESSION)) {
-                $this->frozenSessionData = $_SESSION;
+            if (isset($this->_data)) {
+                $this->frozenSessionData = $this->_data;
             }
             $this->close();
             Reaction::$app->logger->info('Session frozen', __METHOD__);
@@ -919,8 +862,30 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
                 Reaction::$app->logger->error($message);
             }
 
-            $_SESSION = $this->frozenSessionData;
+            $this->_data = $this->frozenSessionData;
             $this->frozenSessionData = null;
+            $this->writeSession();
         }
+    }
+
+    /**
+     * Create session cookie
+     * @return Reaction\Web\Cookie
+     */
+    protected function createSessionCookie() {
+        $_params = $this->getCookieParams();
+        $config = [
+            'class' => 'Reaction\Web\Cookie',
+        ];
+        foreach ($_params as $key => $value) {
+            if ($key === 'httponly') {
+                $key = 'httpOnly';
+            } elseif ($key === 'lifetime') {
+                $key = 'expire';
+                $value = time() + intval($value);
+            }
+            $config[$key] = $value;
+        }
+        return Reaction::create($config);
     }
 }

@@ -7,6 +7,7 @@ use Reaction\Web\RequestComponentInterface;
 /**
  * Interface RequestSessionInterface
  * @package Reaction\Web
+ * @property array $data
  */
 interface RequestSessionInterface extends RequestComponentInterface
 {
