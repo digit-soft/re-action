@@ -24,36 +24,48 @@ return [
             'logger' => 'stdioLogger',
             'formatter' => 'formatterDefault',
             'security' => 'securityDefault',
+            'sessionHandler' => 'sessionHandlerDefault',
         ],
-        'requestConfig' => [
-            'components' => [
-                'helpers' => [
-                    'class' => 'Reaction\Helpers\Request\HelpersGroup',
-                    'components' => [
-                        'inflector' => 'Reaction\Helpers\Request\Inflector',
-                        'string' => 'Reaction\Helpers\Request\StringHelper',
-                        'array' => 'Reaction\Helpers\Request\ArrayHelper',
-                        'json' => 'Reaction\Helpers\Request\JsonHelper',
-                        'ip' => 'Reaction\Helpers\Request\IpHelper',
-                        'html' => 'Reaction\Helpers\Request\HtmlHelper',
-                        'htmlPurifier' => 'Reaction\Helpers\Request\HtmlPurifier',
-                        'file' => 'Reaction\Helpers\Request\FileHelper',
-                    ],
-                ],
-                'i18n' => [
-                    'class' => 'Reaction\I18n\Request\I18nGroup',
-                    'components' => [
-                        'formatter' => 'Reaction\I18n\Request\Formatter',
-                    ],
+    ],
+    //Request config
+    'request' => [
+        'cookieValidationKey' => 'dmyyHbvzRjd7RjXJ',
+        'components' => [
+            'helpers' => [
+                'class' => 'Reaction\Helpers\Request\HelpersGroup',
+                'components' => [
+                    'inflector' => 'Reaction\Helpers\Request\Inflector',
+                    'string' => 'Reaction\Helpers\Request\StringHelper',
+                    'array' => 'Reaction\Helpers\Request\ArrayHelper',
+                    'json' => 'Reaction\Helpers\Request\JsonHelper',
+                    'ip' => 'Reaction\Helpers\Request\IpHelper',
+                    'html' => 'Reaction\Helpers\Request\HtmlHelper',
+                    'htmlPurifier' => 'Reaction\Helpers\Request\HtmlPurifier',
+                    'file' => 'Reaction\Helpers\Request\FileHelper',
                 ],
             ],
+            'i18n' => [
+                'class' => 'Reaction\I18n\Request\I18nGroup',
+                'components' => [
+                    'formatter' => 'Reaction\I18n\Request\Formatter',
+                ],
+            ],
+            //Response builder config
+            'response' => [
+                'class' => 'Reaction\Web\ResponseBuilderInterface',
+            ]
         ],
     ],
     //DI definitions
     'container' => [
         'definitions' => [
-            'Reaction\Web\RequestInterface' => 'Reaction\Web\Request',
+            'Reaction\Web\AppRequestInterface' => 'Reaction\Web\Request',
             'Reaction\Web\RequestServiceInterface' => 'Reaction\Web\RequestService',
+            'Reaction\Web\ResponseBuilderInterface' => 'Reaction\Web\ResponseBuilder',
+            'Reaction\Web\Sessions\SessionHandlerInterface' => [
+                'class' => 'Reaction\Web\Sessions\CachedSessionHandler',
+                'loop' => Instance::of('React\EventLoop\LoopInterface'),
+            ],
         ],
         'singletons' => [
             //React event loop
@@ -94,7 +106,15 @@ return [
             //Security component
             'securityDefault' => [
                 'class' => 'Reaction\Base\Security',
-            ]
+            ],
+            //Default array cache
+            'arrayCacheDefault' => [
+                'class' => 'React\Cache\ArrayCache'
+            ],
+            //Session handler
+            'sessionHandlerDefault' => [
+                'class' => 'Reaction\Web\Sessions\SessionHandlerInterface',
+            ],
         ],
     ],
 
