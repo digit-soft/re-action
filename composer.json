@@ -17,7 +17,6 @@
     "minimum-stability": "dev",
     "require": {
         "php": ">=7.0.0",
-        "php-di/php-di": "~6.0",
         "doctrine/annotations": "*",
         "doctrine/cache": "*",
         "react/http": "~0.8",
