@@ -21,6 +21,7 @@
         "doctrine/annotations": "*",
         "doctrine/cache": "*",
         "react/http": "~0.8",
+        "react/filesystem": "*",
         "digit-soft/re-action-promise": "*",
         "nikic/fast-route": "*",
         "psr/log": "*",
