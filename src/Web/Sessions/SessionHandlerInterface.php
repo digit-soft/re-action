@@ -14,22 +14,22 @@ interface SessionHandlerInterface
     /**
      * Read session data and returns serialized|encoded data
      * @param string $sessionId
-     * @return ExtendedPromiseInterface
+     * @return ExtendedPromiseInterface  with session data
      */
     public function read($sessionId);
 
     /**
      * Write session data to storage
      * @param string $sessionId
-     * @param array  $sessionData
-     * @return ExtendedPromiseInterface
+     * @param array  $data
+     * @return ExtendedPromiseInterface  with session data
      */
-    public function write($sessionId, $sessionData);
+    public function write($sessionId, $data);
 
     /**
      * Destroy a session
      * @param string $sessionId The session ID being destroyed.
-     * @return ExtendedPromiseInterface
+     * @return ExtendedPromiseInterface  with bool when finished
      */
     public function destroy($sessionId);
 
@@ -57,10 +57,10 @@ interface SessionHandlerInterface
     /**
      * Archive session and free main storage
      * @param string $sessionId
-     * @param array  $sessionData
+     * @param array  $data
      * @return ExtendedPromiseInterface  with bool
      */
-    public function archiveSessionData($sessionId, $sessionData);
+    public function archiveSessionData($sessionId, $data);
 
     /**
      * Restore session data from archive
@@ -79,12 +79,12 @@ interface SessionHandlerInterface
     /**
      * Update timestamp of a session
      * @param string $sessionId The session id
-     * @param string $sessionData
+     * @param string $data
      * The encoded session data. This data is the
      * result of the PHP internally encoding
      * the $_SESSION superglobal to a serialized
      * string and passing it as this parameter.
      * @return bool
      */
-    public function updateTimestamp($sessionId, $sessionData);
+    public function updateTimestamp($sessionId, $data);
 }
