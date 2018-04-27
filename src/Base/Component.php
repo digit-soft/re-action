@@ -3,7 +3,6 @@
 namespace Reaction\Base;
 
 use Evenement\EventEmitterInterface;
-use Evenement\EventEmitterTrait;
 use Reaction\Exceptions\InvalidCallException;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Exceptions\UnknownPropertyException;
@@ -15,7 +14,7 @@ use Reaction\Helpers\ArrayHelper;
  */
 class Component extends BaseObject implements EventEmitterInterface
 {
-    use EventEmitterTrait;
+    use EventEmitterWildcardTrait;
 
     /** @var string Base path of component */
     protected $_basePath;
