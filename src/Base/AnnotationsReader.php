@@ -68,14 +68,10 @@ class AnnotationsReader extends BaseObject
     /**
      * Get doctrine annotation reader
      * @return mixed|\object
-     * @throws \DI\DependencyException
-     * @throws \DI\NotFoundException
-     * @throws \Reaction\Exceptions\InvalidConfigException
      * @throws \Doctrine\Common\Annotations\AnnotationException
      */
     protected function getReader() {
         if(!isset($this->_reader)) {
-            //$this->_reader = \Reaction::create($this->readerClass);
             $annotationClassNames = ClassFinderHelper::findClassesPsr4($this->annotationNamespaces);
             $this->_reader = new CachedReader(
                 new IndexedReader(new AnnotationReader()),
