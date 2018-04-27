@@ -2,7 +2,7 @@
 
 namespace Reaction\Web\Sessions;
 
-use React\Promise\ExtendedPromiseInterface;
+use React\Promise\PromiseInterface;
 use Reaction\Web\AppRequestInterface;
 
 /**
@@ -13,37 +13,39 @@ interface SessionHandlerInterface
 {
     /**
      * Read session data and returns serialized|encoded data
-     * @param string $sessionId
-     * @return ExtendedPromiseInterface  with session data
+     * @param string $id
+     * @return PromiseInterface  with session data
      */
-    public function read($sessionId);
+    public function read($id);
 
     /**
      * Write session data to storage
-     * @param string $sessionId
+     * @param string $id
      * @param array  $data
-     * @return ExtendedPromiseInterface  with session data
+     * @return PromiseInterface  with session data
      */
-    public function write($sessionId, $data);
+    public function write($id, $data);
 
     /**
      * Destroy a session
-     * @param string $sessionId The session ID being destroyed.
-     * @return ExtendedPromiseInterface  with bool when finished
+     * @param string $id The session ID being destroyed.
+     * @return PromiseInterface  with bool when finished
      */
-    public function destroy($sessionId);
+    public function destroy($id);
 
     /**
      * Regenerate session id
-     * @param string $sessionIdOld
-     * @return ExtendedPromiseInterface With new session ID (string)
+     * @param string              $idOld
+     * @param AppRequestInterface $request
+     * @param bool                $deleteOldSession
+     * @return PromiseInterface With new session ID (string)
      */
-    public function regenerateId($sessionIdOld, AppRequestInterface $request);
+    public function regenerateId($idOld, AppRequestInterface $request, $deleteOldSession = false);
 
     /**
      * Check session id for uniqueness
      * @param string $sessionId
-     * @return bool
+     * @return PromiseInterface
      */
     public function checkSessionId($sessionId);
 
@@ -58,14 +60,14 @@ interface SessionHandlerInterface
      * Archive session and free main storage
      * @param string $sessionId
      * @param array  $data
-     * @return ExtendedPromiseInterface  with bool
+     * @return PromiseInterface  with bool
      */
     public function archiveSessionData($sessionId, $data);
 
     /**
      * Restore session data from archive
      * @param string $sessionId
-     * @return ExtendedPromiseInterface  with session data array or null
+     * @return PromiseInterface  with session data array or null
      */
     public function restoreSessionData($sessionId);
 
@@ -74,11 +76,11 @@ interface SessionHandlerInterface
      * @param AppRequestInterface $request
      * @return string  A session ID valid for session handler
      */
-    public function createSid(AppRequestInterface $request);
+    public function createId(AppRequestInterface $request);
 
     /**
      * Update timestamp of a session
-     * @param string $sessionId The session id
+     * @param string $id The session id
      * @param string $data
      * The encoded session data. This data is the
      * result of the PHP internally encoding
@@ -86,5 +88,5 @@ interface SessionHandlerInterface
      * string and passing it as this parameter.
      * @return bool
      */
-    public function updateTimestamp($sessionId, $data);
+    public function updateTimestamp($id, $data);
 }
