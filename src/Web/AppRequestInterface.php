@@ -4,6 +4,7 @@ namespace Reaction\Web;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Reaction\Helpers\Request\HelpersGroup;
+use Reaction\Web\Sessions\Session;
 
 /**
  * Interface AppRequestInterface
@@ -13,6 +14,7 @@ use Reaction\Helpers\Request\HelpersGroup;
  * @property string                   $language
  * @property HelpersGroup             $helpers Helpers group
  * @property ResponseBuilderInterface $response
+ * @property Session                  $session
  * @property bool                     $enableCsrfValidation
  * @property string                   $csrfParam
  * @property array                    $csrfCookie
