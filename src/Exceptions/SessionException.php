@@ -1,0 +1,18 @@
+<?php
+
+namespace Reaction\Exceptions;
+
+/**
+ * Class SessionErrorException
+ * @package Reaction\Exceptions
+ */
+class SessionException extends Exception
+{
+    /**
+     * Get Exception name
+     * @return string
+     */
+    public function getName() {
+        return 'Session Error';
+    }
+}
