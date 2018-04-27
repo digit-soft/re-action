@@ -17,8 +17,8 @@
     "minimum-stability": "dev",
     "require": {
         "php": ">=7.0",
-        "doctrine/annotations": "*",
-        "doctrine/cache": "*",
+        "doctrine/annotations": "~1.6",
+        "doctrine/cache": "~1.7",
         "react/http": "~0.8",
         "react/filesystem": "*",
         "digit-soft/re-action-event-emitter": "*",
