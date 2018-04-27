@@ -2,7 +2,6 @@
 
 namespace Reaction;
 
-use DI\DependencyException;
 use React\EventLoop\LoopInterface;
 use React\Http\Server as Http;
 use React\Socket\Server as Socket;
@@ -55,9 +54,8 @@ class BaseApplication extends ServiceLocator implements BaseApplicationInterface
 
     /**
      * Run application
-     * @throws DependencyException
      * @throws Exceptions\InvalidConfigException
-     * @throws \DI\NotFoundException
+     * @throws \ReflectionException
      */
     public function run() {
         // TODO: Make more serious Exception handler :)
