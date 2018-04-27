@@ -2,6 +2,7 @@
 
 namespace Reaction\Base;
 
+use React\Promise\PromiseInterface;
 use Reaction\Exceptions\InvalidCallException;
 use Reaction\Exceptions\UnknownMethodException;
 use Reaction\Exceptions\UnknownPropertyException;
@@ -44,6 +45,17 @@ class BaseObject implements Configurable
      */
     public function init()
     {
+    }
+
+    /**
+     * Initializes the object.
+     * This method is NOT invoked at the end of the constructor.
+     * You must call it manually to run
+     * @return PromiseInterface
+     */
+    public function initPromised()
+    {
+        return \Reaction\Promise\resolve(null);
     }
 
     /**
