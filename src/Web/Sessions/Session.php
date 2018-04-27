@@ -151,7 +151,11 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     {
         if ($this->handler !== null) {
             if (!is_object($this->handler)) {
-                $this->handler = Reaction::create($this->handler);
+                if (Reaction::$app->has($this->handler)) {
+                    $this->handler = Reaction::$app->get($this->handler);
+                } else {
+                    $this->handler = Reaction::create($this->handler);
+                }
             }
             if (!$this->handler instanceof SessionHandlerInterface) {
                 throw new InvalidConfigException('"' . get_class($this) . '::handler" must implement the \Reaction\Web\Sessions\SessionHandlerInterface.');
@@ -169,6 +173,7 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
         if ($this->getIsActive()) {
             Reaction::isDebug() ? session_write_close() : @session_write_close();
         }
+        $this->_isActive = false;
     }
 
     /**
@@ -217,9 +222,13 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
             $cookie = $request->cookies->getValue($name);
             if (!empty($cookie) && ini_get('session.use_cookies')) {
                 $this->_hasSessionId = true;
+                $this->_sessionId = $cookie;
             } elseif (!ini_get('session.use_only_cookies') && ini_get('session.use_trans_sid')) {
-                $this->_hasSessionId = $request->get($name) != '';
+                $idFromRequest = $request->get($name);
+                $this->_hasSessionId = $idFromRequest != '';
+                $this->_sessionId = $idFromRequest != '' ? $idFromRequest : null;
             } else {
+                $this->_sessionId = null;
                 $this->_hasSessionId = false;
             }
         }
@@ -245,7 +254,10 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
      */
     public function getId()
     {
-        return session_id();
+        if (!isset($this->_sessionId)) {
+            $this->getHasSessionId();
+        }
+        return $this->_sessionId;
     }
 
     /**
@@ -255,7 +267,7 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
      */
     public function setId($value)
     {
-        session_id($value);
+        $this->_sessionId = $value;
     }
 
     /**
@@ -273,14 +285,9 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     public function regenerateID($deleteOldSession = false)
     {
         if ($this->getIsActive()) {
-            // add @ to inhibit possible warning due to race condition
-            // https://github.com/yiisoft/yii2/pull/1812
-            if (Reaction::isDebug() && !headers_sent()) {
-                session_regenerate_id($deleteOldSession);
-            } else {
-                @session_regenerate_id($deleteOldSession);
-            }
+            return $this->handler->regenerateId($this->id, $this->request, $deleteOldSession);
         }
+        return Reaction\Promise\reject(new Reaction\Exceptions\SessionException('Session is not active'));
     }
 
     /**
@@ -464,7 +471,7 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     public function getIterator()
     {
         $this->open();
-        return new SessionIterator($this->_data);
+        return new SessionIterator($this);
     }
 
     /**
