@@ -54,7 +54,10 @@ return [
             //Response builder config
             'response' => [
                 'class' => 'Reaction\Web\ResponseBuilderInterface',
-            ]
+            ],
+            'session' => [
+                'class' => 'Reaction\Web\Sessions\Session',
+            ],
         ],
     ],
     //DI definitions
