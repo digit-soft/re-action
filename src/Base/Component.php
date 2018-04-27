@@ -2,17 +2,16 @@
 
 namespace Reaction\Base;
 
-use Evenement\EventEmitterInterface;
+use Reaction\Events\EventEmitterWildcardInterface;
+use Reaction\Events\EventEmitterWildcardTrait;
 use Reaction\Exceptions\InvalidCallException;
-use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Exceptions\UnknownPropertyException;
-use Reaction\Helpers\ArrayHelper;
 
 /**
  * Class Component
  * @package Reaction\Base
  */
-class Component extends BaseObject implements EventEmitterInterface
+class Component extends BaseObject implements EventEmitterWildcardInterface
 {
     use EventEmitterWildcardTrait;
 
