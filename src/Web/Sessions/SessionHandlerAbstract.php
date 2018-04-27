@@ -99,7 +99,7 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
         $promise = $this->read($idOld)->then(
             function ($data) { return $data; },
             function () { return []; }
-        )->then(function ($data) use ($self, $request, $idOld, &$dataOld) {
+        )->then(function ($data) use ($idOld, &$dataOld) {
             $dataOld = $data;
             return $this->destroy($idOld)->then(null, function () { return true; });
         })->then(
@@ -107,7 +107,7 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
                 return $self->createId($request);
             }
         )->then(
-            function ($newId) use ($self, $request, $idOld, &$dataOld, $deleteOldSession) {
+            function ($newId) use ($self, &$dataOld, $deleteOldSession) {
                 $retCallback = function () use ($newId) { return $newId; };
                 $dataNew = $deleteOldSession ? [] : $dataOld;
                 return $self->write($newId, $dataNew)->then($retCallback, $retCallback);
@@ -189,7 +189,7 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
         /** @var FileInterface $file */
         $file = null;
         $writePromise = $this->getArchiveFilePath($sessionId)->then(
-            function ($filePath) use ($sessionId, &$file) {
+            function ($filePath) use (&$file) {
                 $file = \Reaction::$app->fs->file($filePath);
                 return \Reaction::$app->fs->file($filePath)->exists();
             }
@@ -223,7 +223,7 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
     {
         $self = $this;
         return $this->getArchiveFilePath($sessionId)->then(
-            function ($filePath) use ($self) {
+            function ($filePath) {
                 $file = \Reaction::$app->fs->file($filePath);
                 return $file->getContents();
             }
