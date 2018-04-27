@@ -153,6 +153,42 @@ class Reaction
     }
 
     /**
+     * Shortcut to Reaction::$app->logger->debug()
+     * @param string $message
+     * @param array $context
+     */
+    public static function debug($message, $context = []) {
+        static::$app->logger->debug($message, $context);
+    }
+
+    /**
+     * Shortcut to Reaction::$app->logger->info()
+     * @param string $message
+     * @param array $context
+     */
+    public static function info($message, $context = []) {
+        static::$app->logger->info($message, $context);
+    }
+
+    /**
+     * Shortcut to Reaction::$app->logger->warning()
+     * @param string $message
+     * @param array $context
+     */
+    public static function warning($message, $context = []) {
+        static::$app->logger->warning($message, $context);
+    }
+
+    /**
+     * Shortcut to Reaction::$app->logger->error()
+     * @param string $message
+     * @param array $context
+     */
+    public static function error($message, $context = []) {
+        static::$app->logger->error($message, $context);
+    }
+
+    /**
      * Get instance of config reader
      * @return \Reaction\Base\ConfigReader
      */
