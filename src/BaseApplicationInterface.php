@@ -3,6 +3,7 @@
 namespace Reaction;
 
 use React\Filesystem\FilesystemInterface;
+use Reaction\Events\EventEmitterWildcardInterface;
 use Reaction\Web\Sessions\SessionHandlerInterface;
 
 /**
@@ -25,7 +26,7 @@ use Reaction\Web\Sessions\SessionHandlerInterface;
  * @property SessionHandlerInterface          $sessionHandler
  * @property FilesystemInterface              $fs
  */
-interface BaseApplicationInterface
+interface BaseApplicationInterface extends EventEmitterWildcardInterface
 {
     const APP_ENV_PROD  = 'production';
     const APP_ENV_DEV   = 'development';
