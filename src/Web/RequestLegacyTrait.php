@@ -103,6 +103,36 @@ trait RequestLegacyTrait
     }
 
     /**
+     * Retrieves all message header values.
+     *
+     * The keys represent the header name as it will be sent over the wire, and
+     * each value is an array of strings associated with the header.
+     *
+     *     // Represent the headers as a string
+     *     foreach ($message->getHeaders() as $name => $values) {
+     *         echo $name . ": " . implode(", ", $values);
+     *     }
+     *
+     *     // Emit headers iteratively:
+     *     foreach ($message->getHeaders() as $name => $values) {
+     *         foreach ($values as $value) {
+     *             header(sprintf('%s: %s', $name, $value), false);
+     *         }
+     *     }
+     *
+     * While header names are not case-sensitive, getHeaders() will preserve the
+     * exact case in which headers were originally specified.
+     *
+     * @return string[][] Returns an associative array of the message's headers. Each
+     *     key MUST be a header name, and each value MUST be an array of strings
+     *     for that header.
+     */
+    public function getHeaders()
+    {
+        return $this->proxyReact(__FUNCTION__);
+    }
+
+    /**
      * Retrieves a comma-separated string of the values for a single header.
      *
      * This method returns all of the header values of the given
@@ -186,6 +216,16 @@ trait RequestLegacyTrait
     public function withoutHeader($name)
     {
         return $this->proxyReact(__FUNCTION__, func_get_args());
+    }
+
+    /**
+     * Retrieves the HTTP method of the request.
+     *
+     * @return string Returns the request method.
+     */
+    public function getMethod()
+    {
+        return $this->proxyReact(__FUNCTION__);
     }
 
     /**
@@ -361,6 +401,23 @@ trait RequestLegacyTrait
      * @internal
      */
     public function getCookieParams()
+    {
+        return $this->proxyReact(__FUNCTION__);
+    }
+
+    /**
+     * Retrieve query string arguments.
+     *
+     * Retrieves the deserialized query string arguments, if any.
+     *
+     * Note: the query params might not be in sync with the URI or server
+     * params. If you need to ensure you are only getting the original
+     * values, you may need to parse the query string from `getUri()->getQuery()`
+     * or from the `QUERY_STRING` server param.
+     *
+     * @return array
+     */
+    public function getQueryParams()
     {
         return $this->proxyReact(__FUNCTION__);
     }

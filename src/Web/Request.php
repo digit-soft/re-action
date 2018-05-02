@@ -80,9 +80,6 @@ use Reaction\Validators\IpValidator;
  */
 class Request extends Reaction\Base\Component implements AppRequestInterface
 {
-    const _GETTER_PREFIX = 'get';
-    const _SETTER_PREFIX = 'set';
-
     /**
      * The name of the HTTP header for sending CSRF token.
      */
@@ -140,7 +137,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
     /**
      * @var string the name of the POST parameter that is used to indicate if a request is a PUT, PATCH or DELETE
      * request tunneled through POST. Defaults to '_method'.
-     * @see getMethod()
+     * @see _getMethod()
      * @see getBodyParams()
      */
     public $methodParam = '_method';
@@ -259,10 +256,6 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
 
 
     /**
-     * @var ServerRequestInterface React PHP original Http request
-     */
-    protected $_reactRequest;
-    /**
      * @var CookieCollection Collection of request cookies.
      */
     protected $_cookies;
@@ -317,7 +310,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
 //                $this->_queryParams = $params + $this->_queryParams;
 //            }
 //
-//            return [$route, $this->getQueryParams()];
+//            return [$route, $this->queryParams];
 //        }
 //
 //        throw new NotFoundHttpException(Yii::t('yii', 'Page not found.'));
@@ -389,7 +382,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
      * The header collection contains incoming HTTP headers.
      * @return HeaderCollection the header collection
      */
-    public function getHeaders()
+    public function _getHeaders()
     {
         if ($this->_headers === null) {
             $this->_headers = new HeaderCollection();
@@ -408,7 +401,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
      * @return string request method, such as GET, POST, HEAD, PUT, PATCH, DELETE.
      * The value returned is turned into upper case.
      */
-    public function getMethod()
+    public function _getMethod()
     {
         if(!isset($this->_method)) {
             if (isset($this->_postParams[$this->methodParam])) {
@@ -430,7 +423,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
      */
     public function getIsGet()
     {
-        return $this->getMethod() === 'GET';
+        return $this->method === 'GET';
     }
 
     /**
@@ -439,7 +432,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
      */
     public function getIsOptions()
     {
-        return $this->getMethod() === 'OPTIONS';
+        return $this->method === 'OPTIONS';
     }
 
     /**
@@ -448,7 +441,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
      */
     public function getIsHead()
     {
-        return $this->getMethod() === 'HEAD';
+        return $this->method === 'HEAD';
     }
 
     /**
@@ -457,7 +450,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
      */
     public function getIsPost()
     {
-        return $this->getMethod() === 'POST';
+        return $this->method === 'POST';
     }
 
     /**
@@ -466,7 +459,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
      */
     public function getIsDelete()
     {
-        return $this->getMethod() === 'DELETE';
+        return $this->method === 'DELETE';
     }
 
     /**
@@ -475,7 +468,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
      */
     public function getIsPut()
     {
-        return $this->getMethod() === 'PUT';
+        return $this->method === 'PUT';
     }
 
     /**
@@ -484,7 +477,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
      */
     public function getIsPatch()
     {
-        return $this->getMethod() === 'PATCH';
+        return $this->method === 'PATCH';
     }
 
     /**
@@ -545,7 +538,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
      * to parse the [[rawBody|request body]].
      * @return array the request parameters given in the request body.
      * @throws \Reaction\Exceptions\InvalidConfigException if a registered parser does not implement the [[RequestParserInterface]].
-     * @see getMethod()
+     * @see _getMethod()
      * @see getBodyParam()
      * @see setBodyParams()
      */
@@ -558,7 +551,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
                 return $this->_bodyParams;
             }
 
-            $rawContentType = $this->getContentType();
+            $rawContentType = $this->contentType;
             if (($pos = strpos($rawContentType, ';')) !== false) {
                 // e.g. text/html; charset=UTF-8
                 $contentType = substr($rawContentType, 0, $pos);
@@ -571,19 +564,19 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
                 if (!($parser instanceof RequestParserInterface)) {
                     throw new InvalidConfigException("The '$contentType' request parser is invalid. It must implement the Reaction\\Web\\RequestParserInterface.");
                 }
-                $this->_bodyParams = $parser->parse($this->getRawBody(), $rawContentType);
+                $this->_bodyParams = $parser->parse($this->rawBody, $rawContentType);
             } elseif (isset($this->parsers['*'])) {
                 $parser = Reaction::create($this->parsers['*']);
                 if (!($parser instanceof RequestParserInterface)) {
                     throw new InvalidConfigException('The fallback request parser is invalid. It must implement the Reaction\\Web\\RequestParserInterface.');
                 }
-                $this->_bodyParams = $parser->parse($this->getRawBody(), $rawContentType);
-            } elseif ($this->getMethod() === 'POST') {
+                $this->_bodyParams = $parser->parse($this->rawBody, $rawContentType);
+            } elseif ($this->method === 'POST') {
                 // PHP has already parsed the body so we have all params in $_POST
                 $this->_bodyParams = $this->_postParams;
             } else {
                 $this->_bodyParams = [];
-                mb_parse_str($this->getRawBody(), $this->_bodyParams);
+                mb_parse_str($this->rawBody, $this->_bodyParams);
             }
         }
 
@@ -612,7 +605,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
      */
     public function getBodyParam($name, $defaultValue = null)
     {
-        $params = $this->getBodyParams();
+        $params = $this->bodyParams;
 
         if (is_object($params)) {
             // unable to use `ArrayHelper::getValue()` due to different dots in key logic and lack of exception handling
@@ -636,7 +629,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
     public function post($name = null, $defaultValue = null)
     {
         if ($name === null) {
-            return $this->getBodyParams();
+            return $this->bodyParams;
         }
 
         return $this->getBodyParam($name, $defaultValue);
@@ -651,7 +644,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
      * @return array the request GET parameter values.
      * @see setQueryParams()
      */
-    public function getQueryParams()
+    public function _getQueryParams()
     {
         return $this->reactRequest->getQueryParams();
     }
@@ -660,7 +653,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
      * Sets the request [[queryString]] parameters.
      * @param array $values the request query parameters (name-value pairs)
      * @see getQueryParam()
-     * @see getQueryParams()
+     * @see _getQueryParams()
      */
     public function setQueryParams($values)
     {
@@ -677,7 +670,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
     public function get($name = null, $defaultValue = null)
     {
         if ($name === null) {
-            return $this->getQueryParams();
+            return $this->queryParams;
         }
 
         return $this->getQueryParam($name, $defaultValue);
@@ -693,7 +686,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
      */
     public function getQueryParam($name, $defaultValue = null)
     {
-        $params = $this->getQueryParams();
+        $params = $this->queryParams;
 
         return isset($params[$name]) ? $params[$name] : $defaultValue;
     }
@@ -787,7 +780,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
     public function getHostName()
     {
         if ($this->_hostName === null) {
-            $this->_hostName = parse_url($this->getHostInfo(), PHP_URL_HOST);
+            $this->_hostName = parse_url($this->hostInfo, PHP_URL_HOST);
         }
 
         return $this->_hostName;
@@ -1119,11 +1112,11 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
      * Please refer to <https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Origin> for more information.
      *
      * @return string|null URL origin of a CORS request, `null` if not available.
-     * @see getHeaders()
+     * @see _getHeaders()
      */
     public function getOrigin()
     {
-        return $this->getHeaders()->get('origin');
+        return $this->headers->get('origin');
     }
 
     /**
@@ -1597,7 +1590,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
         }
 
         //TODO: Rewrite
-        return Yii::$app->getSession()->get($this->csrfParam);
+        return $this->session->get($this->csrfParam);
     }
 
     /**
@@ -1611,8 +1604,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
             $cookie = $this->createCsrfCookie($token);
             $this->response->getCookies()->add($cookie);
         } else {
-            //TODO: Rewrite
-            Yii::$app->getSession()->set($this->csrfParam, $token);
+            $this->session->set($this->csrfParam, $token);
         }
 
         return $token;
@@ -1658,7 +1650,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
      */
     public function validateCsrfToken($clientSuppliedToken = null)
     {
-        $method = $this->getMethod();
+        $method = $this->method;
         // only validate CSRF token on non-"safe" methods https://tools.ietf.org/html/rfc2616#section-9.1.1
         if (!$this->enableCsrfValidation || in_array($method, ['GET', 'HEAD', 'OPTIONS'], true)) {
             return true;

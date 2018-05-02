@@ -3,6 +3,7 @@
 namespace Reaction\Web;
 
 use Psr\Http\Message\ServerRequestInterface;
+use React\Promise\PromiseInterface;
 use Reaction\Helpers\Request\HelpersGroup;
 use Reaction\Web\Sessions\Session;
 
@@ -91,14 +92,14 @@ interface AppRequestInterface extends ServerRequestInterface
      * The header collection contains incoming HTTP headers.
      * @return HeaderCollection the header collection
      */
-    public function getHeaders();
+    public function _getHeaders();
 
     /**
      * Returns the method of the current request (e.g. GET, POST, HEAD, PUT, PATCH, DELETE).
      * @return string request method, such as GET, POST, HEAD, PUT, PATCH, DELETE.
      * The value returned is turned into upper case.
      */
-    public function getMethod();
+    public function _getMethod();
 
     /**
      * Returns whether this is a GET request.
@@ -218,7 +219,7 @@ interface AppRequestInterface extends ServerRequestInterface
      * @return array the request GET parameter values.
      * @see setQueryParams()
      */
-    public function getQueryParams();
+    public function _getQueryParams();
 
     /**
      * Sets the request [[queryString]] parameters.
@@ -434,7 +435,7 @@ interface AppRequestInterface extends ServerRequestInterface
      * Please refer to <https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Origin> for more information.
      *
      * @return string|null URL origin of a CORS request, `null` if not available.
-     * @see getHeaders()
+     * @see _getHeaders()
      */
     public function getOrigin();
 
@@ -660,6 +661,10 @@ interface AppRequestInterface extends ServerRequestInterface
      */
     public function validateCsrfToken($clientSuppliedToken = null);
 
+    /**
+     * @return PromiseInterface
+     */
+    public function initPromised();
 
     /** OLD REQUEST METHODS */
 
@@ -671,6 +676,24 @@ interface AppRequestInterface extends ServerRequestInterface
      * @return array
      */
     public function getServerParams();
+
+    /**
+     * @internal
+     * @deprecated
+     *
+     * @return string Returns the request method.
+     */
+    public function getMethod();
+
+    /**
+     * @internal
+     * @deprecated
+     *
+     * @return string[][] Returns an associative array of the message's headers. Each
+     *     key MUST be a header name, and each value MUST be an array of strings
+     *     for that header.
+     */
+    public function getHeaders();
 
     /**
      * @internal
@@ -688,6 +711,14 @@ interface AppRequestInterface extends ServerRequestInterface
      * @return static
      */
     public function withCookieParams(array $cookies);
+
+    /**
+     * @internal
+     * @deprecated
+     *
+     * @return array Array with query string arguments
+     */
+    public function getQueryParams();
 
     /**
      * @internal
