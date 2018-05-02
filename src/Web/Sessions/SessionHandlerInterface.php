@@ -74,7 +74,7 @@ interface SessionHandlerInterface
     /**
      * Return a new session ID
      * @param AppRequestInterface $request
-     * @return string  A session ID valid for session handler
+     * @return PromiseInterface  A session ID valid for session handler
      */
     public function createId(AppRequestInterface $request);
 
@@ -86,7 +86,7 @@ interface SessionHandlerInterface
      * result of the PHP internally encoding
      * the $_SESSION superglobal to a serialized
      * string and passing it as this parameter.
-     * @return bool
+     * @return PromiseInterface  with bool when finished
      */
     public function updateTimestamp($id, $data);
 }
