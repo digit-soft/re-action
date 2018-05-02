@@ -88,7 +88,8 @@ use Reaction\Web\Sessions\Session;
  */
 interface AppRequestInterface extends ServerRequestInterface, EventEmitterWildcardInterface
 {
-    const EVENT_REQUEST_END = 'requestEnd';
+    const EVENT_REQUEST_INIT    = 'requestInit';
+    const EVENT_REQUEST_END     = 'requestEnd';
 
     /**
      * Returns the header collection.
