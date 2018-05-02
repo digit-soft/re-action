@@ -7,6 +7,7 @@ use Reaction\DI\Instance;
 return [
     //Application config
     'app' => [
+        'debug' => true,
         'charset' => 'utf-8',
         'hostname' => '127.0.0.1',
         'port' => 4000,
