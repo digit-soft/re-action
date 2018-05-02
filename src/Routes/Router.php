@@ -2,6 +2,7 @@
 
 namespace Reaction\Routes;
 
+use React\Promise\ExtendedPromiseInterface;
 use Reaction\Annotations\Ctrl;
 use Reaction\Annotations\CtrlAction;
 use Reaction\Base\BaseObject;
@@ -10,6 +11,7 @@ use FastRoute\Dispatcher;
 use Reaction\Helpers\ArrayHelper;
 use Reaction\Helpers\ClassFinderHelper;
 use Reaction\Promise\Promise;
+use Reaction\Web\AppRequestInterface;
 use Reaction\Web\Response;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -164,18 +166,19 @@ class Router extends BaseObject implements RouterInterface
 
     /**
      * Dispatch requested route
-     * @param ServerRequestInterface $request
-     * @return Response|Promise
+     * @param AppRequestInterface $request
+     * @return Response|ExtendedPromiseInterface
      */
-    public function dispatchRoute(ServerRequestInterface $request) {
+    public function dispatchRoute(AppRequestInterface $request) {
         $self = $this;
         return (new Promise(function ($r, $c) use ($self, &$request) {
             $response = new Response(200);
-            $requestInfo = $self->getRequestInfo($request);
+            $path = '/' . (string)$request->pathInfo;
+            $path = rtrim($path, '/');
             try {
-                $routeInfo = $self->dispatcher->dispatch($requestInfo['method'], $requestInfo['path']);
+                $routeInfo = $self->dispatcher->dispatch($request->method, $path);
             } catch (\Throwable $exception) {
-                \Reaction::$app->logger->error(get_class($exception) . "\n" . $exception->getMessage() . "\n" . $exception->getTraceAsString());
+                \Reaction::error(get_class($exception) . "\n" . $exception->getMessage() . "\n" . $exception->getTraceAsString());
                 $routeInfo = [Dispatcher::NOT_FOUND];
             }
             switch ($routeInfo[0]) {
@@ -202,7 +205,7 @@ class Router extends BaseObject implements RouterInterface
             } else {
                 $message = $error;
             }
-            \Reaction::$app->logger->error($message);
+            \Reaction::error($message);
         });
     }
 
@@ -214,24 +217,6 @@ class Router extends BaseObject implements RouterInterface
     private function createDispatcher($callback) {
         $function = $this->dispatcherClass;
         return $function($callback, $this->dispatcherOptions);
-    }
-
-    /**
-     * Get basic information about route
-     * @param ServerRequestInterface $request
-     * @return array
-     */
-    private function getRequestInfo(ServerRequestInterface $request) {
-        $info = [
-            'method' => $request->getMethod(),
-            'path' => $request->getUri()->getPath(),
-            'query' => $request->getUri()->getQuery(),
-        ];
-
-        $info['query'] = isset($info['query']) ? $info['query'] : [];
-        $info['method'] = isset($info['method']) ? strtoupper($info['method']) : 'GET';
-
-        return $info;
     }
 
     /**
