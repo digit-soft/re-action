@@ -31,6 +31,10 @@ return [
     //Request config
     'request' => [
         'cookieValidationKey' => 'dmyyHbvzRjd7RjXJ',
+        //What components should be initialized after request creation
+        'initComponents' => [
+            'session',
+        ],
         'components' => [
             'helpers' => [
                 'class' => 'Reaction\Helpers\Request\HelpersGroup',
@@ -117,7 +121,7 @@ return [
             ],
             //Default array cache
             'arrayCacheDefault' => [
-                'class' => 'React\Cache\ArrayCache'
+                'class' => 'Reaction\Cache\ArrayCache'
             ],
             //Session handler
             'sessionHandlerDefault' => [
