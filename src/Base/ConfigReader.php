@@ -76,7 +76,7 @@ class ConfigReader extends BaseObject
      * @param string|null $key
      */
     public function merge($data = [], $key = null) {
-        if(!isset($key)) {
+        if (!isset($key)) {
             $this->data = ArrayHelper::merge($this->data, $data);
         } else {
             if (!isset($this->data[$key])) {
@@ -96,7 +96,7 @@ class ConfigReader extends BaseObject
      * @return array
      */
     public function readData() {
-        if(empty($this->names)) {
+        if (empty($this->names)) {
             $this->names = $this->generateNames();
         }
         //Add default config
