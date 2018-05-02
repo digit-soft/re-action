@@ -3,6 +3,7 @@
 namespace Reaction\Web\Sessions;
 
 use React\Promise\ExtendedPromiseInterface;
+use React\Promise\PromiseInterface;
 use Reaction;
 use Reaction\Exceptions\InvalidArgumentException;
 use Reaction\Exceptions\InvalidConfigException;
@@ -28,10 +29,6 @@ use Reaction\Web\RequestComponent;
  * ```
  *
  * Session can be extended to support customized session storage.
- * To do so, override [[useCustomStorage]] so that it returns true, and
- * override these methods with the actual logic about using custom storage:
- * [[openSession()]], [[closeSession()]], [[readSession()]], [[writeSession()]],
- * [[destroySession()]] and [[gcSession()]].
  *
  * Session also supports a special type of session data, called *flash messages*.
  * A flash message is available only in the current request and the next request.
@@ -49,21 +46,13 @@ use Reaction\Web\RequestComponent;
  * @property string $flash The key identifying the flash message. Note that flash messages and normal session
  * variables share the same name space. If you have a normal session variable using the same name, its value will
  * be overwritten by this method. This property is write-only.
- * @property float $gCProbability The probability (percentage) that the GC (garbage collection) process is
- * started on every session initialization, defaults to 1 meaning 1% chance.
  * @property bool $hasSessionId Whether the current request has sent the session ID.
  * @property string $id The current session ID.
  * @property bool $isActive Whether the session has started. This property is read-only.
  * @property SessionIterator $iterator An iterator for traversing the session variables. This property is
  * read-only.
  * @property string $name The current session name.
- * @property string $savePath The current session save path, defaults to '/tmp'.
- * @property int $timeout The number of seconds after which data will be seen as 'garbage' and cleaned up. The
- * default value is 1440 seconds (or the value of "session.gc_maxlifetime" set in php.ini).
  * @property bool|null $useCookies The value indicating whether cookies should be used to store session IDs.
- * @property bool $useCustomStorage Whether to use custom storage. This property is read-only.
- * @property bool $useTransparentSessionID Whether transparent sid support is enabled or not, defaults to
- * @property array $data Session data
  */
 class Session extends RequestComponent implements \IteratorAggregate, \ArrayAccess, \Countable, RequestSessionInterface
 {
@@ -79,6 +68,10 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
      * @var string Cookie name with session ID
      */
     public $cookieName = '_sess';
+    /**
+     * @var array Session data array
+     */
+    public $data = [];
 
     /**
      * @var array parameter-value pairs to override default session cookie parameters that are used for session_set_cookie_params() function
@@ -97,8 +90,7 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     protected $_sessionId;
     /** @var bool Flag indicates that session is active */
     protected $_isActive = false;
-    /** @var array Session data copy */
-    protected $_data = [];
+
     /** @var array Session data before changes */
     protected $_dataPrev;
 
@@ -110,8 +102,12 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     public function init()
     {
         parent::init();
-        $this->cookieParams['expire'] += time();
-        register_shutdown_function([$this, 'close']);
+        $self = $this;
+        //Close session on end of request
+        $this->request->once(Reaction\Web\AppRequestInterface::EVENT_REQUEST_END, function () use (&$self) {
+            return $self->close();
+        });
+
         if ($this->getIsActive()) {
             Reaction::$app->logger->warning('Session is already started');
             $this->updateFlashCounters();
@@ -119,7 +115,16 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     }
 
     /**
+     * @inheritdoc
+     */
+    public function initPromised()
+    {
+        return $this->open();
+    }
+
+    /**
      * Starts the session.
+     * @return PromiseInterface
      */
     public function open()
     {
@@ -129,16 +134,44 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
 
         $this->registerSessionHandler();
 
-        //TODO: Remove
-        Reaction::isDebug() ? session_start() : @session_start();
+        $self = $this;
+        return $this->openInternal()->then(
+            function () use ($self) {
+                if (Reaction::isDebug()) {
+                    Reaction::info('Session started');
+                }
+                $self->updateFlashCounters();
+            }
+        );
+    }
 
-        if ($this->getIsActive()) {
-            Reaction::$app->logger->info('Session started');
-            $this->updateFlashCounters();
+    /**
+     * Open session internal method
+     * @return PromiseInterface
+     */
+    protected function openInternal() {
+        $self = $this;
+        if (!$this->getId()) {
+            $self = $this;
+            return $this->handler->createId($this->request)->then(
+                function ($id = null) use ($self) {
+                    $self->_isActive = true;
+                    $self->setId($id);
+                    $cookie = $self->createSessionCookie();
+                    $self->request->response->cookies->add($cookie);
+                }
+            );
         } else {
-            $error = error_get_last();
-            $message = isset($error['message']) ? $error['message'] : 'Failed to start session.';
-            Reaction::$app->logger->error($message);
+            $this->_isActive = true;
+            return $this->readSession()->then(
+                function ($data) use ($self) {
+                    $self->data = is_array($data) ? $data : [];
+                    return true;
+                },
+                function () use ($self) {
+                    $self->data = [];
+                }
+            );
         }
     }
 
@@ -167,13 +200,18 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
 
     /**
      * Ends the current session and store session data.
+     * @return PromiseInterface
      */
     public function close()
     {
         if ($this->getIsActive()) {
-            Reaction::isDebug() ? session_write_close() : @session_write_close();
+            if (Reaction::isDebug()) {
+                Reaction::info('Session closed');
+            }
+            return $this->writeSession();
         }
         $this->_isActive = false;
+        return Reaction\Promise\resolve(null);
     }
 
     /**
@@ -187,13 +225,10 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     public function destroy()
     {
         if ($this->getIsActive()) {
-            $sessionId = session_id();
+            $sessionId = $this->getId();
             $this->close();
             $this->setId($sessionId);
             $this->open();
-            session_unset();
-            session_destroy();
-            $this->setId($sessionId);
         }
     }
 
@@ -202,7 +237,7 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
      */
     public function getIsActive()
     {
-        return session_status() === PHP_SESSION_ACTIVE;
+        return $this->_isActive;
     }
 
     private $_hasSessionId;
@@ -281,6 +316,7 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
      * @param bool $deleteOldSession Whether to delete the old associated session file or not.
      * @see open()
      * @see isActive
+     * @return \React\Promise\PromiseInterface|Reaction\Promise\FulfilledPromise|Reaction\Promise\Promise|Reaction\Promise\RejectedPromise
      */
     public function regenerateID($deleteOldSession = false)
     {
@@ -302,7 +338,7 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
                 $key = $this->request->cookieValidationKey;
                 $bytesLn = Reaction\Helpers\StringHelper::byteLength($key);
                 $strLn = mb_strlen($key);
-                $this->_cookieName = $this->cookieName . Reaction::$app->security->hashData($bytesLn  . ':' . $strLn, $key);
+                $this->_cookieName = $this->cookieName . md5(crypt($bytesLn  . ':' . $strLn, $key));
             }
         }
         return $this->_cookieName;
@@ -388,32 +424,7 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     }
 
     /**
-     * Session open handler.
-     * This method should be overridden if [[useCustomStorage]] returns true.
-     * @internal Do not call this method directly.
-     * @param string $savePath session save path
-     * @param string $sessionName session name
-     * @return bool whether session is opened successfully
-     */
-    public function openSession($savePath, $sessionName)
-    {
-        return true;
-    }
-
-    /**
-     * Session close handler.
-     * This method should be overridden if [[useCustomStorage]] returns true.
-     * @internal Do not call this method directly.
-     * @return bool whether session is closed successfully
-     */
-    public function closeSession()
-    {
-        return true;
-    }
-
-    /**
      * Session read handler.
-     * This method should be overridden if [[useCustomStorage]] returns true.
      * @internal Do not call this method directly.
      * @param string $id session ID
      * @return ExtendedPromiseInterface with array the session data
@@ -429,11 +440,10 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
 
     /**
      * Session write handler.
-     * This method should be overridden if [[useCustomStorage]] returns true.
      * @internal Do not call this method directly.
      * @param string $id session ID
      * @param array  $data session data
-     * @return ExtendedPromiseInterface with bool whether session write is successful
+     * @return PromiseInterface with bool whether session write is successful
      */
     public function writeSession($data = null, $id = null)
     {
@@ -442,17 +452,16 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
             return Reaction\Promise\reject(new Reaction\Exceptions\ErrorException('Param "$id" must be specified in "' . __METHOD__ . '"'));
         }
         if (!isset($data)) {
-            $data = $this->_data;
+            $data = $this->data;
         }
         return $this->handler->write($id, $data);
     }
 
     /**
      * Session destroy handler.
-     * This method should be overridden if [[useCustomStorage]] returns true.
      * @internal Do not call this method directly.
      * @param string $id session ID
-     * @return ExtendedPromiseInterface with bool whether session is destroyed successfully
+     * @return PromiseInterface with bool whether session is destroyed successfully
      */
     public function destroySession($id = null)
     {
@@ -481,7 +490,7 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     public function getCount()
     {
         $this->open();
-        return count($this->_data);
+        return count($this->data);
     }
 
     /**
@@ -504,7 +513,7 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     public function get($key, $defaultValue = null)
     {
         $this->open();
-        return isset($this->_data[$key]) ? $this->_data[$key] : $defaultValue;
+        return isset($this->data[$key]) ? $this->data[$key] : $defaultValue;
     }
 
     /**
@@ -512,27 +521,27 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
      * If the specified name already exists, the old value will be overwritten.
      * @param string $key session variable name
      * @param mixed  $value session variable value
-     * @return ExtendedPromiseInterface with bool
      */
     public function set($key, $value)
     {
         $this->open();
-        $this->_data[$key] = $value;
-        return $this->handler->write($this->_sessionId, $this->_data);
+        $data = $this->data;
+        $data[$key] = $value;
+        $this->data = $data;
     }
 
     /**
      * Removes a session variable.
      * @param string $key the name of the session variable to be removed
-     * @return ExtendedPromiseInterface the removed value, null if no such session variable.
      */
     public function remove($key)
     {
         $this->open();
-        if (isset($this->_data[$key])) {
-            unset($this->_data[$key]);
+        $data = $this->data;
+        if (isset($data[$key])) {
+            unset($data[$key]);
         }
-        return $this->writeSession();
+        $this->data = $data;
     }
 
     /**
@@ -542,9 +551,11 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     public function removeAll()
     {
         $this->open();
-        foreach (array_keys($this->data) as $key) {
-            unset($this->data[$key]);
+        $data = $this->data;
+        foreach (array_keys($data) as $key) {
+            unset($data[$key]);
         }
+        $this->data = $data;
         return $this->writeSession();
     }
 
@@ -565,6 +576,7 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     protected function updateFlashCounters()
     {
         $counters = $this->get($this->flashParam, []);
+        $data = $this->data;
         if (is_array($counters)) {
             foreach ($counters as $key => $count) {
                 if ($count > 0) {
@@ -573,11 +585,12 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
                     $counters[$key]++;
                 }
             }
-            $this->data[$this->flashParam] = $counters;
+            $data[$this->flashParam] = $counters;
         } else {
             // fix the unexpected problem that flashParam doesn't return an array
-            unset($this->data[$this->flashParam]);
+            unset($data[$this->flashParam]);
         }
+        $this->data = $data;
     }
 
     /**
@@ -813,42 +826,19 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     }
 
     /**
-     * Setter for data
-     * @param array $data
-     */
-    public function setData(array $data) {
-        $data = (array)$data;
-        return $this->changeDataInternal($data);
-    }
-
-    /**
-     * Getter for data
-     * @return array
-     */
-    public function getData() {
-        return $this->_data;
-    }
-
-    /**
-     * @internal
-     * @param array $data
-     */
-    protected function changeDataInternal(array $data) {
-        $this->_data = $data;
-    }
-
-    /**
      * If session is started it's not possible to edit session ini settings. In PHP7.2+ it throws exception.
      * This function saves session data to temporary variable and stop session.
      */
     protected function freeze()
     {
         if ($this->getIsActive()) {
-            if (isset($this->_data)) {
-                $this->frozenSessionData = $this->_data;
+            if (isset($this->data)) {
+                $this->frozenSessionData = $this->data;
             }
-            $this->close();
-            Reaction::$app->logger->info('Session frozen', __METHOD__);
+            //$this->close();
+            if (Reaction::isDebug()) {
+                Reaction::info('Session frozen');
+            }
         }
     }
 
@@ -859,17 +849,17 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     {
         if (null !== $this->frozenSessionData) {
 
-            Reaction::isDebug() ? session_start() : @session_start();
+            //$this->open();
 
             if ($this->getIsActive()) {
-                Reaction::$app->logger->info('Session unfrozen');
+                Reaction::info('Session unfrozen');
             } else {
                 $error = error_get_last();
                 $message = isset($error['message']) ? $error['message'] : 'Failed to unfreeze session.';
-                Reaction::$app->logger->error($message);
+                Reaction::error($message);
             }
 
-            $this->_data = $this->frozenSessionData;
+            $this->data = $this->frozenSessionData;
             $this->frozenSessionData = null;
             $this->writeSession();
         }
@@ -888,11 +878,15 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
             if ($key === 'httponly') {
                 $key = 'httpOnly';
             } elseif ($key === 'lifetime') {
+                $expireValue = intval($value);
+                if (empty($expireValue)) continue;
                 $key = 'expire';
-                $value = time() + intval($value);
+                $value = time() + $expireValue;
             }
             $config[$key] = $value;
         }
+        $config['value'] = $this->id;
+        $config['name'] = $this->getName();
         return Reaction::create($config);
     }
 }
