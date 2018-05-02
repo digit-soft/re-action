@@ -211,7 +211,7 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
             return $this->writeSession();
         }
         $this->_isActive = false;
-        return Reaction\Promise\resolve(null);
+        return \Reaction\Promise\resolve(null);
     }
 
     /**

@@ -350,7 +350,7 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
     protected function getArchiveFilePath($sessionId, $existCheck = false) {
         $fileName = $sessionId . '.json';
         return $this->getArchivePath()->then(
-            function ($dirPath) use ($fileName, $existCheck) {
+            function ($dirPath) use ($fileName) {
                 return rtrim($dirPath) . DIRECTORY_SEPARATOR . $fileName;
             }
         )->then(
