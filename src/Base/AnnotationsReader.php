@@ -87,7 +87,9 @@ class AnnotationsReader extends BaseObject
      * @return \ReflectionClass
      */
     protected function getClassReflection($class) {
-        if(is_object($class) && $class instanceof \ReflectionClass) return $class;
+        if (is_object($class) && $class instanceof \ReflectionClass) {
+            return $class;
+        }
         return new \ReflectionClass($class);
     }
 
@@ -97,7 +99,9 @@ class AnnotationsReader extends BaseObject
      * @param string $property
      */
     protected function getPropertyReflection($class, $property) {
-        if(is_object($class) && $class instanceof \ReflectionProperty) return $class;
+        if (is_object($class) && $class instanceof \ReflectionProperty) {
+            return $class;
+        }
         return new \ReflectionProperty($class, $property);
     }
 
@@ -107,7 +111,9 @@ class AnnotationsReader extends BaseObject
      * @param string $method
      */
     protected function getMethodReflection($class, $method) {
-        if(is_object($class) && $class instanceof \ReflectionMethod) return $class;
+        if (is_object($class) && $class instanceof \ReflectionMethod) {
+            return $class;
+        }
         return new \ReflectionMethod($class, $method);
     }
 }

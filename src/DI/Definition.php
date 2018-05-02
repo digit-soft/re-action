@@ -73,7 +73,9 @@ class Definition
      * @return array
      */
     public function dumpArrayDefinition() {
-        if(empty($this->config) || !isset($this->config['class'])) return [];
+        if (empty($this->config) || !isset($this->config['class'])) {
+            return [];
+        }
         return empty($this->params) ? $this->config : [
             $this->config,
             $this->params,

@@ -79,8 +79,9 @@ class ConfigReader extends BaseObject
         if(!isset($key)) {
             $this->data = ArrayHelper::merge($this->data, $data);
         } else {
-            if(!isset($this->data[$key])) { $this->data[$key] = $data; }
-            else {
+            if (!isset($this->data[$key])) {
+                $this->data[$key] = $data;
+            } else {
                 if(is_array($this->data[$key])) {
                     $this->data[$key] = ArrayHelper::merge($this->data[$key], $data);
                 } else {
@@ -101,14 +102,19 @@ class ConfigReader extends BaseObject
         //Add default config
         $ds = DIRECTORY_SEPARATOR;
         $_defaultConfPath_ = realpath(dirname(__FILE__) . $ds . '..' . $ds) . $ds . $this->defaultConfigName;
-        if(!in_array($_defaultConfPath_, $this->names)) array_unshift($this->names, $_defaultConfPath_);
+        if (!in_array($_defaultConfPath_, $this->names)) {
+            array_unshift($this->names, $_defaultConfPath_);
+        }
         $_confData_ = [];
         foreach ($this->names as $_name_) {
             $_fileName_ = strpos($_name_, '/') === 0 ? $_name_ : $this->path . DIRECTORY_SEPARATOR . $_name_;
             $_confData_[] = $this->readFileData($_fileName_);
         }
-        if(empty($_confData_)) return [];
-        elseif (count($_confData_) === 1) return reset($_confData_);
+        if (empty($_confData_)) {
+            return [];
+        } elseif (count($_confData_) === 1) {
+            return reset($_confData_);
+        }
         return ArrayHelper::merge(...$_confData_);
     }
 
@@ -118,7 +124,9 @@ class ConfigReader extends BaseObject
      * @return array|mixed
      */
     protected function readFileData($_fileName_ = null) {
-        if(!file_exists($_fileName_)) return [];
+        if (!file_exists($_fileName_)) {
+            return [];
+        }
         /** @noinspection PhpIncludeInspection */
         $_conf_data_ = include $_fileName_;
         return is_array($_conf_data_) ? $_conf_data_ : [];

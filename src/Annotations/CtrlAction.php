@@ -35,12 +35,18 @@ class CtrlAction
      */
     public function __construct($values = [])
     {
-        if(count($values) === 1 && isset($values['value'])) $values = $values['value'];
+        if (count($values) === 1 && isset($values['value'])) {
+            $values = $values['value'];
+        }
         if(is_string($values)) {
             $this->path = $values;
         } elseif (is_array($values)) {
-            if(!empty($values['method'])) $this->method = (array)$values['method'];
-            if(!empty($values['path'])) $this->path = (string)$values['path'];
+            if (!empty($values['method'])) {
+                $this->method = (array)$values['method'];
+            }
+            if (!empty($values['path'])) {
+                $this->path = (string)$values['path'];
+            }
         }
 
         if(empty($this->path)) {

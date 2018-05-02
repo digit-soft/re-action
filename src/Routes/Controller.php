@@ -43,7 +43,9 @@ class Controller extends Component implements ControllerInterface
     public function registerInRouter(Router $router) {
         $routes = $this->routes();
         $group = $this->group();
-        if(empty($routes)) return;
+        if (empty($routes)) {
+            return;
+        }
         foreach ($routes as $row) {
             $method = $row['method'];
             $route = $group . $row['route'];

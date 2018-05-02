@@ -26,8 +26,14 @@ class Ctrl
      */
     public function __construct($values = [])
     {
-        if(isset($values['ignore'])) $this->ignore = (array)$values['ignore'];
-        if(isset($values['only'])) $this->ignore = (array)$values['only'];
-        if(isset($values['group'])) $this->group = (string)$values['group'];
+        if (isset($values['ignore'])) {
+            $this->ignore = (array)$values['ignore'];
+        }
+        if (isset($values['only'])) {
+            $this->ignore = (array)$values['only'];
+        }
+        if (isset($values['group'])) {
+            $this->group = (string)$values['group'];
+        }
     }
 }

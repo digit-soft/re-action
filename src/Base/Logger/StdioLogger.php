@@ -266,7 +266,9 @@ class StdioLogger extends AbstractLogger
             return $endId;
         } else {
             $data = ArrayHelper::remove($this->profilerData, $endId, null);
-            if(!isset($data)) return null;
+            if (!isset($data)) {
+                return null;
+            }
             $timeSpent = (microtime(true) - $data['start']) * 1000;
             $message .= "\nTime: {_timeSpent} ms. Memory usage: {_memoryUsage} MB";
             $memoryUsage = memory_get_usage() / (1024 * 1024);
@@ -296,7 +298,9 @@ class StdioLogger extends AbstractLogger
         if ($this->hideLevel === false) {
             $logColors = isset(static::$LOG_COLORS[$level]) ? static::$LOG_COLORS[$level] : [];
             $message = str_pad('[' .$level . ']', 10, ' ') . $message;
-            if(!empty($logColors)) $message = $this->colorizeText($message, $logColors);
+            if (!empty($logColors)) {
+                $message = $this->colorizeText($message, $logColors);
+            }
         }
         if ($this->newLine === true) {
             $message .= self::NEW_LINE;

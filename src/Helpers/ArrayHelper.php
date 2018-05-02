@@ -143,7 +143,9 @@ class ArrayHelper
      * @return array
      */
     private static function cleanupMergedValues($array = []) {
-        if(!is_array($array)) return $array;
+        if (!is_array($array)) {
+            return $array;
+        }
         foreach ($array as $key => $value) {
             if($value instanceof IgnoreArrayValue || $value instanceof ReplaceArrayValue) {
                 $array[$key] = $value->value;
