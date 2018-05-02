@@ -154,7 +154,7 @@ class Reaction
 
     /**
      * Shortcut to Reaction::$app->logger->debug()
-     * @param string $message
+     * @param string|mixed $message
      * @param array $context
      */
     public static function debug($message, $context = []) {
@@ -163,7 +163,7 @@ class Reaction
 
     /**
      * Shortcut to Reaction::$app->logger->info()
-     * @param string $message
+     * @param string|mixed $message
      * @param array $context
      */
     public static function info($message, $context = []) {
@@ -172,7 +172,7 @@ class Reaction
 
     /**
      * Shortcut to Reaction::$app->logger->warning()
-     * @param string $message
+     * @param string|mixed $message
      * @param array $context
      */
     public static function warning($message, $context = []) {
@@ -181,7 +181,7 @@ class Reaction
 
     /**
      * Shortcut to Reaction::$app->logger->error()
-     * @param string $message
+     * @param string|mixed $message
      * @param array $context
      */
     public static function error($message, $context = []) {
