@@ -51,7 +51,7 @@ trait RequestServiceLocatorTrait
      */
     public function __set($name, $value)
     {
-        $setter = $setter = $this->getCustomSetter($name);
+        $setter = $this->getCustomSetter($name);
         if (method_exists($this, $setter)) {
             $this->$setter($value);
         } else {
