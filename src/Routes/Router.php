@@ -13,7 +13,6 @@ use Reaction\Helpers\ClassFinderHelper;
 use Reaction\Promise\Promise;
 use Reaction\Web\AppRequestInterface;
 use Reaction\Web\Response;
-use Psr\Http\Message\ServerRequestInterface;
 
 class Router extends BaseObject implements RouterInterface
 {
@@ -22,8 +21,6 @@ class Router extends BaseObject implements RouterInterface
     ];
     public $dispatcherClass = '\FastRoute\simpleDispatcher';
     public $dispatcherOptions = [];
-    ///** @var Application */
-    //public $app;
 
     private $routes = [];
     private $errorHandlers = [];
@@ -194,7 +191,9 @@ class Router extends BaseObject implements RouterInterface
                     $response = $routeInfo[1]($request, ...array_values($params));
                     break;
             }
-            $r($response);
+            $request->emitAndWait(AppRequestInterface::EVENT_REQUEST_END, [$request])->then(
+                function () use ($r, $response) { $r($response); }
+            );
         }))->then(function ($response) {
             //Fallback if return value is string
             if(is_string($response)) return new Response(200, [], $response);
