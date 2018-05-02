@@ -2,7 +2,7 @@
 
 namespace Reaction\Routes;
 
-use React\Promise\ExtendedPromiseInterface;
+use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\Annotations\Ctrl;
 use Reaction\Annotations\CtrlAction;
 use Reaction\Base\BaseObject;
@@ -164,7 +164,7 @@ class Router extends BaseObject implements RouterInterface
     /**
      * Dispatch requested route
      * @param AppRequestInterface $request
-     * @return Response|ExtendedPromiseInterface
+     * @return ExtendedPromiseInterface
      */
     public function dispatchRoute(AppRequestInterface $request) {
         $self = $this;

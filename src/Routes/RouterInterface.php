@@ -2,7 +2,7 @@
 
 namespace Reaction\Routes;
 
-use Psr\Http\Message\ServerRequestInterface;
+use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\Web\AppRequestInterface;
 
 /**
@@ -101,7 +101,7 @@ interface RouterInterface
     /**
      * Dispatch requested route
      * @param AppRequestInterface $request
-     * @return \Reaction\Web\Response
+     * @return ExtendedPromiseInterface
      */
     public function dispatchRoute(AppRequestInterface $request);
 }
