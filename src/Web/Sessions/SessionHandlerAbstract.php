@@ -25,16 +25,16 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
      * After that time GC will remove data from storage and archive it for '$sessionLifetime' seconds
      * @see $sessionLifetime
      */
-    public $gcLifetime = 8600;
+    public $gcLifetime = 10;
     /**
      * @var integer Session lifetime in seconds (default 7 days).
      * Time for archive session life from where it can be restored
      */
-    public $sessionLifetime = 604800;
+    public $sessionLifetime = 20;
     /**
      * @var integer GC timer interval in seconds
      */
-    public $timerInterval = 5;
+    public $timerInterval = 3;
     /**
      * @var bool Whenever do not use internal garbage collector
      */
@@ -133,7 +133,7 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
     /**
      * Return a new session ID
      * @param AppRequestInterface $request
-     * @return string  A session ID valid for session handler
+     * @return PromiseInterface  with session ID valid for session handler
      */
     public function createId(AppRequestInterface $request)
     {
@@ -217,30 +217,76 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
     /**
      * Restore session data from archive
      * @param string $sessionId
+     * @param bool   $deleteFromArchive
      * @return PromiseInterface  with session data array or null
      */
-    public function restoreSessionData($sessionId)
+    public function restoreSessionData($sessionId, $deleteFromArchive = false)
     {
         $self = $this;
-        return $this->getArchiveFilePath($sessionId)->then(
-            function ($filePath) {
+        /** @var FileInterface $file */
+        $file = null;
+        return $this->getArchiveFilePath($sessionId, true)->then(
+            function ($filePath) use (&$file) {
                 $file = \Reaction::$app->fs->file($filePath);
                 return $file->getContents();
             }
         )->then(
-            function ($dataStr) use ($self) {
+            function ($dataStr) use ($self, &$file, $deleteFromArchive) {
                 try {
                     $data = $self->unserializeSessionData($dataStr);
                 } catch (\InvalidArgumentException $exception) {
                     $data = null;
                 }
-                return is_array($data) ? $data : null;
+                $data = is_array($data) ? $data : null;
+                if ($deleteFromArchive) {
+                    $callback = function () use ($data) { return $data; };
+                    return $file->remove()->then($callback, $callback);
+                }
+                return $data;
             },
             function () use ($sessionId) {
                 $message = sprintf('Failed to restore session "%s"', $sessionId);
                 throw new SessionException($message);
             }
         );
+    }
+
+    /**
+     * GC cleanup callback for archived sessions.
+     * For file archive
+     */
+    protected function gcCleanupArchive() {
+        $self = $this;
+        return $this->getArchivePath()->then(
+            function ($pathArchive) {
+                $path = \Reaction::$app->fs->dir($pathArchive);
+                return $path->ls();
+            }
+        )->then(
+            function ($list) use ($self) {
+                $promises = [];
+                $expiredTime = time() - $self->sessionLifetime;
+                foreach ($list as $node) {
+                    /** @var FileInterface $node */
+                    if (!($node instanceof FileInterface)) continue;
+                    $promises[] = $node->time()->then(
+                        function ($data) use ($expiredTime, $node) {
+                            /** @var \DateTime $date */
+                            $date = $data['mtime'];
+                            if ($date->getTimestamp() < $expiredTime) {
+                                return $node->remove()->then(null, function () { return true; });
+                            }
+                            return true;
+                        },
+                        function () { return false; }
+                    );
+                }
+                if (empty($promises)) {
+                    return \Reaction\Promise\resolve(true);
+                }
+                return \Reaction\Promise\all($promises);
+            }
+        )->then(null, function () { return \Reaction\Promise\resolve(false); });
     }
 
     /**
@@ -298,13 +344,25 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
     /**
      * Get session archive file path
      * @param string $sessionId
+     * @param bool   $existCheck
      * @return PromiseInterface
      */
-    protected function getArchiveFilePath($sessionId) {
+    protected function getArchiveFilePath($sessionId, $existCheck = false) {
         $fileName = $sessionId . '.json';
         return $this->getArchivePath()->then(
-            function ($dirPath) use ($fileName) {
+            function ($dirPath) use ($fileName, $existCheck) {
                 return rtrim($dirPath) . DIRECTORY_SEPARATOR . $fileName;
+            }
+        )->then(
+            function ($filePath) use ($existCheck) {
+                if ($existCheck) {
+                    return \Reaction::$app->fs->file($filePath)->exists()->then(
+                        function () use ($filePath) {
+                            return $filePath;
+                        }
+                    );
+                }
+                return resolve($filePath);
             }
         );
     }

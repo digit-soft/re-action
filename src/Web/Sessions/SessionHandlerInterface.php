@@ -67,9 +67,10 @@ interface SessionHandlerInterface
     /**
      * Restore session data from archive
      * @param string $sessionId
+     * @param bool   $deleteFromArchive
      * @return PromiseInterface  with session data array or null
      */
-    public function restoreSessionData($sessionId);
+    public function restoreSessionData($sessionId, $deleteFromArchive = false);
 
     /**
      * Return a new session ID

@@ -2,10 +2,12 @@
 
 namespace Reaction\Web\Sessions;
 
+use React\Filesystem\Node\FileInterface;
 use React\Promise\ExtendedPromiseInterface;
 use React\Promise\PromiseInterface;
 use Reaction\Cache\ExtendedCacheInterface;
 use Reaction\Exceptions\SessionException;
+use Reaction\Helpers\ArrayHelper;
 use Reaction\Promise\Promise;
 
 /**
@@ -27,6 +29,17 @@ class CachedSessionHandler extends SessionHandlerAbstract
     protected $keys = [];
 
     /**
+     * @inheritdoc
+     */
+    public function init()
+    {
+        if (!is_object($this->cache)) {
+            $this->cache = \Reaction::create($this->cache);
+        }
+        parent::init();
+    }
+
+    /**
      * Read session data and returns serialized|encoded data
      * @param string $id
      * @return PromiseInterface  with session data
@@ -38,7 +51,22 @@ class CachedSessionHandler extends SessionHandlerAbstract
         return $this->getDataFromCache($key)->then(
             function ($record) use ($self) {
                 return $self->extractData($record, true);
-            },
+            }
+        )->then(
+            null,
+            function ($error = null) use ($self, $id) {
+                return $self->restoreSessionData($id, true)->then(
+                    function ($data) use ($self, $id, $error) {
+                        if (is_array($data)) {
+                            return $self->write($id, $data);
+                        } else {
+                            return \Reaction\Promise\reject($error);
+                        }
+                    }
+                );
+            }
+        )->then(
+            null,
             function ($error = null) use ($id) {
                 $message = sprintf('Failed to read session data for "%s"', $id);
                 throw new SessionException($message, 0, $error);
@@ -60,7 +88,7 @@ class CachedSessionHandler extends SessionHandlerAbstract
         return $this->writeDataToCache($key, $record)->then(
             function () use ($self, $key, $id) {
                 $self->keys[$id] = time();
-                return $self->cache->get($key);
+                return $self->read($id);
             },
             function ($error = null) use ($id) {
                 $message = sprintf('Failed to write session data for "%s"', $id);
@@ -79,7 +107,8 @@ class CachedSessionHandler extends SessionHandlerAbstract
         if (isset($this->keys[$id])) {
             unset($this->keys[$id]);
         }
-        return $this->cache->remove($id)->then(
+        $key = $this->getSessionKey($id);
+        return $this->cache->remove($key)->then(
             function () use ($id) { return $id; },
             function ($error = null) use ($id) {
                 $message = sprintf('Failed to destroy session "%s"', $id);
@@ -98,7 +127,7 @@ class CachedSessionHandler extends SessionHandlerAbstract
      */
     public function gc()
     {
-        \Reaction::$app->logger->info($this->keys);
+        \Reaction::info($this->cache);
         if ($this->_gcIsRunning || empty($this->keys)) {
             return;
         }
@@ -121,6 +150,7 @@ class CachedSessionHandler extends SessionHandlerAbstract
             );
             $promises[] = $promise;
         }
+        $promises[] = $this->gcCleanupArchive();
         if (!empty($promises)) {
             \Reaction\Promise\all($promises)->always(
                 function () use ($self) { $self->_gcIsRunning = false; }
