@@ -76,9 +76,10 @@ class ClassFinderHelper
         $paths = [];
         $namespace = trim($namespace, static::CS);
         $nsPrefixes = static::getNamespacePrefixes($namespace);
+        $nsPrefixesCount = count($nsPrefixes);
         $loaderPrefixes = static::getLoaderPrefixes();
         $nsPrefix = null;
-        for ($i = 0; $i < count($nsPrefixes); $i++) {
+        for ($i = 0; $i < $nsPrefixesCount; $i++) {
             $nsPrefix = $nsPrefixes[$i];
             if (!isset($loaderPrefixes[$nsPrefix])) {
                 continue;
@@ -89,7 +90,8 @@ class ClassFinderHelper
             $nsSuffix = trim(substr($namespace, strlen($nsPrefix)), static::CS);
             $nsSuffix = str_replace(static::CS, static::DS, $nsSuffix);
             $loaderPaths = $loaderPrefixes[$nsPrefix];
-            for ($j = 0; $j < count($loaderPaths); $j++) {
+            $loaderPathsCount = count($loaderPaths);
+            for ($j = 0; $j < $loaderPathsCount; $j++) {
                 $possiblePath = $loaderPaths[$j] . static::DS . $nsSuffix;
                 if(file_exists($possiblePath) && is_dir($possiblePath)) { $paths[] = $possiblePath; }
             }
@@ -97,7 +99,7 @@ class ClassFinderHelper
                 break;
             }
         }
-        if(empty($paths)) {
+        if (empty($paths)) {
             return [null, []];
         }
 
@@ -111,12 +113,13 @@ class ClassFinderHelper
      */
     protected static function getNamespacePrefixes($namespace) {
         $namespaceExp = explode(static::CS, trim($namespace, static::CS));
-        if (count($namespaceExp) === 1) {
+        $namespaceExpCount = count($namespaceExp);
+        if ($namespaceExpCount === 1) {
             return $namespaceExp;
         }
         $prefixes = [];
         $currPrefix = '';
-        for ($i = 0; $i < count($namespaceExp); $i++) {
+        for ($i = 0; $i < $namespaceExpCount; $i++) {
             $currPrefix .= static::CS . $namespaceExp[$i];
             $prefixes[] = trim($currPrefix, static::CS);
         }
