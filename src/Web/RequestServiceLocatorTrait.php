@@ -30,11 +30,33 @@ trait RequestServiceLocatorTrait
      */
     public function __get($name)
     {
+        $getter = $this->getCustomGetter($name);
         if ($this->hasComponent($name)) {
             return $this->getComponent($name);
+        } elseif (method_exists($this, $getter)) {
+            return $this->$getter();
         }
 
         return parent::__get($name);
+    }
+
+    /**
+     * Sets value of an object property.
+     *
+     * Do not call this method directly as it is a PHP magic method that
+     * will be implicitly called when executing `$object->property = $value;`.
+     * @param string $name the property name or the event name
+     * @param mixed $value the property value
+     * @see __get()
+     */
+    public function __set($name, $value)
+    {
+        $setter = $setter = $this->getCustomSetter($name);
+        if (method_exists($this, $setter)) {
+            $this->$setter($value);
+        } else {
+            parent::__set($name, $value);
+        }
     }
 
     /**
@@ -45,11 +67,35 @@ trait RequestServiceLocatorTrait
      */
     public function __isset($name)
     {
+        $getter = $this->getCustomGetter($name);
         if ($this->hasComponent($name)) {
             return true;
+        } elseif (method_exists($this, $getter)) {
+            return $this->$getter() !== null;
         }
 
         return parent::__isset($name);
+    }
+
+    /**
+     * Sets an object property to null.
+     *
+     * Do not call this method directly as it is a PHP magic method that
+     * will be implicitly called when executing `unset($object->property)`.
+     *
+     * Note that if the property is not defined, this method will do nothing.
+     * If the property is read-only, it will throw an exception.
+     * @param string $name the property name
+     * @see http://php.net/manual/en/function.unset.php
+     */
+    public function __unset($name)
+    {
+        $setter = $this->getCustomSetter($name);
+        if (method_exists($this, $setter)) {
+            $this->$setter(null);
+        } else {
+            parent::__unset($name);
+        }
     }
 
     /**
@@ -250,5 +296,23 @@ trait RequestServiceLocatorTrait
         foreach ($components as $id => $component) {
             $this->setComponent($id, $component);
         }
+    }
+
+    /**
+     * Get possible getter for Request
+     * @param string $name
+     * @return string
+     */
+    private function getCustomGetter($name) {
+        return '_get' . $name;
+    }
+
+    /**
+     * Get possible setter for Request
+     * @param string $name
+     * @return string
+     */
+    private function getCustomSetter($name) {
+        return '_set' . $name;
     }
 }

@@ -80,6 +80,9 @@ use Reaction\Validators\IpValidator;
  */
 class Request extends Reaction\Base\Component implements AppRequestInterface
 {
+    const _GETTER_PREFIX = 'get';
+    const _SETTER_PREFIX = 'set';
+
     /**
      * The name of the HTTP header for sending CSRF token.
      */
@@ -249,6 +252,10 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
      * @var string Application request language
      */
     public $language = 'en_US';
+    /**
+     * @var array Components to init first
+     */
+    public $initComponents = [];
 
 
     /**
@@ -269,10 +276,29 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
     protected $_postParams = [];
     protected $_method;
 
+    /**
+     * @inheritdoc
+     */
     public function init()
     {
         $this->syncWithReactRequest();
         $this->getCsrfToken();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function initPromised()
+    {
+        $promises = [
+            Reaction\Promise\resolve(true),
+        ];
+        foreach ($this->initComponents as $componentName) {
+            /** @var RequestComponent $component */
+            $component = $this->getComponent($componentName);
+            $promises[] = $component->initPromised()->then(null, function () { return true; });
+        }
+        return Reaction\Promise\all($promises);
     }
 
 //    /**

@@ -13,6 +13,9 @@ use Reaction\Exceptions\UnknownPropertyException;
  */
 class BaseObject implements Configurable
 {
+    const _GETTER_PREFIX = 'get';
+    const _SETTER_PREFIX = 'set';
+
     /**
      * Constructor.
      *
@@ -71,10 +74,11 @@ class BaseObject implements Configurable
      */
     public function __get($name)
     {
-        $getter = 'get' . $name;
+        $getter = static::_GETTER_PREFIX . $name;
+        $setter = static::_SETTER_PREFIX . $name;
         if (method_exists($this, $getter)) {
             return $this->$getter();
-        } elseif (method_exists($this, 'set' . $name)) {
+        } elseif (method_exists($this, $setter)) {
             throw new InvalidCallException('Getting write-only property: ' . get_class($this) . '::' . $name);
         }
 
@@ -94,7 +98,7 @@ class BaseObject implements Configurable
      */
     public function __set($name, $value)
     {
-        $setter = 'set' . $name;
+        $setter = static::_SETTER_PREFIX . $name;
         if (method_exists($this, $setter)) {
             $this->$setter($value);
         } elseif (method_exists($this, 'get' . $name)) {
@@ -117,7 +121,7 @@ class BaseObject implements Configurable
      */
     public function __isset($name)
     {
-        $getter = 'get' . $name;
+        $getter = static::_GETTER_PREFIX . $name;
         if (method_exists($this, $getter)) {
             return $this->$getter() !== null;
         }
@@ -139,10 +143,10 @@ class BaseObject implements Configurable
      */
     public function __unset($name)
     {
-        $setter = 'set' . $name;
+        $setter = static::_SETTER_PREFIX . $name;
         if (method_exists($this, $setter)) {
             $this->$setter(null);
-        } elseif (method_exists($this, 'get' . $name)) {
+        } elseif (method_exists($this, static::_GETTER_PREFIX . $name)) {
             throw new InvalidCallException('Unsetting read-only property: ' . get_class($this) . '::' . $name);
         }
     }
@@ -198,7 +202,8 @@ class BaseObject implements Configurable
      */
     public function canGetProperty($name, $checkVars = true)
     {
-        return method_exists($this, 'get' . $name) || $checkVars && property_exists($this, $name);
+        $getter = static::_GETTER_PREFIX . $name;
+        return method_exists($this, $getter) || $checkVars && property_exists($this, $name);
     }
 
     /**
@@ -217,7 +222,8 @@ class BaseObject implements Configurable
      */
     public function canSetProperty($name, $checkVars = true)
     {
-        return method_exists($this, 'set' . $name) || $checkVars && property_exists($this, $name);
+        $setter = static::_GETTER_PREFIX . $name;
+        return method_exists($this, $setter) || $checkVars && property_exists($this, $name);
     }
 
     /**

@@ -56,7 +56,8 @@ class Component extends BaseObject implements EventEmitterWildcardInterface
      */
     public function __set($name, $value)
     {
-        $setter = 'set' . $name;
+        $setter = static::_SETTER_PREFIX . $name;
+        $getter = static::_GETTER_PREFIX . $name;
         if (method_exists($this, $setter)) {
             // set property
             $this->$setter($value);
@@ -69,7 +70,7 @@ class Component extends BaseObject implements EventEmitterWildcardInterface
             return;
         }
 
-        if (method_exists($this, 'get' . $name)) {
+        if (method_exists($this, $getter)) {
             throw new InvalidCallException('Setting read-only property: ' . get_class($this) . '::' . $name);
         }
 
