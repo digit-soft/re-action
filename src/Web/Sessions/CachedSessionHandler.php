@@ -86,7 +86,7 @@ class CachedSessionHandler extends SessionHandlerAbstract
         $self = $this;
         $record = $this->packRecord($data);
         return $this->writeDataToCache($key, $record)->then(
-            function () use ($self, $key, $id) {
+            function () use ($self, $id) {
                 $self->keys[$id] = time();
                 return $self->read($id);
             },
