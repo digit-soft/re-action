@@ -284,14 +284,14 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
     public function initPromised()
     {
         $promises = [
-            Reaction\Promise\resolve(true),
+            \Reaction\Promise\resolve(true),
         ];
         foreach ($this->initComponents as $componentName) {
             /** @var RequestComponent $component */
             $component = $this->getComponent($componentName);
             $promises[] = $component->initPromised()->then(null, function () { return true; });
         }
-        return Reaction\Promise\all($promises);
+        return \Reaction\Promise\all($promises);
     }
 
 //    /**
@@ -1116,7 +1116,9 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
      */
     public function getOrigin()
     {
-        return $this->headers->get('origin');
+        /** @var string|null $origin */
+        $origin = $this->headers->get('origin');
+        return $origin;
     }
 
     /**
