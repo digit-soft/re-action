@@ -4,6 +4,7 @@ namespace Reaction\Web;
 
 use Psr\Http\Message\ServerRequestInterface;
 use React\Promise\PromiseInterface;
+use Reaction\Events\EventEmitterWildcardInterface;
 use Reaction\Helpers\Request\HelpersGroup;
 use Reaction\Web\Sessions\Session;
 
@@ -85,8 +86,10 @@ use Reaction\Web\Sessions\Session;
  * @property string|null $userHost User host name, null if not available. This property is read-only.
  * @property string|null $userIP User IP address, null if not available. This property is read-only.
  */
-interface AppRequestInterface extends ServerRequestInterface
+interface AppRequestInterface extends ServerRequestInterface, EventEmitterWildcardInterface
 {
+    const EVENT_REQUEST_END = 'requestEnd';
+
     /**
      * Returns the header collection.
      * The header collection contains incoming HTTP headers.
