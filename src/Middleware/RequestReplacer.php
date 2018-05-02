@@ -5,6 +5,7 @@ namespace Reaction\Middleware;
 use Psr\Http\Message\ServerRequestInterface;
 use Reaction\Base\Configurable;
 use Reaction\Helpers\ArrayHelper;
+use Reaction\Web\AppRequestInterface;
 
 /**
  * Class RequestReplacer. Replaces react request for an AppRequestInterface instance
@@ -41,8 +42,9 @@ class RequestReplacer implements Configurable
             $config = ArrayHelper::merge($this->requestClassName, $config);
         }
         $config['reactRequest'] = $request;
+        /** @var AppRequestInterface $newRequest */
         $newRequest = \Reaction::create($config);
-
-        return $next($newRequest);
+        $initCallback = function () use ($next, &$newRequest) { return $next($newRequest); };
+        return $newRequest->initPromised()->then($initCallback, $initCallback);
     }
 }
