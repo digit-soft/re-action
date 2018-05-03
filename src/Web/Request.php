@@ -289,7 +289,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
         foreach ($this->initComponents as $componentName) {
             /** @var RequestComponent $component */
             $component = $this->getComponent($componentName);
-            $promises[] = $component->initPromised()->then(null, function () { return true; });
+            $promises[] = $component->initPromised()->then(null, function() { return true; });
         }
         return \Reaction\Promise\all($promises);
     }
@@ -403,7 +403,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
      */
     public function _getMethod()
     {
-        if(!isset($this->_method)) {
+        if (!isset($this->_method)) {
             /** @var string $methodHeader */
             $methodHeader = $this->headers->get('X-Http-Method-Override');
             if (isset($this->_postParams[$this->methodParam])) {
@@ -975,7 +975,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
             $pathInfo = substr($pathInfo, 1);
         }
 
-        return (string) $pathInfo;
+        return (string)$pathInfo;
     }
 
     /**
@@ -1216,7 +1216,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
     public function setPort($value)
     {
         if ($value != $this->_port) {
-            $this->_port = (int) $value;
+            $this->_port = (int)$value;
             $this->_hostInfo = null;
         }
     }
@@ -1249,7 +1249,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
     public function setSecurePort($value)
     {
         if ($value != $this->_securePort) {
-            $this->_securePort = (int) $value;
+            $this->_securePort = (int)$value;
             $this->_hostInfo = null;
         }
     }
@@ -1390,7 +1390,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
                 if (strpos($param, '=') !== false) {
                     list($key, $value) = explode('=', $param, 2);
                     if ($key === 'q') {
-                        $values['q'][2] = (float) $value;
+                        $values['q'][2] = (float)$value;
                     } else {
                         $values[$key] = $value;
                     }
@@ -1401,7 +1401,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
             $accepts[] = $values;
         }
 
-        usort($accepts, function ($a, $b) {
+        usort($accepts, function($a, $b) {
             $a = $a['q']; // index, name, q
             $b = $b['q'];
             if ($a[2] > $b[2]) {
