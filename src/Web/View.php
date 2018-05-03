@@ -36,7 +36,7 @@ use Reaction\Helpers\Json;
  *
  * Borrowed from yii2
  */
-class View extends \Reaction\Base\View
+class View extends \Reaction\Base\View implements RequestComponentInterface
 {
     /**
      * @event Event an event that is triggered by [[beginBody()]].
@@ -74,16 +74,20 @@ class View extends \Reaction\Base\View
     /**
      * This is internally used as the placeholder for receiving the content registered for the head section.
      */
-    const PH_HEAD = '<![CDATA[YII-BLOCK-HEAD]]>';
+    const PH_HEAD = '<![CDATA[REACTION-BLOCK-HEAD]]>';
     /**
      * This is internally used as the placeholder for receiving the content registered for the beginning of the body section.
      */
-    const PH_BODY_BEGIN = '<![CDATA[YII-BLOCK-BODY-BEGIN]]>';
+    const PH_BODY_BEGIN = '<![CDATA[REACTION-BLOCK-BODY-BEGIN]]>';
     /**
      * This is internally used as the placeholder for receiving the content registered for the end of the body section.
      */
-    const PH_BODY_END = '<![CDATA[YII-BLOCK-BODY-END]]>';
+    const PH_BODY_END = '<![CDATA[REACTION-BLOCK-BODY-END]]>';
 
+    /**
+     * @var AppRequestInterface  Application request that is currently processed
+     */
+    public $request;
     /**
      * @var AssetBundle[] list of the registered asset bundles. The keys are the bundle names, and the values
      * are the registered [[AssetBundle]] objects.
@@ -217,8 +221,7 @@ class View extends \Reaction\Base\View
      */
     public function getAssetManager()
     {
-        //TODO: Rewrite getting asset manager from request object
-        return $this->_assetManager ?: Yii::$app->getAssetManager();
+        return $this->_assetManager ?: $this->request->assetManager;
     }
 
     /**
@@ -427,7 +430,7 @@ class View extends \Reaction\Base\View
             $this->cssFiles[$key] = Html::cssFile($url, $options);
         } else {
             $this->getAssetManager()->bundles[$key] = \Reaction::create([
-                'class' => AssetBundle::className(),
+                'class' => AssetBundle::class,
                 'baseUrl' => '',
                 'css' => [strncmp($url, '//', 2) === 0 ? $url : ltrim($url, '/')],
                 'cssOptions' => $options,

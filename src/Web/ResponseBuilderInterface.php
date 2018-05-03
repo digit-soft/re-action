@@ -13,6 +13,7 @@ use Psr\Http\Message\StreamInterface;
  * @property HeaderCollection    $headers
  * @property CookieCollection    $cookies
  * @property AppRequestInterface $request
+ * @property string              $format
  */
 interface ResponseBuilderInterface
 {
@@ -25,14 +26,14 @@ interface ResponseBuilderInterface
     /**
      * Set status code
      * @param int $code
-     * @return Response
+     * @return ResponseBuilderInterface
      */
     public function setStatusCode($code = 200);
 
     /**
      * Sets the response status code based on the exception.
-     * @param \Exception|\Error $e the exception object.
-     * @return Response the response object itself
+     * @param \Exception|\Error|\Throwable $e the exception object.
+     * @return ResponseBuilderInterface
      */
     public function setStatusCodeByException($e);
 
@@ -75,6 +76,7 @@ interface ResponseBuilderInterface
     /**
      * Set Response body
      * @param string|array|StreamInterface $body
+     * @return ResponseBuilderInterface
      */
     public function setBody($body);
 
