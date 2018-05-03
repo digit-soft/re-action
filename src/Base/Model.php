@@ -275,7 +275,7 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
             }
             return $reflector->getShortName();
         } catch (\ReflectionException $exception) {
-            $className = explode('\\',static::class);
+            $className = explode('\\', static::class);
             return end($className);
         }
     }
@@ -297,6 +297,7 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
                 }
             }
         } catch (\ReflectionException $exception) {
+            //TODO: Rewrite
             App::app()->exceptions->throwToStdout($exception);
             $names = [];
         }
@@ -435,7 +436,7 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
      * $model->validators[] = $newValidator;
      * ```
      *
-     * @return ArrayObject|\app\base\validators\Validator[] all the validators declared in the model.
+     * @return ArrayObject|\Reaction\Validators\Validator[] all the validators declared in the model.
      * @throws InvalidConfigException
      */
     public function getValidators()
@@ -460,6 +461,7 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
         try {
             $_validators = $this->getValidators();
         } catch (InvalidConfigException $exception) {
+            //TODO: Rewrite
             App::app()->exceptions->throwToStdout($exception);
             $_validators = [];
         }
@@ -488,9 +490,10 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
                 try {
                     $validator = Validator::createValidator($rule[1], $this, (array)$rule[0], array_slice($rule, 2));
                 } catch (\Exception $e) {
+                    //TODO: Rewrite
                     App::app()->exceptions->throwToStdout($e);
                 }
-                if(isset($validator)) {
+                if (isset($validator)) {
                     $validators->append($validator);
                 }
             } else {
