@@ -496,12 +496,13 @@ class View extends \Reaction\Base\View implements RequestComponentInterface
     {
         $url = \Reaction::$app->getAlias($url);
         $key = $key ?: $url;
+        $helpers = $this->request->helpers;
 
         $depends = ArrayHelper::remove($options, 'depends', []);
 
         if (empty($depends)) {
             $position = ArrayHelper::remove($options, 'position', self::POS_END);
-            $this->jsFiles[$position][$key] = Html::jsFile($url, $options);
+            $this->jsFiles[$position][$key] = $helpers->html->jsFile($url, $options);
         } else {
             $this->getAssetManager()->bundles[$key] = Reaction::create([
                 'class' => AssetBundle::class,
