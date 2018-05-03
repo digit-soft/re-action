@@ -254,6 +254,11 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
      */
     public $initComponents = [];
 
+    /**
+     * @var Reaction\Routes\ControllerInterface Currently used controller
+     */
+    public $controller;
+
 
     /**
      * @var CookieCollection Collection of request cookies.
