@@ -18,6 +18,10 @@ return [
             '@runtime' => '@root/Runtime',
             '@views' => '@root/Views',
             '@reaction' => dirname(__FILE__),
+            '@web' => '',
+            '@webroot' => '@root/Web',
+            '@vendor' => '@root/vendor',
+            '@bower' => '@vendor/bower-asset',
         ],
         //Components
         'components' => [
@@ -68,6 +72,9 @@ return [
             ],
             'view' => [
                 'class' => 'Reaction\Web\View',
+            ],
+            'urlManager' => [
+                'class' => 'Reaction\Web\UrlManager',
             ],
         ],
     ],
