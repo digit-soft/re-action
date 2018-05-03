@@ -809,7 +809,7 @@ class Formatter extends Component
         }
         try {
             if (is_numeric($value)) { // process as unix timestamp, which is always in UTC
-                $timestamp = new DateTime('@' . (int) $value, new DateTimeZone('UTC'));
+                $timestamp = new DateTime('@' . (int)$value, new DateTimeZone('UTC'));
                 return $checkDateTimeInfo ? [$timestamp, true, true] : $timestamp;
             } elseif (($timestamp = DateTime::createFromFormat('Y-m-d|', $value, new DateTimeZone($this->defaultTimeZone))) !== false) { // try Y-m-d format (support invalid dates like 2012-13-01)
                 return $checkDateTimeInfo ? [$timestamp, false, true] : $timestamp;
@@ -1054,7 +1054,7 @@ class Formatter extends Component
             return $result;
         }
 
-        return number_format((int) $value, 0, $this->decimalSeparator, $this->thousandSeparator);
+        return number_format((int)$value, 0, $this->decimalSeparator, $this->thousandSeparator);
     }
 
     /**
@@ -1658,7 +1658,7 @@ class Formatter extends Component
             return 0;
         }
         if (is_string($value) && is_numeric($value)) {
-            $value = (float) $value;
+            $value = (float)$value;
         }
         if (!is_numeric($value)) {
             throw new InvalidArgumentException("'$value' is not a numeric value.");

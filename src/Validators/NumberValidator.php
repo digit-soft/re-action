@@ -148,8 +148,7 @@ class NumberValidator extends Validator
 
         if ($this->min !== null) {
             // ensure numeric value to make javascript comparison equal to PHP comparison
-            // https://github.com/yiisoft/yii2/issues/3118
-            $options['min'] = is_string($this->min) ? (float) $this->min : $this->min;
+            $options['min'] = is_string($this->min) ? (float)$this->min : $this->min;
             $options['tooSmall'] = $this->formatMessage($this->tooSmall, [
                 'attribute' => $label,
                 'min' => $this->min,
@@ -157,8 +156,7 @@ class NumberValidator extends Validator
         }
         if ($this->max !== null) {
             // ensure numeric value to make javascript comparison equal to PHP comparison
-            // https://github.com/yiisoft/yii2/issues/3118
-            $options['max'] = is_string($this->max) ? (float) $this->max : $this->max;
+            $options['max'] = is_string($this->max) ? (float)$this->max : $this->max;
             $options['tooBig'] = $this->formatMessage($this->tooBig, [
                 'attribute' => $label,
                 'max' => $this->max,

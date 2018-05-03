@@ -76,7 +76,7 @@ class PhpMessageSource extends MessageSource
             }
         }
 
-        return (array) $messages;
+        return (array)$messages;
     }
 
     /**
@@ -114,7 +114,7 @@ class PhpMessageSource extends MessageSource
             }
         }
 
-        return (array) $messages;
+        return (array)$messages;
     }
 
     /**

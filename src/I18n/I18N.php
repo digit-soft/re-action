@@ -97,7 +97,7 @@ class I18N extends Component
      */
     public function format($message, $params, $language)
     {
-        $params = (array) $params;
+        $params = (array)$params;
         if ($params === []) {
             return $message;
         }

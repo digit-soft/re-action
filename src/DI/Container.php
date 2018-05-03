@@ -636,7 +636,7 @@ class Container extends Component
     public function setDefinitions(array $definitions)
     {
         foreach ($definitions as $class => $definition) {
-            if($definition instanceof Definition) {
+            if ($definition instanceof Definition) {
                 $definition = $this->extractDefinition($definition);
             }
             if (is_array($definition) && count($definition) === 2 && array_values($definition) === $definition) {
@@ -661,7 +661,7 @@ class Container extends Component
     public function setSingletons(array $singletons)
     {
         foreach ($singletons as $class => $definition) {
-            if($definition instanceof Definition) {
+            if ($definition instanceof Definition) {
                 $definition = $this->extractDefinition($definition);
             }
             if (is_array($definition) && count($definition) === 2 && array_values($definition) === $definition) {
@@ -679,7 +679,7 @@ class Container extends Component
      * @return array
      */
     protected function extractDefinition(Definition $definition) {
-        if(!($definition instanceof Definition) || !$definition->isValid()) {
+        if (!($definition instanceof Definition) || !$definition->isValid()) {
             return [];
         }
         return $definition->dumpArrayDefinition();

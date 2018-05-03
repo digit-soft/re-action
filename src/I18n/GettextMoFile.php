@@ -243,7 +243,7 @@ class GettextMoFile extends GettextFile
      */
     protected function writeInteger($fileHandle, $integer)
     {
-        return $this->writeBytes($fileHandle, pack($this->useBigEndian ? 'N' : 'V', (int) $integer));
+        return $this->writeBytes($fileHandle, pack($this->useBigEndian ? 'N' : 'V', (int)$integer));
     }
 
     /**

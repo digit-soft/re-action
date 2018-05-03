@@ -30,7 +30,7 @@ class Reaction
      */
     public static function init(Composer\Autoload\ClassLoader $composer, $configsPath = null) {
         static::$composer = $composer;
-        if(!isset($configsPath)) {
+        if (!isset($configsPath)) {
             throw new \Reaction\Exceptions\InvalidArgumentException("Missing \$configsPath option");
         }
         static::$configsPath = $configsPath;
@@ -116,7 +116,7 @@ class Reaction
      */
     public static function t($domain, $message, $params = [], $language = null) {
         $_params = [];
-        foreach ($params as $key => $value) { $_params['{'.$key.'}'] = $value; }
+        foreach ($params as $key => $value) { $_params['{' . $key . '}'] = $value; }
         return !empty($params) ? strtr($message, $_params) : $message;
     }
 
