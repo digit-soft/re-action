@@ -95,6 +95,10 @@ class View extends Component implements ViewInterface, DynamicContentAwareInterf
      * [[setDynamicPlaceholders()]], [[addDynamicPlaceholder()]] instead.
      */
     public $dynamicPlaceholders = [];
+    /**
+     * @var string View layout in which it will be rendered
+     */
+    public $layout = '@reaction/Views/layout/main';
 
     /**
      * @var array the view files currently being rendered. There may be multiple view files being
@@ -161,7 +165,7 @@ class View extends Component implements ViewInterface, DynamicContentAwareInterf
      * @throws InvalidCallException if a relative view name is given while there is no active context to
      * determine the corresponding view file.
      */
-    protected function findViewFile($view, $context = null)
+    public function findViewFile($view, $context = null)
     {
         if (strncmp($view, '@', 1) === 0) {
             // e.g. "@app/views/main"
