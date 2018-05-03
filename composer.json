@@ -25,7 +25,9 @@
         "digit-soft/re-action-promise": "*",
         "nikic/fast-route": "*",
         "psr/log": "*",
-        "ezyang/htmlpurifier": "~4.10"
+        "ezyang/htmlpurifier": "~4.10",
+        "bower-asset/jquery": "~3.2",
+        "bower-asset/bootstrap": "~4.1"
     },
     "require-dev": {},
     "autoload": {
@@ -33,5 +35,11 @@
             "Reaction\\": "src/"
         },
         "files": [ "src/Reaction.php" ]
-    }
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://asset-packagist.org"
+        }
+    ]
 }
