@@ -61,7 +61,7 @@ class BaseApplication extends ServiceLocator implements BaseApplicationInterface
         // TODO: Make more serious Exception handler :)
         $this->router->registerControllers();
         $this->router->publishRoutes();
-        $this->addMiddleware([$this->router, 'dispatchRoute']);
+        $this->addMiddleware([$this->router, 'resolveRequest']);
         $this->socket = \Reaction::create(SocketServerInterface::class);
         $this->http = \Reaction::create(Http::class, [$this->middleware]);
         $this->http->listen($this->socket);

@@ -17,6 +17,8 @@ use Reaction\Web\Sessions\Session;
  * @property HelpersGroup             $helpers Helpers group
  * @property ResponseBuilderInterface $response
  * @property Session                  $session
+ * @property AssetManager             $assetManager
+ * @property View                     $view
  * @property bool                     $enableCsrfValidation
  * @property string                   $csrfParam
  * @property array                    $csrfCookie
