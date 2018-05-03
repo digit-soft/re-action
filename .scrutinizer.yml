@@ -1,2 +1,5 @@
 filter:
-    excluded_paths: [src/Helpers/*]
+    excluded_paths:
+      - src/Helpers/
+      - src/I18n/Migrations/
+      - src/I18n/DbMessageSource.php
