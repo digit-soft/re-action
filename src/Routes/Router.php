@@ -22,6 +22,10 @@ class Router extends BaseObject implements RouterInterface
     public $dispatcherClass = '\FastRoute\simpleDispatcher';
     public $dispatcherOptions = [];
 
+    public $_errorController = [
+        'class' => 'Reaction\Routes\ErrorController',
+    ];
+
     private $routes = [];
     private $errorHandlers = [];
     private $groupCurrent = '';
@@ -165,47 +169,39 @@ class Router extends BaseObject implements RouterInterface
      * Dispatch requested route
      * @param AppRequestInterface $request
      * @return ExtendedPromiseInterface
+     * @throws \Reaction\Exceptions\InvalidConfigException
+     * @throws \ReflectionException
      */
-    public function dispatchRoute(AppRequestInterface $request) {
+    public function resolveRequest(AppRequestInterface $request) {
         $self = $this;
-        return (new Promise(function ($r, $c) use ($self, &$request) {
-            $response = new Response(200);
-            $path = '/' . (string)$request->pathInfo;
-            $path = rtrim($path, '/');
-            try {
-                $routeInfo = $self->dispatcher->dispatch($request->method, $path);
-            } catch (\Throwable $exception) {
-                \Reaction::error(get_class($exception) . "\n" . $exception->getMessage() . "\n" . $exception->getTraceAsString());
-                $routeInfo = [Dispatcher::NOT_FOUND];
+        $routeInfo = $self->dispatchRequest($request);
+        /** @var RouteInterface $route */
+        $route = \Reaction::create([
+            'class' => RouteInterface::class,
+            'dispatchedData' => $routeInfo,
+        ]);
+        return $route->resolve($request)->then(
+            function ($response) use (&$request) {
+                return $request->emitAndWait(AppRequestInterface::EVENT_REQUEST_END, [$request])->then(
+                    function () use ($response) {
+                        return $response;
+                    }
+                );
             }
-            switch ($routeInfo[0]) {
-                case Dispatcher::NOT_FOUND:
-                    $response = new Response(404, ['Content-Type' => 'text/plain'],  'Not found');
-                    break;
-                case Dispatcher::METHOD_NOT_ALLOWED:
-                    $message = strtr('Method Not Allowed. Only "{methods}"', ['{methods}' => implode(', ', $routeInfo[1])]);
-                    $response = new Response(405, ['Content-Type' => 'text/plain'],  $message);
-                    break;
-                case Dispatcher::FOUND:
-                    $params = $routeInfo[2] ?? [];
-                    $response = $routeInfo[1]($request, ...array_values($params));
-                    break;
-            }
-            $request->emitAndWait(AppRequestInterface::EVENT_REQUEST_END, [$request])->then(
-                function () use ($r, $response) { $r($response); }
-            );
-        }))->then(function ($response) {
-            //Fallback if return value is string
-            if(is_string($response)) return new Response(200, [], $response);
-            return $response;
-        })->otherwise(function ($error) {
-            if($error instanceof \Throwable) {
-                $message = get_class($error) . "\n" . $error->getMessage() . "\n" . $error->getTraceAsString();
-            } else {
-                $message = $error;
-            }
-            \Reaction::error($message);
-        });
+        );
+    }
+
+    /**
+     * Get info about requested route from dispatcher
+     * @param AppRequestInterface $request
+     * @return array
+     */
+    protected function dispatchRequest(AppRequestInterface $request) {
+        $path = '/' . (string)$request->pathInfo;
+        $path = rtrim($path, '/');
+        $method = $request->method;
+        $routeInfo = $this->dispatcher->dispatch($method, $path);
+        return $routeInfo;
     }
 
     /**
@@ -274,5 +270,28 @@ class Router extends BaseObject implements RouterInterface
             $handlerName = $row['handler'];
             $this->addRoute($method, $route, [$controller, $handlerName]);
         }
+    }
+
+    /**
+     * Get controller for errors
+     * @return Controller
+     * @throws \Reaction\Exceptions\InvalidConfigException
+     * @throws \ReflectionException
+     */
+    public function getErrorController()
+    {
+        if (!is_object($this->_errorController)) {
+            $this->_errorController = \Reaction::create($this->_errorController);
+        }
+        return $this->_errorController;
+    }
+
+    /**
+     * Set controller for errors
+     * @param string|array $controller
+     */
+    public function setErrorController($controller)
+    {
+        $this->_errorController = $controller;
     }
 }
