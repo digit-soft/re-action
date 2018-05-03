@@ -219,10 +219,12 @@ class Router extends BaseObject implements RouterInterface
      */
     protected function registerController($className) {
         $_className = is_string($className) ? $className : get_class($className);
-        if(in_array($_className, $this->controllers)) return;
+        if (in_array($_className, $this->controllers)) {
+            return;
+        }
         $this->controllers[] = $_className;
         $classAnnotations = \Reaction::$annotations->getClass($className);
-        if(isset($classAnnotations[Ctrl::class])) {
+        if (isset($classAnnotations[Ctrl::class])) {
             $this->registerControllerWithAnnotations($className, $classAnnotations[Ctrl::class]);
         } else {
             $this->registerControllerNoAnnotations($className);
@@ -241,9 +243,11 @@ class Router extends BaseObject implements RouterInterface
             return strpos($value->name, 'action') === 0 ? $value : false;
         });
         $actions = ArrayHelper::getColumn($actions, 'name', false);
-        if(empty($actions)) return;
+        if (empty($actions)) {
+            return;
+        }
         $controller = is_string($className) ? new $className() : $className;
-        for($i = 0; $i < count($actions); $i++) {
+        for ($i = 0; $i < count($actions); $i++) {
             $actionAnnotations = \Reaction::$annotations->getMethod($className, $actions[$i]);
             if(!isset($actionAnnotations[CtrlAction::class])) continue;
             /** @var CtrlAction $ctrlAction */
@@ -262,7 +266,9 @@ class Router extends BaseObject implements RouterInterface
         $controller = new $className();
         $routes = $controller->routes();
         $group = $controller->group();
-        if(empty($routes)) return;
+        if (empty($routes)) {
+            return;
+        }
         foreach ($routes as $row) {
             $method = $row['method'];
             $route = $group . $row['route'];
