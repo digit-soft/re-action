@@ -5,6 +5,7 @@ namespace Reaction\Routes;
 /**
  * Interface ControllerInterface
  * @package Reaction\Routes
+ * @property string $viewPath
  */
 interface ControllerInterface
 {
