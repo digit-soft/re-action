@@ -172,13 +172,7 @@ class Router extends BaseObject implements RouterInterface
      * @throws \ReflectionException
      */
     public function resolveRequest(AppRequestInterface $request) {
-        $self = $this;
-        $routeInfo = $self->dispatchRequest($request);
-        /** @var RouteInterface $route */
-        $route = \Reaction::create([
-            'class' => RouteInterface::class,
-            'dispatchedData' => $routeInfo,
-        ]);
+        $route = $this->resolveRoute($request);
         return $route->resolve($request)->then(
             function ($response) use (&$request) {
                 return $request->emitAndWait(AppRequestInterface::EVENT_REQUEST_END, [$request])->then(
@@ -191,16 +185,23 @@ class Router extends BaseObject implements RouterInterface
     }
 
     /**
-     * Get info about requested route from dispatcher
      * @param AppRequestInterface $request
-     * @return array
+     * @return RouteInterface
+     * @throws \Reaction\Exceptions\InvalidConfigException
+     * @throws \ReflectionException
      */
-    protected function dispatchRequest(AppRequestInterface $request) {
+    protected function resolveRoute(AppRequestInterface $request) {
         $path = '/' . (string)$request->pathInfo;
         $path = rtrim($path, '/');
         $method = $request->method;
         $routeInfo = $this->dispatcher->dispatch($method, $path);
-        return $routeInfo;
+        /** @var RouteInterface $route */
+        $route = \Reaction::create([
+            'class' => RouteInterface::class,
+            'dispatchedData' => $routeInfo,
+        ]);
+        $request->route = $route;
+        return $route;
     }
 
     /**

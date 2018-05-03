@@ -7,6 +7,7 @@ use React\Promise\PromiseInterface;
 use Reaction\Events\EventEmitterWildcardInterface;
 use Reaction\Helpers\Request\HelpersGroup;
 use Reaction\Routes\ControllerInterface;
+use Reaction\Routes\RouteInterface;
 use Reaction\Web\Sessions\Session;
 
 /**
@@ -33,7 +34,7 @@ use Reaction\Web\Sessions\Session;
  * @property array                    $secureHeaders
  * @property array                    $secureProtocolHeaders
  * @property array                    $ipHeaders
- * @property ControllerInterface      $controller
+ * @property RouteInterface           $route
  * @property string $absoluteUrl The currently requested absolute URL. This property is read-only.
  * @property array $acceptableContentTypes The content types ordered by the quality score. Types with the
  * highest scores will be returned first. The array keys are the content types, while the array values are the

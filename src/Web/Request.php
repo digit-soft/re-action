@@ -255,9 +255,9 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
     public $initComponents = [];
 
     /**
-     * @var Reaction\Routes\ControllerInterface Currently used controller
+     * @var Reaction\Routes\RouteInterface Currently used route
      */
-    public $controller;
+    public $route;
 
 
     /**
