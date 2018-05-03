@@ -63,6 +63,12 @@ return [
             'session' => [
                 'class' => 'Reaction\Web\Sessions\Session',
             ],
+            'assetManager' => [
+                'class' => 'Reaction\Web\AssetManager',
+            ],
+            'view' => [
+                'class' => 'Reaction\Web\View',
+            ],
         ],
     ],
     //DI definitions
@@ -75,6 +81,7 @@ return [
                 'class' => 'Reaction\Web\Sessions\CachedSessionHandler',
                 'loop' => Instance::of('React\EventLoop\LoopInterface'),
             ],
+            'Reaction\Routes\RouteInterface' => 'Reaction\Routes\Route',
         ],
         'singletons' => [
             //React event loop
