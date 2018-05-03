@@ -81,7 +81,7 @@ class Route extends BaseObject implements RouteInterface
                 $exception = new Exception($exception);
             } else {
                 $type = is_object($exception) ? get_class($exception) : gettype($exception);
-                $exception = new NotSupportedException('Only exceptions are supported in "%s" but "%s" given', __METHOD__, $type);
+                $exception = new NotSupportedException(sprintf('Only exceptions are supported in "%s" but "%s" given', __METHOD__, $type));
             }
         }
         $this->_exceptionsCount++;

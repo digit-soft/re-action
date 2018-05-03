@@ -127,7 +127,6 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
             case Response::FORMAT_RAW:
             case Response::FORMAT_HTML:
                 return $this->resolveErrorAsHtml($request, $exception);
-                break;
             default:
                 return $this->resolveErrorAsArray($request, $exception);
         }

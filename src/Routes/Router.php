@@ -10,9 +10,7 @@ use FastRoute\BadRouteException;
 use FastRoute\Dispatcher;
 use Reaction\Helpers\ArrayHelper;
 use Reaction\Helpers\ClassFinderHelper;
-use Reaction\Promise\Promise;
 use Reaction\Web\AppRequestInterface;
-use Reaction\Web\Response;
 
 class Router extends BaseObject implements RouterInterface
 {
@@ -22,6 +20,7 @@ class Router extends BaseObject implements RouterInterface
     public $dispatcherClass = '\FastRoute\simpleDispatcher';
     public $dispatcherOptions = [];
 
+    /** @var array|string|object Error controller */
     public $_errorController = [
         'class' => 'Reaction\Routes\ErrorController',
     ];
