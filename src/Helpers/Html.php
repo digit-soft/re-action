@@ -717,7 +717,7 @@ class Html
      * - `doubleEncode`: whether to double encode HTML entities in `$value`. If `false`, HTML entities in `$value` will not
      *   be further encoded. This option is available since version 2.0.11.
      *
-     * @param null   $encoding
+     * @param string $encoding
      * @return string the generated text area tag
      */
     public static function textarea($name, $value = '', $options = [], $encoding = null)
