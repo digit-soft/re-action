@@ -404,10 +404,12 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
     public function _getMethod()
     {
         if(!isset($this->_method)) {
+            /** @var string $methodHeader */
+            $methodHeader = $this->headers->get('X-Http-Method-Override');
             if (isset($this->_postParams[$this->methodParam])) {
                 $this->_method = strtoupper($this->_postParams[$this->methodParam]);
             } elseif ($this->headers->has('X-Http-Method-Override')) {
-                $this->_method = strtoupper($this->headers->get('X-Http-Method-Override'));
+                $this->_method = $methodHeader;
             } elseif ($reactMethod = $this->reactRequest->getMethod()) {
                 $this->_method = $reactMethod;
             } else {
@@ -499,6 +501,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
      */
     public function getIsFlash()
     {
+        /** @var string $userAgent */
         $userAgent = $this->headers->get('User-Agent', '');
         return stripos($userAgent, 'Shockwave') !== false
             || stripos($userAgent, 'Flash') !== false;
@@ -605,6 +608,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
      */
     public function getBodyParam($name, $defaultValue = null)
     {
+        /** @var array|object $params */
         $params = $this->bodyParams;
 
         if (is_object($params)) {
@@ -851,7 +855,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
      * Sets the relative URL for the application entry script.
      * This setter is provided in case the entry script URL cannot be determined
      * on certain Web servers.
-     * @param string $value the relative URL for the application entry script.
+     * @param string|null $value the relative URL for the application entry script.
      */
     public function setScriptUrl($value)
     {
@@ -913,7 +917,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
     /**
      * Sets the path info of the current request.
      * This method is mainly provided for testing purpose.
-     * @param string $value the path info of the current request
+     * @param string|null $value the path info of the current request
      */
     public function setPathInfo($value)
     {
@@ -1063,7 +1067,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
         foreach ($this->secureProtocolHeaders as $header => $values) {
             if (($headerValue = $this->headers->get($header, null)) !== null) {
                 foreach ($values as $value) {
-                    if (strcasecmp($headerValue, $value) === 0) {
+                    if (is_string($headerValue) && strcasecmp($headerValue, $value) === 0) {
                         return true;
                     }
                 }
@@ -1327,7 +1331,9 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
     {
         if ($this->_languages === null) {
             if ($this->headers->has('Accept-Language')) {
-                $this->_languages = array_keys($this->parseAcceptHeader($this->headers->get('Accept-Language')));
+                /** @var string $acceptLangHeader */
+                $acceptLangHeader = $this->headers->get('Accept-Language');
+                $this->_languages = array_keys($this->parseAcceptHeader($acceptLangHeader));
             } else {
                 $this->_languages = [];
             }
@@ -1476,7 +1482,10 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
     public function getETags()
     {
         if ($this->headers->has('If-None-Match')) {
-            return preg_split('/[\s,]+/', str_replace('-gzip', '', $this->headers->get('If-None-Match')), -1, PREG_SPLIT_NO_EMPTY);
+            /** @var string $ifNoneHeader */
+            $ifNoneHeader = $this->headers->get('If-None-Match');
+            $eTags = preg_split('/[\s,]+/', str_replace('-gzip', '', $ifNoneHeader), -1, PREG_SPLIT_NO_EMPTY);
+            return is_array($eTags) ? $eTags : [];
         }
 
         return [];
@@ -1671,7 +1680,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
     /**
      * Validates CSRF token.
      *
-     * @param string $clientSuppliedToken The masked client-supplied token.
+     * @param string|null $clientSuppliedToken The masked client-supplied token.
      * @param string $trueToken The masked true token.
      * @return bool
      */
