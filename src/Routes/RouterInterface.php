@@ -8,6 +8,7 @@ use Reaction\Web\AppRequestInterface;
 /**
  * Interface RouterInterface
  * @package Reaction\Routes
+ * @property Controller $errorController
  */
 interface RouterInterface
 {
@@ -99,9 +100,21 @@ interface RouterInterface
     public function publishRoutes();
 
     /**
-     * Dispatch requested route
+     * Resolve request
      * @param AppRequestInterface $request
      * @return ExtendedPromiseInterface
      */
-    public function dispatchRoute(AppRequestInterface $request);
+    public function resolveRequest(AppRequestInterface $request);
+
+    /**
+     * Get controller for errors
+     * @return Controller
+     */
+    public function getErrorController();
+
+    /**
+     * Set controller for errors
+     * @param string|array $controller
+     */
+    public function setErrorController($controller);
 }
