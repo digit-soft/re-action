@@ -31,7 +31,7 @@ use Reaction\Helpers\Url;
  * @property AssetConverterInterface $converter The asset converter. Note that the type of this property
  * differs in getter and setter. See [[getConverter()]] and [[setConverter()]] for details.
  */
-class AssetManager extends Component
+class AssetManager extends RequestComponent
 {
     /**
      * @var array|bool list of asset bundle configurations. This property is provided to customize asset bundles.
