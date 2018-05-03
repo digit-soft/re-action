@@ -72,24 +72,29 @@ class Cookie extends BaseObject
         }
         $value = isset($value) && $value !== "" ? urlencode($value) : '';
         $name = urlencode($this->name);
-        $data = [ ];
+        $data = [
+            'Secure' => $this->secure ? null : '',
+            'HttpOnly' => $this->httpOnly ? null : '',
+            'Domain' => isset($this->domain) ? $this->domain : '',
+            'Path' => isset($this->path) ? $this->path : '',
+            'Expires' => !empty($this->expire) ? gmdate('D, d M Y H:i:s T', $this->expire) : '',
+        ];
+        foreach ($data as $key => $value) {
+            if ($value === '') {
+                unset($data[$key]);
+            }
+        }
         $data[$name] = $value;
-        if ($this->secure) {
-            $data['Secure'] = null;
-        }
-        if ($this->httpOnly) {
-            $data['HttpOnly'] = null;
-        }
-        if (isset($this->domain) && $this->domain !== '') {
-            $data['Domain'] = $this->domain;
-        }
-        if (isset($this->path) && $this->path !== '') {
-            $data['Path'] = $this->path;
-        }
-        if (!empty($this->expire)) {
-            $data['Expires'] = gmdate('D, d M Y H:i:s T', $this->expire);
-        }
 
+        return $this->convertArrayToHeaderString($data);
+    }
+
+    /**
+     * Convert cookie data array to Set-cookie header string
+     * @param array $data
+     * @return string
+     */
+    protected function convertArrayToHeaderString(array $data) {
         $strings = [];
         foreach ($data as $key => $val) {
             if (null === $val) {
