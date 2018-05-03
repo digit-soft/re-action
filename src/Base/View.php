@@ -20,7 +20,7 @@ use Reaction\Widgets\FragmentCache;
  * @property string|bool $viewFile The view file currently being rendered. False if no view file is being
  * rendered. This property is read-only.
  */
-class View extends Component implements DynamicContentAwareInterface
+class View extends Component implements ViewInterface, DynamicContentAwareInterface
 {
     /**
      * @event Event an event that is triggered by [[beginPage()]].
@@ -111,7 +111,7 @@ class View extends Component implements DynamicContentAwareInterface
         parent::init();
         if (is_array($this->theme)) {
             if (!isset($this->theme['class'])) {
-                $this->theme['class'] = 'yii\base\Theme';
+                $this->theme['class'] = 'Reaction\Base\Theme';
             }
             $this->theme = \Reaction::create($this->theme);
         } elseif (is_string($this->theme)) {
@@ -339,7 +339,7 @@ class View extends Component implements DynamicContentAwareInterface
     {
         if (!empty($this->cacheStack)) {
             $n = count($this->dynamicPlaceholders);
-            $placeholder = "<![CDATA[YII-DYNAMIC-$n]]>";
+            $placeholder = "<![CDATA[REACTION-DYNAMIC-$n]]>";
             $this->addDynamicPlaceholder($placeholder, $statements);
 
             return $placeholder;
@@ -543,6 +543,13 @@ class View extends Component implements DynamicContentAwareInterface
         ob_end_flush();
     }
 
+    /**
+     * Static helper for rendering any php file
+     * @param string $_file_
+     * @param array $_params_
+     * @return string
+     * @throws \Throwable
+     */
     public static function renderPhpStateless($_file_, $_params_ = [])
     {
         $_file_ = Reaction::$app->getAlias($_file_);
