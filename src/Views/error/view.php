@@ -8,6 +8,7 @@ $this->title = 'Error :: ' . $exceptionName;
 $traceArray = $exception->getTrace();
 $traceArray = array_slice($traceArray, 0, 30);
 $inFile = $exception->getFile();
+\Reaction\Assets\JqueryAsset::register($this);
 ?>
 
 <h1><?= $exceptionName ?></h1>

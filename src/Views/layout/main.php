@@ -13,5 +13,6 @@
 </head>
 <body>
 <?= $content; ?>
+<?= $this->endBody() ?>
 </body>
 </html>
