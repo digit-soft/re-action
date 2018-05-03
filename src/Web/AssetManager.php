@@ -113,7 +113,7 @@ class AssetManager extends RequestComponent
      * Options FollowSymLinks
      * ```
      */
-    public $linkAssets = false;
+    public $linkAssets = true;
     /**
      * @var int the permission to be set for newly published asset files.
      * This value will be used by PHP chmod() function. No umask will be applied.
