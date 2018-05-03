@@ -3,6 +3,9 @@
 
 namespace Reaction\Helpers;
 
+use Reaction;
+use Reaction\Exceptions\InvalidArgumentException;
+
 /**
  * Url provides a set of static methods for managing URLs.
  *
@@ -13,7 +16,7 @@ class Url
 {
 
     /**
-     * @var \yii\web\UrlManager URL manager to use for creating URLs
+     * @var \Reaction\Web\UrlManager URL manager to use for creating URLs
      */
     public static $urlManager;
 
@@ -205,7 +208,7 @@ class Url
             return static::toRoute($url, $scheme);
         }
 
-        $url = Yii::getAlias($url);
+        $url = Reaction::$app->getAlias($url);
         if ($url === '') {
             $url = Yii::$app->getRequest()->getUrl();
         }
@@ -425,11 +428,11 @@ class Url
     }
 
     /**
-     * @return \yii\web\UrlManager URL manager used to create URLs
+     * @return \Reaction\Web\UrlManager URL manager used to create URLs
      * @since 2.0.8
      */
     protected static function getUrlManager()
     {
-        return static::$urlManager ?: Yii::$app->getUrlManager();
+        return static::$urlManager ?: Reaction::$app->getUrlManager();
     }
 }
