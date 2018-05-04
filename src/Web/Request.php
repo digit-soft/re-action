@@ -5,6 +5,7 @@ namespace Reaction\Web;
 use Psr\Http\Message\ServerRequestInterface;
 use Reaction;
 use Reaction\Exceptions\InvalidConfigException;
+use Reaction\Routes\RouteInterface;
 use Reaction\Validators\IpValidator;
 
 /**
@@ -254,11 +255,6 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
      */
     public $initComponents = [];
 
-    /**
-     * @var Reaction\Routes\RouteInterface Currently used route
-     */
-    public $route;
-
 
     /**
      * @var CookieCollection Collection of request cookies.
@@ -273,6 +269,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
     protected $_serverParams = [];
     protected $_postParams = [];
     protected $_method;
+    protected $_route;
 
     /**
      * @inheritdoc
@@ -281,6 +278,30 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
     {
         $this->syncWithReactRequest();
         $this->getCsrfToken();
+    }
+
+    /**
+     * Get current route
+     * @return RouteInterface
+     * @throws InvalidConfigException
+     */
+    public function getRoute() {
+        if (!isset($this->_route)) {
+            $data = Reaction::$app->router->getDispatcherData($this);
+            $this->_route = \Reaction::create([
+                'class' => RouteInterface::class,
+                'dispatchedData' => $data,
+            ]);
+        }
+        return $this->_route;
+    }
+
+    /**
+     * Setter for route
+     * @param RouteInterface|null $route
+     */
+    public function setRoute($route = null) {
+        $this->_route = $route;
     }
 
     /**

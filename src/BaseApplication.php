@@ -55,7 +55,6 @@ class BaseApplication extends ServiceLocator implements BaseApplicationInterface
     /**
      * Run application
      * @throws Exceptions\InvalidConfigException
-     * @throws \ReflectionException
      */
     public function run() {
         // TODO: Make more serious Exception handler :)

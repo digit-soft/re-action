@@ -6,7 +6,6 @@ use Psr\Http\Message\ServerRequestInterface;
 use React\Promise\PromiseInterface;
 use Reaction\Events\EventEmitterWildcardInterface;
 use Reaction\Helpers\Request\HelpersGroup;
-use Reaction\Routes\ControllerInterface;
 use Reaction\Routes\RouteInterface;
 use Reaction\Web\Sessions\Session;
 
@@ -670,6 +669,18 @@ interface AppRequestInterface extends ServerRequestInterface, EventEmitterWildca
      * @return bool whether CSRF token is valid. If [[enableCsrfValidation]] is false, this method will return true.
      */
     public function validateCsrfToken($clientSuppliedToken = null);
+
+    /**
+     * Get current route
+     * @return RouteInterface
+     */
+    public function getRoute();
+
+    /**
+     * Setter for route
+     * @param RouteInterface|null $route
+     */
+    public function setRoute($route = null);
 
     /**
      * @return PromiseInterface

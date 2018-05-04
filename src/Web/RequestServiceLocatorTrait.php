@@ -125,7 +125,6 @@ trait RequestServiceLocatorTrait
      * @return \object|null the component of the specified ID. If `$throwException` is false and `$id`
      * is not registered before, null will be returned.
      * @throws InvalidConfigException if `$id` refers to a nonexistent component ID
-     * @throws \ReflectionException
      * @see has()
      * @see set()
      */
