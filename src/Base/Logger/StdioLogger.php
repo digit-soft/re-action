@@ -14,7 +14,7 @@ use Reaction\Exceptions\InvalidArgumentException;
  * Class StdioLogger
  * @package Reaction\Base\Logger
  */
-class StdioLogger extends AbstractLogger
+class StdioLogger extends AbstractLogger implements LoggerInterface
 {
     /**
      * Logging levels PSR-3 LogLevel enum.

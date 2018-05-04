@@ -156,7 +156,7 @@ class Reaction
      * @param array $context
      */
     public static function debug($message, $context = []) {
-        static::$app->logger->debug($message, $context);
+        static::$app->logger->debug($message, $context, 1);
     }
 
     /**
@@ -165,7 +165,7 @@ class Reaction
      * @param array $context
      */
     public static function info($message, $context = []) {
-        static::$app->logger->info($message, $context);
+        static::$app->logger->info($message, $context, 1);
     }
 
     /**
@@ -174,7 +174,7 @@ class Reaction
      * @param array $context
      */
     public static function warning($message, $context = []) {
-        static::$app->logger->warning($message, $context);
+        static::$app->logger->warning($message, $context, 1);
     }
 
     /**
@@ -183,7 +183,7 @@ class Reaction
      * @param array $context
      */
     public static function error($message, $context = []) {
-        static::$app->logger->error($message, $context);
+        static::$app->logger->error($message, $context, 1);
     }
 
     /**

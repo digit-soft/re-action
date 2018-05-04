@@ -3,6 +3,7 @@
 namespace Reaction;
 
 use React\Filesystem\FilesystemInterface;
+use Reaction\Base\Logger\LoggerInterface;
 use Reaction\Events\EventEmitterWildcardInterface;
 use Reaction\Web\Sessions\SessionHandlerInterface;
 
@@ -20,7 +21,7 @@ use Reaction\Web\Sessions\SessionHandlerInterface;
  * @property \React\Socket\Server             $socket
  * @property \Reaction\Routes\RouterInterface $router
  * @property \Reaction\Base\Security          $security
- * @property \Psr\Log\AbstractLogger          $logger
+ * @property LoggerInterface                  $logger
  * TODO: Check that app level formatter is needed
  * @property \Reaction\I18n\Formatter         $formatter
  * @property SessionHandlerInterface          $sessionHandler
