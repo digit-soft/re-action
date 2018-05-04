@@ -3,6 +3,7 @@
 namespace Reaction\Web;
 
 use Reaction\Base\BaseObject;
+use Reaction\Helpers\ArrayHelper;
 
 /**
  * Cookie represents information related with a cookie, such as [[name]], [[value]], [[domain]], etc.
@@ -79,12 +80,12 @@ class Cookie extends BaseObject
             'Path' => isset($this->path) ? $this->path : '',
             'Expires' => !empty($this->expire) ? gmdate('D, d M Y H:i:s T', $this->expire) : '',
         ];
-        foreach ($data as $key => $value) {
-            if ($value === '') {
+        foreach ($data as $key => $val) {
+            if ($val === '') {
                 unset($data[$key]);
             }
         }
-        $data[$name] = $value;
+        $data = ArrayHelper::merge([$name => $value], $data);
 
         return $this->convertArrayToHeaderString($data);
     }
@@ -106,7 +107,6 @@ class Cookie extends BaseObject
             }
             $strings[] = $key . '=' . $val;
         }
-
         return implode('; ', $strings);
     }
 }
