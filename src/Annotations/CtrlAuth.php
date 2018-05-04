@@ -21,7 +21,7 @@ use function Reaction\Promise\resolve;
  * Class Auth. Auth validation for controller action
  * @package Reaction\Annotations
  */
-class Auth implements CtrlActionValidatorInterface
+class CtrlAuth implements CtrlActionValidatorInterface
 {
     /**
      * @var array Permissions to check
