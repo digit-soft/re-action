@@ -2,14 +2,20 @@
 
 namespace Reaction\Routes;
 
+use React\Promise\PromiseInterface;
+use Reaction\Annotations\CtrlActionValidatorInterface;
 use Reaction\Base\Component;
 use Reaction\Base\ViewContextInterface;
 use Reaction\Exceptions\Exception;
+use Reaction\Exceptions\Http\ForbiddenException;
 use Reaction\Exceptions\Http\NotFoundException;
 use Reaction\Exceptions\HttpException;
 use Reaction\Exceptions\HttpExceptionInterface;
+use Reaction\Helpers\ArrayHelper;
 use Reaction\Helpers\StringHelper;
+use function Reaction\Promise\all;
 use Reaction\Promise\ExtendedPromiseInterface;
+use function Reaction\Promise\resolve;
 use Reaction\Web\AppRequestInterface;
 use Reaction\Web\Response;
 use Reaction\Web\ResponseBuilderInterface;
@@ -98,15 +104,23 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
      * @param mixed               ...$params
      * @return mixed
      * @throws NotFoundException
-     * @throws \Reaction\Exceptions\InvalidConfigException
-     * @throws \Reaction\Exceptions\NotInstantiableException
-     * @throws \ReflectionException
      */
     public function resolveAction(AppRequestInterface $request, string $action, ...$params) {
         $action = $this->normalizeActionName($action);
         array_unshift($params, $request);
-        $request->view->context = $this;
-        return \Reaction::$di->invoke([$this, $action], $params);
+        $self = $this;
+        return $this->validateAction($action, $request)->then(
+            function () use (&$request, &$self, $action, $params) {
+                $request->view->context = $self;
+                return \Reaction::$di->invoke([$self, $action], $params);
+            },
+            function ($error) {
+                if (!$error instanceof \Throwable) {
+                    $error = new ForbiddenException('You can not perform this action');
+                }
+                throw $error;
+            }
+        );
     }
 
     /**
@@ -322,5 +336,37 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
             $classNameExp = explode('\\', get_class($exception));
             return end($classNameExp);
         }
+    }
+
+    /**
+     * Validate that user can perform that action
+     * @param string $action
+     * @param AppRequestInterface $request
+     * @return ExtendedPromiseInterface
+     */
+    protected function validateAction($action, AppRequestInterface $request) {
+        $annotationsCtrl = \Reaction::$annotations->getClass($this);
+        $annotationsAction = \Reaction::$annotations->getMethod($this, $action);
+        $annotations = ArrayHelper::merge(array_values($annotationsCtrl), array_values($annotationsAction));
+        $promises = [];
+        if (!empty($annotations)) {
+            foreach ($annotations as $annotation) {
+                if (!$annotation instanceof CtrlActionValidatorInterface) {
+                    continue;
+                }
+                $promise = $annotation->validate($request);
+                if (!$promise instanceof PromiseInterface) {
+                    $promise = !empty($promise) ? \Reaction\Promise\resolve(true) : \Reaction\Promise\reject(false);
+                    \Reaction::warning('not PR');
+                }
+                $promises[] = $promise;
+                $promises[] = \Reaction\Promise\resolve(true);
+            }
+        }
+        if (empty($promises)) {
+            return resolve(true);
+        }
+        $all = \Reaction\Promise\all($promises);
+        return $all;
     }
 }

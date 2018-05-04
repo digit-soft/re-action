@@ -9,6 +9,7 @@ use Reaction\Exceptions\Exception;
 use Reaction\Exceptions\Http\MethodNotAllowedException;
 use Reaction\Exceptions\Http\NotFoundException;
 use Reaction\Exceptions\InvalidArgumentException;
+use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Exceptions\NotSupportedException;
 use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\Promise\Promise;
@@ -157,6 +158,11 @@ class Route extends BaseObject implements RouteInterface
         }
     }
 
+    /**
+     * Process response from controller action
+     * @param ResponseInterface|ResponseBuilderInterface $response
+     * @return ResponseInterface
+     */
     protected function processResponse($response) {
         if ($response instanceof ResponseInterface) {
             return $response;
@@ -181,6 +187,11 @@ class Route extends BaseObject implements RouteInterface
             '*' => NotSupportedException::class,
         ];
         $errorClass = isset($errors[$dispatcherCode]) ? $errors[$dispatcherCode] : $errors['*'];
-        return \Reaction::create($errorClass);
+        try {
+            $exception = \Reaction::create($errorClass);
+        } catch (InvalidConfigException $createException) {
+            return $createException;
+        }
+        return $exception;
     }
 }
