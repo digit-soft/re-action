@@ -102,8 +102,8 @@ class PhpMessageSource extends MessageSource
             && $fallbackLanguage !== $this->sourceLanguage
             && $fallbackLanguage !== substr($this->sourceLanguage, 0, 2)
         ) {
-            Reaction::$app->logger->error("The message file for category '$category' does not exist: $originalMessageFile "
-                . "Fallback file does not exist as well: $fallbackMessageFile", __METHOD__);
+            Reaction::error("The message file for category '$category' does not exist: $originalMessageFile "
+                . "Fallback file does not exist as well: $fallbackMessageFile");
         } elseif (empty($messages)) {
             return $fallbackMessages;
         } elseif (!empty($fallbackMessages)) {
