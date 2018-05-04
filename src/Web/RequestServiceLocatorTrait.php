@@ -3,6 +3,7 @@
 namespace Reaction\Web;
 
 use Reaction\Exceptions\InvalidConfigException;
+use Reaction\Helpers\ArrayHelper;
 
 /**
  * Trait RequestServiceLocatorTrait
@@ -224,7 +225,7 @@ trait RequestServiceLocatorTrait
         }
 
         if (is_array($config)) {
-            $config['request'] = $this;
+            $config = ArrayHelper::merge(['request' => $this], $config);
             $definition = isset($params) ? [$config, $params] : $config;
         }
 

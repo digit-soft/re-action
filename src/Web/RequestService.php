@@ -34,7 +34,7 @@ class RequestService extends ServiceLocator implements RequestServiceInterface
 
         //Inject request to newly created components
         if (is_array($config)) {
-            $config['request'] = $this;
+            $config = \Reaction\Helpers\ArrayHelper::merge(['request' => $this], $config);
             $definition = isset($params) ? [$config, $params] : $config;
         }
         return parent::set($id, $definition);
