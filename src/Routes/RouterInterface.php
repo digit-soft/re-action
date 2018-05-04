@@ -117,4 +117,11 @@ interface RouterInterface
      * @param string|array $controller
      */
     public function setErrorController($controller);
+
+    /**
+     * Get data from dispatcher
+     * @param AppRequestInterface $request
+     * @return array
+     */
+    public function getDispatcherData(AppRequestInterface $request);
 }

@@ -2,17 +2,21 @@
 
 namespace Reaction\Routes;
 
+use Reaction\Base\Component;
 use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\Annotations\Ctrl;
 use Reaction\Annotations\CtrlAction;
-use Reaction\Base\BaseObject;
 use FastRoute\BadRouteException;
 use FastRoute\Dispatcher;
 use Reaction\Helpers\ArrayHelper;
 use Reaction\Helpers\ClassFinderHelper;
 use Reaction\Web\AppRequestInterface;
 
-class Router extends BaseObject implements RouterInterface
+/**
+ * Class Router
+ * @package Reaction\Routes
+ */
+class Router extends Component implements RouterInterface
 {
     public $controllerNamespaces = [
         'App\Controllers',
@@ -165,14 +169,24 @@ class Router extends BaseObject implements RouterInterface
     }
 
     /**
+     * Get data from dispatcher
+     * @param AppRequestInterface$request
+     * @return array
+     */
+    public function getDispatcherData(AppRequestInterface$request) {
+        $path = '/' . (string)$request->pathInfo;
+        $path = rtrim($path, '/');
+        $method = $request->method;
+        return $this->dispatcher->dispatch($method, $path);
+    }
+
+    /**
      * Dispatch requested route
      * @param AppRequestInterface $request
      * @return ExtendedPromiseInterface
-     * @throws \Reaction\Exceptions\InvalidConfigException
-     * @throws \ReflectionException
      */
     public function resolveRequest(AppRequestInterface $request) {
-        $route = $this->resolveRoute($request);
+        $route = $request->getRoute();
         return $route->resolve($request)->then(
             function ($response) use (&$request) {
                 return $request->emitAndWait(AppRequestInterface::EVENT_REQUEST_END, [$request])->then(
@@ -182,26 +196,6 @@ class Router extends BaseObject implements RouterInterface
                 );
             }
         );
-    }
-
-    /**
-     * @param AppRequestInterface $request
-     * @return RouteInterface
-     * @throws \Reaction\Exceptions\InvalidConfigException
-     * @throws \ReflectionException
-     */
-    protected function resolveRoute(AppRequestInterface $request) {
-        $path = '/' . (string)$request->pathInfo;
-        $path = rtrim($path, '/');
-        $method = $request->method;
-        $routeInfo = $this->dispatcher->dispatch($method, $path);
-        /** @var RouteInterface $route */
-        $route = \Reaction::create([
-            'class' => RouteInterface::class,
-            'dispatchedData' => $routeInfo,
-        ]);
-        $request->route = $route;
-        return $route;
     }
 
     /**
