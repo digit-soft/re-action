@@ -60,7 +60,6 @@ class Reaction
      * @param array        $params Constructor parameters indexed array
      * @return object|mixed
      * @throws InvalidConfigException
-     * @throws ReflectionException
      */
     public static function create($type, array $params = []) {
         if (is_string($type)) {
@@ -84,7 +83,6 @@ class Reaction
      * @param array    $params
      * @return mixed
      * @throws InvalidConfigException
-     * @throws ReflectionException
      * @throws \Reaction\Exceptions\NotInstantiableException
      */
     public static function invoke($callable, $params = []) {

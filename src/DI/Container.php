@@ -140,7 +140,6 @@ class Container extends Component
      * @return object an instance of the requested class.
      * @throws InvalidConfigException if the class cannot be recognized or correspond to an invalid definition
      * @throws NotInstantiableException If resolved to an abstract class or an interface
-     * @throws \ReflectionException
      */
     public function get($class, $params = [], $config = [])
     {
@@ -363,7 +362,6 @@ class Container extends Component
      * @param array  $config configurations to be applied to the new instance
      * @throws NotInstantiableException If resolved to an abstract class or an interface
      * @throws InvalidConfigException
-     * @throws \ReflectionException
      * @return object the newly created instance of the specified class
      */
     protected function build($class, $params, $config)
@@ -425,7 +423,7 @@ class Container extends Component
      * Returns the dependencies of the specified class.
      * @param string $class class name, interface name or alias name
      * @return array the dependencies of the specified class.
-     * @throws \ReflectionException
+     * @throws InvalidConfigException
      */
     protected function getDependencies($class)
     {
@@ -434,7 +432,12 @@ class Container extends Component
         }
 
         $dependencies = [];
-        $reflection = new ReflectionClass($class);
+        try {
+            $reflection = new ReflectionClass($class);
+        } catch (\ReflectionException $exception) {
+            //Convert exception
+            throw new InvalidConfigException($exception->getMessage(), $exception->getCode(), $exception);
+        }
 
         $constructor = $reflection->getConstructor();
         if ($constructor !== null) {
@@ -462,7 +465,6 @@ class Container extends Component
      * @param ReflectionClass $reflection the class reflection associated with the dependencies
      * @return array the resolved dependencies
      * @throws InvalidConfigException if a dependency cannot be resolved or if a dependency cannot be fulfilled.
-     * @throws \ReflectionException
      */
     protected function resolveDependencies($dependencies, $reflection = null)
     {
@@ -506,8 +508,7 @@ class Container extends Component
      * This can be either a list of parameters, or an associative array representing named function parameters.
      * @return mixed the callback return value.
      * @throws InvalidConfigException if a dependency cannot be resolved or if a dependency cannot be fulfilled.
-     * @throws NotInstantiableException If resolved to an abstract class or an interface (since 2.0.9)
-     * @throws \ReflectionException
+     * @throws NotInstantiableException If resolved to an abstract class or an interface
      */
     public function invoke(callable $callback, $params = [])
     {
@@ -528,15 +529,19 @@ class Container extends Component
      * @param array    $params The array of parameters for the function, can be either numeric or associative.
      * @return array The resolved dependencies.
      * @throws InvalidConfigException if a dependency cannot be resolved or if a dependency cannot be fulfilled.
-     * @throws NotInstantiableException If resolved to an abstract class or an interface (since 2.0.9)
-     * @throws \ReflectionException
+     * @throws NotInstantiableException If resolved to an abstract class or an interface
      */
     public function resolveCallableDependencies(callable $callback, $params = [])
     {
-        if (is_array($callback)) {
-            $reflection = new \ReflectionMethod($callback[0], $callback[1]);
-        } else {
-            $reflection = new \ReflectionFunction($callback);
+        try {
+            if (is_array($callback)) {
+                $reflection = new \ReflectionMethod($callback[0], $callback[1]);
+            } else {
+                $reflection = new \ReflectionFunction($callback);
+            }
+        } catch (\ReflectionException $exception) {
+            //Convert exception
+            throw new InvalidConfigException($exception->getMessage(), $exception->getCode(), $exception);
         }
 
         $args = [];
