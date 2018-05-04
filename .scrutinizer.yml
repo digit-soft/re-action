@@ -1,3 +1,15 @@
+coding_style:
+    php:
+        indentation:
+            general:
+                use_tabs: false
+                size: 4
+            switch:
+                indent_case: true
+        spaces:
+            before_parentheses:
+                function_declaration: false
+                closure_definition: false
 filter:
     excluded_paths:
       - src/Helpers/
