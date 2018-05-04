@@ -15,6 +15,7 @@ class IpHelper extends RequestHelperProxy
      *
      * @param string $ip the valid IPv4 or IPv6 address.
      * @return int [[IPV4]] or [[IPV6]]
+     * @see \Reaction\Helpers\IpHelper::getIpVersion()
      */
     public function getIpVersion($ip)
     {
@@ -43,6 +44,7 @@ class IpHelper extends RequestHelperProxy
      * @return bool whether $subnet is contained by $range
      *
      * @see https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing
+     * @see \Reaction\Helpers\IpHelper::inRange()
      */
     public function inRange($subnet, $range)
     {
@@ -56,6 +58,7 @@ class IpHelper extends RequestHelperProxy
      *
      * @param string $ip the original valid IPv6 address
      * @return string the expanded IPv6 address
+     * @see \Reaction\Helpers\IpHelper::expandIPv6()
      */
     public function expandIPv6($ip)
     {
@@ -67,6 +70,7 @@ class IpHelper extends RequestHelperProxy
      *
      * @param string $ip the valid IPv4 or IPv6 address
      * @return string bits as a string
+     * @see \Reaction\Helpers\IpHelper::ip2bin()
      */
     public function ip2bin($ip)
     {

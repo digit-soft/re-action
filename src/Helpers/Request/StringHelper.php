@@ -15,6 +15,7 @@ class StringHelper extends RequestHelperProxy
      * This method ensures the string is treated as a byte array by using `mb_strlen()`.
      * @param string $string the string being measured for length
      * @return int the number of bytes in the given string.
+     * @see \Reaction\Helpers\StringHelper::byteLength()
      */
     public function byteLength($string)
     {
@@ -30,6 +31,7 @@ class StringHelper extends RequestHelperProxy
      * no limit on length i.e. the output will be until the end of the string.
      * @return string the extracted part of string, or FALSE on failure or an empty string.
      * @see http://www.php.net/manual/en/function.substr.php
+     * @see \Reaction\Helpers\StringHelper::byteSubstr()
      */
     public function byteSubstr($string, $start, $length = null)
     {
@@ -48,6 +50,7 @@ class StringHelper extends RequestHelperProxy
      * @param string $suffix If the name component ends in suffix this will also be cut off.
      * @return string the trailing name component of the given path.
      * @see http://www.php.net/manual/en/function.basename.php
+     * @see \Reaction\Helpers\StringHelper::basename()
      */
     public function basename($path, $suffix = '')
     {
@@ -62,6 +65,7 @@ class StringHelper extends RequestHelperProxy
      * @param string $path A path string.
      * @return string the parent directory's path.
      * @see http://www.php.net/manual/en/function.basename.php
+     * @see \Reaction\Helpers\StringHelper::dirname()
      */
     public function dirname($path)
     {
@@ -77,6 +81,7 @@ class StringHelper extends RequestHelperProxy
      * @param string $encoding The charset to use, defaults to charset currently used by application.
      * @param bool $asHtml Whether to treat the string being truncated as HTML and preserve proper HTML tags.
      * @return string the truncated string.
+     * @see \Reaction\Helpers\StringHelper::truncate()
      */
     public function truncate($string, $length, $suffix = '...', $encoding = null, $asHtml = false)
     {
@@ -91,6 +96,7 @@ class StringHelper extends RequestHelperProxy
      * @param string $suffix String to append to the end of truncated string.
      * @param bool $asHtml Whether to treat the string being truncated as HTML and preserve proper HTML tags.
      * @return string the truncated string.
+     * @see \Reaction\Helpers\StringHelper::truncateWords()
      */
     public function truncateWords($string, $count, $suffix = '...', $asHtml = false)
     {
@@ -120,6 +126,7 @@ class StringHelper extends RequestHelperProxy
      * @param bool   $caseSensitive Case sensitive search. Default is true. When case sensitive is enabled, $with must exactly match the starting of the string in order to get a true value.
      * @param string $encoding String encoding
      * @return bool Returns true if first input starts with second input, false otherwise
+     * @see \Reaction\Helpers\StringHelper::startsWith()
      */
     public function startsWith($string, $with, $caseSensitive = true, $encoding = null)
     {
@@ -135,6 +142,7 @@ class StringHelper extends RequestHelperProxy
      * @param bool $caseSensitive Case sensitive search. Default is true. When case sensitive is enabled, $with must exactly match the ending of the string in order to get a true value.
      * @param string $encoding String encoding
      * @return bool Returns true if first input ends with second input, false otherwise
+     * @see \Reaction\Helpers\StringHelper::endsWith()
      */
     public function endsWith($string, $with, $caseSensitive = true, $encoding = null)
     {
@@ -152,6 +160,7 @@ class StringHelper extends RequestHelperProxy
      *   - callable - will be called for each value instead of trim. Takes the only argument - value.
      * @param bool $skipEmpty Whether to skip empty strings between delimiters. Default is false.
      * @return array
+     * @see \Reaction\Helpers\StringHelper::explode()
      */
     public function explode($string, $delimiter = ',', $trim = true, $skipEmpty = false)
     {
@@ -163,6 +172,7 @@ class StringHelper extends RequestHelperProxy
      *
      * @param string $string
      * @return int
+     * @see \Reaction\Helpers\StringHelper::countWords()
      */
     public function countWords($string)
     {
@@ -174,6 +184,7 @@ class StringHelper extends RequestHelperProxy
      * of current locale is comma.
      * @param int|float|string $value
      * @return string
+     * @see \Reaction\Helpers\StringHelper::normalizeNumber()
      */
     public function normalizeNumber($value)
     {
@@ -189,6 +200,7 @@ class StringHelper extends RequestHelperProxy
      * @see https://tools.ietf.org/html/rfc4648#page-7
      * @param string $input the string to encode.
      * @return string encoded string.
+     * @see \Reaction\Helpers\StringHelper::base64UrlEncode()
      */
     public function base64UrlEncode($input)
     {
@@ -201,6 +213,7 @@ class StringHelper extends RequestHelperProxy
      * @see https://tools.ietf.org/html/rfc4648#page-7
      * @param string $input encoded string.
      * @return string decoded string.
+     * @see \Reaction\Helpers\StringHelper::base64UrlDecode()
      */
     public function base64UrlDecode($input)
     {
@@ -213,6 +226,7 @@ class StringHelper extends RequestHelperProxy
      * The decimal separator will always be `.`.
      * @param float|int $number a floating point number or integer.
      * @return string the string representation of the number.
+     * @see \Reaction\Helpers\StringHelper::floatToString()
      */
     public function floatToString($number)
     {
@@ -231,6 +245,7 @@ class StringHelper extends RequestHelperProxy
      * - filePath: bool, whether slashes in string only matches slashes in the given pattern. Defaults to `false`.
      *
      * @return bool whether the string matches pattern or not.
+     * @see \Reaction\Helpers\StringHelper::matchWildcard()
      */
     public function matchWildcard($pattern, $string, $options = [])
     {

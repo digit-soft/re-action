@@ -27,6 +27,7 @@ class FileHelper extends RequestHelperProxy
      * @param string $path the file/directory path to be normalized
      * @param string $ds the directory separator to be used in the normalized result. Defaults to `DIRECTORY_SEPARATOR`.
      * @return string the normalized file/directory path
+     * @see \Reaction\Helpers\FileHelper::normalizePath()
      */
     public function normalizePath($path, $ds = DIRECTORY_SEPARATOR)
     {
@@ -53,6 +54,7 @@ class FileHelper extends RequestHelperProxy
      * If not set, the value of [[\yii\base\Application::sourceLanguage]] will be used.
      * @return string the matching localized file, or the original file if the localized version is not found.
      * If the target and the source language codes are the same, the original file will be returned.
+     * @see \Reaction\Helpers\FileHelper::localize()
      */
     public function localize($file, $language = null, $sourceLanguage = null)
     {
@@ -73,6 +75,7 @@ class FileHelper extends RequestHelperProxy
      * `finfo_open()` cannot determine it.
      * @return string the MIME type (e.g. `text/plain`). Null is returned if the MIME type cannot be determined.
      * @throws InvalidConfigException when the `fileinfo` PHP extension is not installed and `$checkExtension` is `false`.
+     * @see \Reaction\Helpers\FileHelper::getMimeType()
      */
     public function getMimeType($file, $magicFile = null, $checkExtension = true)
     {
@@ -86,6 +89,7 @@ class FileHelper extends RequestHelperProxy
      * @param string $magicFile the path (or alias) of the file that contains all available MIME type information.
      * If this is not set, the file specified by [[mimeMagicFile]] will be used.
      * @return string|null the MIME type. Null is returned if the MIME type cannot be determined.
+     * @see \Reaction\Helpers\FileHelper::getMimeTypeByExtension()
      */
     public function getMimeTypeByExtension($file, $magicFile = null)
     {
@@ -99,6 +103,7 @@ class FileHelper extends RequestHelperProxy
      * @param string $magicFile the path (or alias) of the file that contains all available MIME type information.
      * If this is not set, the file specified by [[mimeMagicFile]] will be used.
      * @return array the extensions corresponding to the specified MIME type
+     * @see \Reaction\Helpers\FileHelper::getExtensionsByMimeType()
      */
     public function getExtensionsByMimeType($mimeType, $magicFile = null)
     {
@@ -169,6 +174,7 @@ class FileHelper extends RequestHelperProxy
      *   do not contain files at the target destination because files have been filtered via `only` or `except`.
      *   Defaults to true. This option is available since version 2.0.12. Before 2.0.12 empty directories are always copied.
      * @throws InvalidArgumentException if unable to open directory
+     * @see \Reaction\Helpers\FileHelper::copyDirectory()
      */
     public function copyDirectory($src, $dst, $options = [])
     {
@@ -186,6 +192,7 @@ class FileHelper extends RequestHelperProxy
      *   Only symlink would be removed in that default case.
      *
      * @throws ErrorException in case of failure
+     * @see \Reaction\Helpers\FileHelper::removeDirectory()
      */
     public function removeDirectory($dir, $options = [])
     {
@@ -197,6 +204,7 @@ class FileHelper extends RequestHelperProxy
      *
      * @param string $path
      * @return bool
+     * @see \Reaction\Helpers\FileHelper::unlink()
      */
     public function unlink($path)
     {
@@ -237,6 +245,7 @@ class FileHelper extends RequestHelperProxy
      * - `recursive`: boolean, whether the files under the subdirectories should also be looked for. Defaults to `true`.
      * @return array files found under the directory, in no particular order. Ordering depends on the files system used.
      * @throws InvalidArgumentException if the dir is invalid.
+     * @see \Reaction\Helpers\FileHelper::findFiles()
      */
     public function findFiles($dir, $options = [])
     {
@@ -258,6 +267,7 @@ class FileHelper extends RequestHelperProxy
      * - `recursive`: boolean, whether the files under the subdirectories should also be looked for. Defaults to `true`.
      * @return array directories found under the directory, in no particular order. Ordering depends on the files system used.
      * @throws InvalidArgumentException if the dir is invalid.
+     * @see \Reaction\Helpers\FileHelper::findDirectories()
      */
     public function findDirectories($dir, $options = [])
     {
@@ -270,6 +280,7 @@ class FileHelper extends RequestHelperProxy
      * @param array $options the filtering options. See [[findFiles()]] for explanations of
      * the supported options.
      * @return bool whether the file or directory satisfies the filtering options.
+     * @see \Reaction\Helpers\FileHelper::filterPath()
      */
     public function filterPath($path, $options)
     {
@@ -288,6 +299,7 @@ class FileHelper extends RequestHelperProxy
      * @param bool $recursive whether to create parent directories if they do not exist.
      * @return bool whether the directory is created successfully
      * @throws \Reaction\Exceptions\Exception if the directory could not be created (i.e. php error due to parallel changes)
+     * @see \Reaction\Helpers\FileHelper::createDirectory()
      */
     public function createDirectory($path, $mode = 0775, $recursive = true)
     {

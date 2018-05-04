@@ -27,6 +27,7 @@ class FormatConverter extends RequestHelperProxy
      * @param string $locale the locale to use for converting ICU short patterns `short`, `medium`, `long` and `full`.
      * If not given, `Yii::$app->language` will be used.
      * @return string The converted date format pattern.
+     * @see \Reaction\Helpers\FormatConverter::convertDateIcuToPhp()
      */
     public function convertDateIcuToPhp($pattern, $type = 'date', $locale = null)
     {
@@ -43,6 +44,7 @@ class FormatConverter extends RequestHelperProxy
      *
      * @param string $pattern date format pattern in php date()-function format.
      * @return string The converted date format pattern.
+     * @see \Reaction\Helpers\FormatConverter::convertDatePhpToIcu()
      */
     public function convertDatePhpToIcu($pattern)
     {
@@ -62,6 +64,7 @@ class FormatConverter extends RequestHelperProxy
      * @param string $locale the locale to use for converting ICU short patterns `short`, `medium`, `long` and `full`.
      * If not given, `Reaction::$app->language` will be used.
      * @return string The converted date format pattern.
+     * @see \Reaction\Helpers\FormatConverter::convertDateIcuToJui()
      */
     public function convertDateIcuToJui($pattern, $type = 'date', $locale = null)
     {
@@ -82,6 +85,7 @@ class FormatConverter extends RequestHelperProxy
      *
      * @param string $pattern date format pattern in php date()-function format.
      * @return string The converted date format pattern.
+     * @see \Reaction\Helpers\FormatConverter::convertDatePhpToJui()
      */
     public function convertDatePhpToJui($pattern)
     {

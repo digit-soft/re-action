@@ -28,6 +28,7 @@ class JsonHelper extends RequestHelperProxy
      * <http://www.php.net/manual/en/function.json-encode.php>. Default is `JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE`.
      * @return string the encoding result.
      * @throws InvalidArgumentException if there is any encoding error.
+     * @see \Reaction\Helpers\Json::encode()
      */
     public function encode($value, $options = 320)
     {
@@ -47,6 +48,7 @@ class JsonHelper extends RequestHelperProxy
      * @param mixed $value the data to be encoded
      * @return string the encoding result
      * @throws InvalidArgumentException if there is any encoding error
+     * @see \Reaction\Helpers\Json::htmlEncode()
      */
     public function htmlEncode($value)
     {
@@ -59,6 +61,7 @@ class JsonHelper extends RequestHelperProxy
      * @param bool $asArray whether to return objects in terms of associative arrays.
      * @return mixed the PHP data
      * @throws InvalidArgumentException if there is any decoding error
+     * @see \Reaction\Helpers\Json::decode()
      */
     public function decode($json, $asArray = true)
     {
@@ -74,6 +77,7 @@ class JsonHelper extends RequestHelperProxy
      *   only the first error message for each attribute will be shown. Defaults to `false`.
      *
      * @return string the generated error summary
+     * @see \Reaction\Helpers\Json::errorSummary()
      */
     public function errorSummary($models, $options = [])
     {

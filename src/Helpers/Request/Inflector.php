@@ -2,6 +2,8 @@
 
 namespace Reaction\Helpers\Request;
 
+use Reaction\Helpers\Inflector as InflectorStatic;
+
 /**
  * Class Inflector. Proxy to \Reaction\Helpers\Inflector
  * @package Reaction\Web\RequestComponents
@@ -16,6 +18,7 @@ class Inflector extends RequestHelperProxy
      * For example, 'apple' will become 'apples', and 'child' will become 'children'.
      * @param string $word the word to be pluralized
      * @return string the pluralized word
+     * @see \Reaction\Helpers\Inflector::pluralize()
      */
     public function pluralize($word)
     {
@@ -26,6 +29,7 @@ class Inflector extends RequestHelperProxy
      * Returns the singular of the $word.
      * @param string $word the english word to singularize
      * @return string Singular noun.
+     * @see \Reaction\Helpers\Inflector::singularize()
      */
     public function singularize($word)
     {
@@ -38,6 +42,7 @@ class Inflector extends RequestHelperProxy
      * @param string $words
      * @param bool $ucAll whether to set all words to uppercase
      * @return string
+     * @see \Reaction\Helpers\Inflector::titleize()
      */
     public function titleize($words, $ucAll = false)
     {
@@ -53,6 +58,7 @@ class Inflector extends RequestHelperProxy
      * @see variablize()
      * @param string $word the word to CamelCase
      * @return string
+     * @see \Reaction\Helpers\Inflector::camelize()
      */
     public function camelize($word)
     {
@@ -65,6 +71,7 @@ class Inflector extends RequestHelperProxy
      * @param string $name the string to be converted
      * @param bool $ucwords whether to capitalize the first letter in each word
      * @return string the resulting words
+     * @see \Reaction\Helpers\Inflector::camel2words()
      */
     public function camel2words($name, $ucwords = true)
     {
@@ -79,6 +86,7 @@ class Inflector extends RequestHelperProxy
      * @param string $separator the character used to concatenate the words in the ID
      * @param bool|string $strict whether to insert a separator between two consecutive uppercase chars, defaults to false
      * @return string the resulting ID
+     * @see \Reaction\Helpers\Inflector::camel2id()
      */
     public function camel2id($name, $separator = '-', $strict = false)
     {
@@ -92,6 +100,7 @@ class Inflector extends RequestHelperProxy
      * @param string $id the ID to be converted
      * @param string $separator the character used to separate the words in the ID
      * @return string the resulting CamelCase name
+     * @see \Reaction\Helpers\Inflector::id2camel()
      */
     public function id2camel($id, $separator = '-')
     {
@@ -102,6 +111,7 @@ class Inflector extends RequestHelperProxy
      * Converts any "CamelCased" into an "underscored_word".
      * @param string $words the word(s) to underscore
      * @return string
+     * @see \Reaction\Helpers\Inflector::underscore()
      */
     public function underscore($words)
     {
@@ -113,6 +123,7 @@ class Inflector extends RequestHelperProxy
      * @param string $word the string to humanize
      * @param bool $ucAll whether to set all words to uppercase or not
      * @return string
+     * @see \Reaction\Helpers\Inflector::humanize()
      */
     public function humanize($word, $ucAll = false)
     {
@@ -127,6 +138,7 @@ class Inflector extends RequestHelperProxy
      * "who's online" will be converted to "whoSOnline".
      * @param string $word to lowerCamelCase
      * @return string
+     * @see \Reaction\Helpers\Inflector::variablize()
      */
     public function variablize($word)
     {
@@ -139,6 +151,7 @@ class Inflector extends RequestHelperProxy
      * For example, converts "Person" to "people".
      * @param string $className the class name for getting related table_name
      * @return string
+     * @see \Reaction\Helpers\Inflector::tableize()
      */
     public function tableize($className)
     {
@@ -157,6 +170,7 @@ class Inflector extends RequestHelperProxy
      * @param string $replacement The replacement to use for spaces
      * @param bool $lowercase whether to return the string in lowercase or not. Defaults to `true`.
      * @return string The converted string.
+     * @see \Reaction\Helpers\Inflector::slug()
      */
     public function slug($string, $replacement = '-', $lowercase = true)
     {
@@ -174,6 +188,7 @@ class Inflector extends RequestHelperProxy
      * @param string|\Transliterator $transliterator either a [[\Transliterator]] or a string
      * from which a [[\Transliterator]] can be built.
      * @return string
+     * @see \Reaction\Helpers\Inflector::transliterate()
      */
     public function transliterate($string, $transliterator = null)
     {
@@ -194,6 +209,7 @@ class Inflector extends RequestHelperProxy
      * For example, converts "people" to "Person".
      * @param string $tableName
      * @return string
+     * @see \Reaction\Helpers\Inflector::classify()
      */
     public function classify($tableName)
     {
@@ -204,6 +220,7 @@ class Inflector extends RequestHelperProxy
      * Converts number to its ordinal English form. For example, converts 13 to 13th, 2 to 2nd ...
      * @param int $number the number to get its ordinal value
      * @return string
+     * @see \Reaction\Helpers\Inflector::ordinalize()
      */
     public function ordinalize($number)
     {
@@ -236,6 +253,7 @@ class Inflector extends RequestHelperProxy
      * @param string $connector the string connecting words other than those connected by
      * $lastWordConnector and $twoWordsConnector
      * @return string the generated sentence
+     * @see \Reaction\Helpers\Inflector::sentence()
      */
     public function sentence(array $words, $twoWordsConnector = null, $lastWordConnector = null, $connector = ', ')
     {

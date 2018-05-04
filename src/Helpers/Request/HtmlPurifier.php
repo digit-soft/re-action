@@ -49,6 +49,7 @@ class HtmlPurifier extends RequestHelperProxy
      * ```
      *
      * @return string the purified HTML content.
+     * @see \Reaction\Helpers\HtmlPurifier::process()
      */
     public function process($content, $config = null)
     {

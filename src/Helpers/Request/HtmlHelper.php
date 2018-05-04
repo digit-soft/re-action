@@ -4,6 +4,7 @@ namespace Reaction\Helpers\Request;
 
 use Reaction\Base\Model;
 use Reaction\Exceptions\InvalidArgumentException;
+use Reaction\Helpers\Html;
 use Reaction\Helpers\Url;
 
 /**
@@ -23,6 +24,7 @@ class HtmlHelper extends RequestHelperProxy
      * @param string $encoding
      * @return string the encoded content
      * @see decode()
+     * @see Html::encode()
      * @see http://www.php.net/manual/en/function.htmlspecialchars.php
      */
     public function encode($content, $doubleEncode = true, $encoding = null)
@@ -36,6 +38,7 @@ class HtmlHelper extends RequestHelperProxy
      * @param string $content the content to be decoded
      * @return string the decoded content
      * @see encode()
+     * @see Html::decode()
      * @see http://www.php.net/manual/en/function.htmlspecialchars-decode.php
      */
     public function decode($content)
@@ -61,6 +64,7 @@ class HtmlHelper extends RequestHelperProxy
      * @return string the generated HTML tag
      * @see beginTag()
      * @see endTag()
+     * @see Html::tag()
      */
     public function tag($name, $content = '', $options = [], $encoding = null)
     {
@@ -78,6 +82,7 @@ class HtmlHelper extends RequestHelperProxy
      * @return string the generated start tag
      * @see endTag()
      * @see tag()
+     * @see Html::beginTag()
      */
     public function beginTag($name, $options = [], $encoding = null)
     {
@@ -90,6 +95,7 @@ class HtmlHelper extends RequestHelperProxy
      * @return string the generated end tag
      * @see beginTag()
      * @see tag()
+     * @see Html::endTag()
      */
     public function endTag($name)
     {
@@ -105,6 +111,7 @@ class HtmlHelper extends RequestHelperProxy
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
      * @param string $encoding
      * @return string the generated style tag
+     * @see Html::style()
      */
     public function style($content, $options = [], $encoding = null)
     {
@@ -120,6 +127,7 @@ class HtmlHelper extends RequestHelperProxy
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
      * @param string $encoding
      * @return string the generated script tag
+     * @see Html::script()
      */
     public function script($content, $options = [], $encoding = null)
     {
@@ -142,6 +150,7 @@ class HtmlHelper extends RequestHelperProxy
      * @param string $encoding
      * @return string the generated link tag
      * @see Url::to()
+     * @see Html::cssFile()
      */
     public function cssFile($url, $options = [], $encoding = null)
     {
@@ -163,6 +172,7 @@ class HtmlHelper extends RequestHelperProxy
      * @param string $encoding
      * @return string the generated script tag
      * @see Url::to()
+     * @see Html::jsFile()
      */
     public function jsFile($url, $options = [], $encoding = null)
     {
@@ -173,6 +183,7 @@ class HtmlHelper extends RequestHelperProxy
      * Generates the meta tags containing CSRF token information.
      * @return string the generated meta tags
      * @see Request::enableCsrfValidation
+     * @see Html::csrfMetaTags()
      */
     public function csrfMetaTags()
     {
@@ -198,6 +209,7 @@ class HtmlHelper extends RequestHelperProxy
      * @param string       $encoding
      * @return string the generated form start tag.
      * @see endForm()
+     * @see Html::beginForm()
      */
     public function beginForm($action = '', $method = 'post', $options = [], $encoding = null)
     {
@@ -208,6 +220,7 @@ class HtmlHelper extends RequestHelperProxy
      * Generates a form end tag.
      * @return string the generated tag
      * @see beginForm()
+     * @see Html::endForm()
      */
     public function endForm()
     {
@@ -236,7 +249,8 @@ class HtmlHelper extends RequestHelperProxy
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
      * @param string            $encoding
      * @return string the generated hyperlink
-     * @see \Reaction\Helpers\Url::to()
+     * @see Url::to()
+     * @see Html::a()
      */
     public function a($text, $url = null, $options = [], $encoding = null)
     {
@@ -256,6 +270,7 @@ class HtmlHelper extends RequestHelperProxy
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
      * @param string $encoding
      * @return string the generated mailto link
+     * @see Html::mailto()
      */
     public function mailto($text, $email = null, $options = [], $encoding = null)
     {
@@ -274,6 +289,7 @@ class HtmlHelper extends RequestHelperProxy
      * descriptors and values are URLs. All URLs will be processed by [[Url::to()]].
      * @param string       $encoding
      * @return string the generated image tag.
+     * @see Html::img()
      */
     public function img($src, $options = [], $encoding = null)
     {
@@ -293,6 +309,7 @@ class HtmlHelper extends RequestHelperProxy
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
      * @param string $encoding
      * @return string the generated label tag
+     * @see Html::label()
      */
     public function label($content, $for = null, $options = [], $encoding = null)
     {
@@ -310,6 +327,7 @@ class HtmlHelper extends RequestHelperProxy
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
      * @param string $encoding
      * @return string the generated button tag
+     * @see Html::button()
      */
     public function button($content = 'Button', $options = [], $encoding = null)
     {
@@ -331,6 +349,7 @@ class HtmlHelper extends RequestHelperProxy
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
      * @param string $encoding
      * @return string the generated submit button tag
+     * @see Html::submitButton()
      */
     public function submitButton($content = 'Submit', $options = [], $encoding = null)
     {
@@ -348,6 +367,7 @@ class HtmlHelper extends RequestHelperProxy
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
      * @param string $encoding
      * @return string the generated reset button tag
+     * @see Html::resetButton()
      */
     public function resetButton($content = 'Reset', $options = [], $encoding = null)
     {
@@ -365,6 +385,7 @@ class HtmlHelper extends RequestHelperProxy
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
      * @param string $encoding
      * @return string the generated input tag
+     * @see Html::input()
      */
     public function input($type, $name = null, $value = null, $options = [], $encoding = null)
     {
@@ -380,6 +401,7 @@ class HtmlHelper extends RequestHelperProxy
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
      * @param string $encoding
      * @return string the generated button tag
+     * @see Html::buttonInput()
      */
     public function buttonInput($label = 'Button', $options = [], $encoding = null)
     {
@@ -399,6 +421,7 @@ class HtmlHelper extends RequestHelperProxy
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
      * @param string $encoding
      * @return string the generated button tag
+     * @see Html::submitInput()
      */
     public function submitInput($label = 'Submit', $options = [], $encoding = null)
     {
@@ -413,6 +436,7 @@ class HtmlHelper extends RequestHelperProxy
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
      * @param string $encoding
      * @return string the generated button tag
+     * @see Html::resetInput()
      */
     public function resetInput($label = 'Reset', $options = [], $encoding = null)
     {
@@ -429,6 +453,7 @@ class HtmlHelper extends RequestHelperProxy
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
      * @param string $encoding
      * @return string the generated text input tag
+     * @see Html::textInput()
      */
     public function textInput($name, $value = null, $options = [], $encoding = null)
     {
@@ -445,6 +470,7 @@ class HtmlHelper extends RequestHelperProxy
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
      * @param string $encoding
      * @return string the generated hidden input tag
+     * @see Html::hiddenInput()
      */
     public function hiddenInput($name, $value = null, $options = [], $encoding = null)
     {
@@ -461,6 +487,7 @@ class HtmlHelper extends RequestHelperProxy
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
      * @param string $encoding
      * @return string the generated password input tag
+     * @see Html::passwordInput()
      */
     public function passwordInput($name, $value = null, $options = [], $encoding = null)
     {
@@ -480,6 +507,7 @@ class HtmlHelper extends RequestHelperProxy
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
      * @param string $encoding
      * @return string the generated file input tag
+     * @see Html::fileInput()
      */
     public function fileInput($name, $value = null, $options = [], $encoding = null)
     {
@@ -501,6 +529,7 @@ class HtmlHelper extends RequestHelperProxy
      *
      * @param null   $encoding
      * @return string the generated text area tag
+     * @see Html::textarea()
      */
     public function textarea($name, $value = '', $options = [], $encoding = null)
     {
@@ -516,6 +545,7 @@ class HtmlHelper extends RequestHelperProxy
      * See [[booleanInput()]] for details about accepted attributes.
      *
      * @return string the generated radio button tag
+     * @see Html::radio()
      */
     public function radio($name, $checked = false, $options = [], $encoding = null)
     {
@@ -531,6 +561,7 @@ class HtmlHelper extends RequestHelperProxy
      * See [[booleanInput()]] for details about accepted attributes.
      *
      * @return string the generated checkbox tag
+     * @see Html::checkbox()
      */
     public function checkbox($name, $checked = false, $options = [], $encoding = null)
     {
@@ -581,6 +612,7 @@ class HtmlHelper extends RequestHelperProxy
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
      *
      * @return string the generated drop-down list tag
+     * @see Html::dropDownList()
      */
     public function dropDownList($name, $selection = null, $items = [], $options = [], $encoding = null)
     {
@@ -634,6 +666,7 @@ class HtmlHelper extends RequestHelperProxy
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
      *
      * @return string the generated list box tag
+     * @see Html::listBox()
      */
     public function listBox($name, $selection = null, $items = [], $options = [], $encoding = null)
     {
@@ -674,6 +707,7 @@ class HtmlHelper extends RequestHelperProxy
      *
      * @param string            $encoding
      * @return string the generated checkbox list
+     * @see Html::checkboxList()
      */
     public function checkboxList($name, $selection = null, $items = [], $options = [], $encoding = null)
     {
@@ -713,6 +747,7 @@ class HtmlHelper extends RequestHelperProxy
      *
      * @param string            $encoding
      * @return string the generated radio button list
+     * @see Html::radioList()
      */
     public function radioList($name, $selection = null, $items = [], $options = [], $encoding = null)
     {
@@ -744,6 +779,7 @@ class HtmlHelper extends RequestHelperProxy
      *
      * @param string             $encoding
      * @return string the generated unordered list. An empty list tag will be returned if `$items` is empty.
+     * @see Html::ul()
      */
     public function ul($items, $options = [], $encoding = null)
     {
@@ -773,6 +809,7 @@ class HtmlHelper extends RequestHelperProxy
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
      *
      * @return string the generated ordered list. An empty string is returned if `$items` is empty.
+     * @see Html::ol()
      */
     public function ol($items, $options = [], $encoding = null)
     {
@@ -798,6 +835,7 @@ class HtmlHelper extends RequestHelperProxy
      *
      * @param string $encoding
      * @return string the generated label tag
+     * @see Html::activeLabel()
      */
     public function activeLabel($model, $attribute, $options = [], $encoding = null)
     {
@@ -824,6 +862,7 @@ class HtmlHelper extends RequestHelperProxy
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
      *
      * @return string the generated hint tag
+     * @see Html::activeHint()
      */
     public function activeHint($model, $attribute, $options = [], $encoding = null)
     {
@@ -847,6 +886,7 @@ class HtmlHelper extends RequestHelperProxy
      *
      * @param string        $encoding
      * @return string the generated error summary
+     * @see Html::errorSummary()
      */
     public function errorSummary($models, $options = [], $encoding = null)
     {
@@ -875,6 +915,7 @@ class HtmlHelper extends RequestHelperProxy
      *
      * @param string $encoding
      * @return string the generated label tag
+     * @see Html::error()
      */
     public function error($model, $attribute, $options = [], $encoding = null)
     {
@@ -895,6 +936,7 @@ class HtmlHelper extends RequestHelperProxy
      * @param string $encoding
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
      * @return string the generated input tag
+     * @see Html::activeInput()
      */
     public function activeInput($type, $model, $attribute, $options = [], $encoding = null)
     {
@@ -920,6 +962,7 @@ class HtmlHelper extends RequestHelperProxy
      *
      * @param string $encoding
      * @return string the generated input tag
+     * @see Html::activeTextInput()
      */
     public function activeTextInput($model, $attribute, $options = [], $encoding = null)
     {
@@ -938,6 +981,7 @@ class HtmlHelper extends RequestHelperProxy
      * @param string $encoding
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
      * @return string the generated input tag
+     * @see Html::activeHiddenInput()
      */
     public function activeHiddenInput($model, $attribute, $options = [], $encoding = null)
     {
@@ -965,6 +1009,7 @@ class HtmlHelper extends RequestHelperProxy
      * @param string $encoding
      *
      * @return string the generated input tag
+     * @see Html::activePasswordInput()
      */
     public function activePasswordInput($model, $attribute, $options = [], $encoding = null)
     {
@@ -987,6 +1032,7 @@ class HtmlHelper extends RequestHelperProxy
      * from `$options` to be used for the hidden input.
      * @param string $encoding
      * @return string the generated input tag
+     * @see Html::activeFileInput()
      */
     public function activeFileInput($model, $attribute, $options = [], $encoding = null)
     {
@@ -1012,6 +1058,7 @@ class HtmlHelper extends RequestHelperProxy
      *
      * @param string $encoding
      * @return string the generated textarea tag
+     * @see Html::activeTextarea()
      */
     public function activeTextarea($model, $attribute, $options = [], $encoding = null)
     {
@@ -1029,6 +1076,7 @@ class HtmlHelper extends RequestHelperProxy
      * @param string $encoding
      *
      * @return string the generated radio button tag
+     * @see Html::activeRadio()
      */
     public function activeRadio($model, $attribute, $options = [], $encoding = null)
     {
@@ -1046,6 +1094,7 @@ class HtmlHelper extends RequestHelperProxy
      * @param string $encoding
      *
      * @return string the generated checkbox tag
+     * @see Html::activeCheckbox()
      */
     public function activeCheckbox($model, $attribute, $options = [], $encoding = null)
     {
@@ -1098,6 +1147,7 @@ class HtmlHelper extends RequestHelperProxy
      * @param string $encoding
      *
      * @return string the generated drop-down list tag
+     * @see Html::activeDropDownList()
      */
     public function activeDropDownList($model, $attribute, $items, $options = [], $encoding = null)
     {
@@ -1153,6 +1203,7 @@ class HtmlHelper extends RequestHelperProxy
      * @param string $encoding
      *
      * @return string the generated list box tag
+     * @see Html::activeListBox()
      */
     public function activeListBox($model, $attribute, $items, $options = [], $encoding = null)
     {
@@ -1197,6 +1248,7 @@ class HtmlHelper extends RequestHelperProxy
      * @param string $encoding
      *
      * @return string the generated checkbox list
+     * @see Html::activeCheckboxList()
      */
     public function activeCheckboxList($model, $attribute, $items, $options = [], $encoding = null)
     {
@@ -1240,6 +1292,7 @@ class HtmlHelper extends RequestHelperProxy
      * @param string $encoding
      *
      * @return string the generated radio button list
+     * @see Html::activeRadioList()
      */
     public function activeRadioList($model, $attribute, $items, $options = [], $encoding = null)
     {
@@ -1263,6 +1316,7 @@ class HtmlHelper extends RequestHelperProxy
      *
      * @param string            $encoding
      * @return string the generated list options
+     * @see Html::renderSelectOptions()
      */
     public function renderSelectOptions($selection, $items, &$tagOptions = [], $encoding = null)
     {
@@ -1292,6 +1346,7 @@ class HtmlHelper extends RequestHelperProxy
      * into a string with a leading white space (so that it can be directly appended to the tag name
      * in a tag. If there is no attribute, an empty string will be returned.
      * @see addCssClass()
+     * @see Html::renderTagAttributes()
      */
     public function renderTagAttributes($attributes, $encoding = null)
     {
@@ -1315,6 +1370,7 @@ class HtmlHelper extends RequestHelperProxy
      * @param string|array $class the CSS class(es) to be added
      * @see mergeCssClasses()
      * @see removeCssClass()
+     * @see Html::addCssClass()
      */
     public function addCssClass(&$options, $class)
     {
@@ -1326,6 +1382,7 @@ class HtmlHelper extends RequestHelperProxy
      * @param array $options the options to be modified.
      * @param string|array $class the CSS class(es) to be removed
      * @see addCssClass()
+     * @see Html::removeCssClass()
      */
     public function removeCssClass(&$options, $class)
     {
@@ -1353,6 +1410,7 @@ class HtmlHelper extends RequestHelperProxy
      * @see removeCssStyle()
      * @see cssStyleFromArray()
      * @see cssStyleToArray()
+     * @see Html::addCssStyle()
      */
     public function addCssStyle(&$options, $style, $overwrite = true)
     {
@@ -1372,6 +1430,7 @@ class HtmlHelper extends RequestHelperProxy
      * @param string|array $properties the CSS properties to be removed. You may use a string
      * if you are removing a single property.
      * @see addCssStyle()
+     * @see Html::removeCssStyle()
      */
     public function removeCssStyle(&$options, $properties)
     {
@@ -1391,6 +1450,7 @@ class HtmlHelper extends RequestHelperProxy
      * @param array $style the CSS style array. The array keys are the CSS property names,
      * and the array values are the corresponding CSS property values.
      * @return string the CSS style string. If the CSS style is empty, a null will be returned.
+     * @see Html::cssStyleFromArray()
      */
     public function cssStyleFromArray(array $style)
     {
@@ -1412,6 +1472,7 @@ class HtmlHelper extends RequestHelperProxy
      *
      * @param string $style the CSS style string
      * @return array the array representation of the CSS style
+     * @see Html::cssStyleToArray()
      */
     public function cssStyleToArray($style)
     {
@@ -1434,6 +1495,7 @@ class HtmlHelper extends RequestHelperProxy
      * @param string $attribute the attribute name or expression
      * @return string the attribute name without prefix and suffix.
      * @throws InvalidArgumentException if the attribute name contains non-word characters.
+     * @see Html::getAttributeName()
      */
     public function getAttributeName($attribute)
     {
@@ -1453,6 +1515,7 @@ class HtmlHelper extends RequestHelperProxy
      * @param string $attribute the attribute name or expression
      * @return string|array the corresponding attribute value
      * @throws InvalidArgumentException if the attribute name contains non-word characters.
+     * @see Html::getAttributeValue()
      */
     public function getAttributeValue($model, $attribute)
     {
@@ -1473,6 +1536,7 @@ class HtmlHelper extends RequestHelperProxy
      * @param string $attribute the attribute name or expression
      * @return string the generated input name
      * @throws InvalidArgumentException if the attribute name contains non-word characters.
+     * @see Html::getInputName()
      */
     public function getInputName($model, $attribute)
     {
@@ -1488,6 +1552,7 @@ class HtmlHelper extends RequestHelperProxy
      * @param string $attribute the attribute name or expression. See [[getAttributeName()]] for explanation of attribute expression.
      * @return string the generated input ID
      * @throws InvalidArgumentException if the attribute name contains non-word characters.
+     * @see Html::getInputId()
      */
     public function getInputId($model, $attribute)
     {
@@ -1498,6 +1563,7 @@ class HtmlHelper extends RequestHelperProxy
      * Escapes regular expression to use in JavaScript.
      * @param string $regexp the regular expression to be escaped.
      * @return string the escaped result.
+     * @see Html::escapeJsRegularExpression()
      */
     public function escapeJsRegularExpression($regexp)
     {

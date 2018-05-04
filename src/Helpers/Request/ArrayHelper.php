@@ -46,6 +46,7 @@ class ArrayHelper extends RequestHelperProxy
      *
      * @param bool $recursive whether to recursively converts properties which are objects into arrays.
      * @return array the array representation of the object
+     * @see \Reaction\Helpers\ArrayHelper::toArray()
      */
     public function toArray($object, $properties = [], $recursive = true)
     {
@@ -66,6 +67,7 @@ class ArrayHelper extends RequestHelperProxy
      * @param array $b array to be merged from. You can specify additional
      * arrays via third argument, fourth argument etc.
      * @return array the merged array (the original arrays are not changed.)
+     * @see \Reaction\Helpers\ArrayHelper::merge()
      */
     public function merge($a, $b)
     {
@@ -109,6 +111,7 @@ class ArrayHelper extends RequestHelperProxy
      * @param mixed $default the default value to be returned if the specified array key does not exist. Not used when
      * getting value from an object.
      * @return mixed the value of the element if found, default value otherwise
+     * @see \Reaction\Helpers\ArrayHelper::getValue()
      */
     public function getValue($array, $key, $default = null)
     {
@@ -166,6 +169,7 @@ class ArrayHelper extends RequestHelperProxy
      * you can also describe the path as an array of keys
      * if the path is null then `$array` will be assigned the `$value`
      * @param mixed $value the value to be written
+     * @see \Reaction\Helpers\ArrayHelper::setValue()
      */
     public function setValue(&$array, $path, $value)
     {
@@ -190,6 +194,7 @@ class ArrayHelper extends RequestHelperProxy
      * @param string $key key name of the array element
      * @param mixed $default the default value to be returned if the specified key does not exist
      * @return mixed|null the value of the element if found, default value otherwise
+     * @see \Reaction\Helpers\ArrayHelper::remove()
      */
     public function remove(&$array, $key, $default = null)
     {
@@ -212,6 +217,7 @@ class ArrayHelper extends RequestHelperProxy
      * @param array $array the array where to look the value from
      * @param string $value the value to remove from the array
      * @return array the items that were removed from the array
+     * @see \Reaction\Helpers\ArrayHelper::removeValue()
      */
     public function removeValue(&$array, $value)
     {
@@ -317,6 +323,7 @@ class ArrayHelper extends RequestHelperProxy
      * defined, the array element will be discarded. Otherwise, if $groups is specified, array element will be added
      * to the result array without any key.
      * @return array the indexed and/or grouped array
+     * @see \Reaction\Helpers\ArrayHelper::index()
      */
     public function index($array, $key, $groups = [])
     {
@@ -348,6 +355,7 @@ class ArrayHelper extends RequestHelperProxy
      * @param bool $keepKeys whether to maintain the array keys. If false, the resulting array
      * will be re-indexed with integers.
      * @return array the list of column values
+     * @see \Reaction\Helpers\ArrayHelper::getColumn()
      */
     public function getColumn($array, $name, $keepKeys = true)
     {
@@ -394,6 +402,7 @@ class ArrayHelper extends RequestHelperProxy
      * @param string|\Closure $to
      * @param string|\Closure $group
      * @return array
+     * @see \Reaction\Helpers\ArrayHelper::map()
      */
     public function map($array, $from, $to, $group = null)
     {
@@ -408,6 +417,7 @@ class ArrayHelper extends RequestHelperProxy
      * @param array $array the array with keys to check
      * @param bool $caseSensitive whether the key comparison should be case-sensitive
      * @return bool whether the array contains the specified key
+     * @see \Reaction\Helpers\ArrayHelper::keyExists()
      */
     public function keyExists($key, $array, $caseSensitive = true)
     {
@@ -429,6 +439,7 @@ class ArrayHelper extends RequestHelperProxy
      * for more details. When sorting by multiple keys with different sort flags, use an array of sort flags.
      * @throws InvalidArgumentException if the $direction or $sortFlag parameters do not have
      * correct number of elements as that of $key.
+     * @see \Reaction\Helpers\ArrayHelper::multisort()
      */
     public function multisort(&$array, $key, $direction = SORT_ASC, $sortFlag = SORT_REGULAR)
     {
@@ -447,6 +458,7 @@ class ArrayHelper extends RequestHelperProxy
      * [[\app\run\Application::charset]] will be used.
      * @return array the encoded data
      * @see http://www.php.net/manual/en/function.htmlspecialchars.php
+     * @see \Reaction\Helpers\ArrayHelper::htmlEncode()
      */
     public function htmlEncode($data, $valuesOnly = true, $charset = null)
     {
@@ -463,6 +475,7 @@ class ArrayHelper extends RequestHelperProxy
      * both the array keys and array values will be decoded.
      * @return array the decoded data
      * @see http://www.php.net/manual/en/function.htmlspecialchars-decode.php
+     * @see \Reaction\Helpers\ArrayHelper::htmlDecode()
      */
     public function htmlDecode($data, $valuesOnly = true)
     {
@@ -481,6 +494,7 @@ class ArrayHelper extends RequestHelperProxy
      * @param bool $allStrings whether the array keys must be all strings in order for
      * the array to be treated as associative.
      * @return bool whether the array is associative
+     * @see \Reaction\Helpers\ArrayHelper::isAssociative()
      */
     public function isAssociative($array, $allStrings = true)
     {
@@ -499,6 +513,7 @@ class ArrayHelper extends RequestHelperProxy
      * @param bool $consecutive whether the array keys must be a consecutive sequence
      * in order for the array to be treated as indexed.
      * @return bool whether the array is indexed
+     * @see \Reaction\Helpers\ArrayHelper::isIndexed()
      */
     public function isIndexed($array, $consecutive)
     {
@@ -516,6 +531,7 @@ class ArrayHelper extends RequestHelperProxy
      * @return bool `true` if `$needle` was found in `$haystack`, `false` otherwise.
      * @throws InvalidArgumentException if `$haystack` is neither traversable nor an array.
      * @see http://php.net/manual/en/function.in-array.php
+     * @see \Reaction\Helpers\ArrayHelper::isIn()
      */
     public function isIn($needle, $haystack, $strict = false)
     {
@@ -530,6 +546,7 @@ class ArrayHelper extends RequestHelperProxy
      * @param mixed $var The variable being evaluated.
      * @return bool whether $var is array-like
      * @see http://php.net/manual/en/function.is-array.php
+     * @see \Reaction\Helpers\ArrayHelper::isTraversable()
      */
     public function isTraversable($var)
     {
@@ -546,6 +563,7 @@ class ArrayHelper extends RequestHelperProxy
      * @param bool $strict Whether to enable strict (`===`) comparison.
      * @throws InvalidArgumentException if `$haystack` or `$needles` is neither traversable nor an array.
      * @return bool `true` if `$needles` is a subset of `$haystack`, `false` otherwise.
+     * @see \Reaction\Helpers\ArrayHelper::isSubset()
      */
     public function isSubset($needles, $haystack, $strict = false)
     {
@@ -594,6 +612,7 @@ class ArrayHelper extends RequestHelperProxy
      * - `var.key` = only `$array['var']['key'] will be left in result.
      * - `!var.key` = `$array['var']['key'] will be removed from result.
      * @return array Filtered array
+     * @see \Reaction\Helpers\ArrayHelper::filter()
      */
     public function filter($array, $filters)
     {

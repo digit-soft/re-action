@@ -7,6 +7,8 @@ use Reaction\Exceptions\InvalidArgumentException;
 
 class UrlHelper extends RequestHelperProxy
 {
+    public $helperClass = 'Reaction\Helpers\Url';
+
     /**
      * Creates a URL for the given route.
      *
@@ -72,6 +74,7 @@ class UrlHelper extends RequestHelperProxy
      *
      * @return string the generated URL
      * @throws InvalidArgumentException a relative route is given while there is no active controller
+     * @see \Reaction\Helpers\Url::toRoute()
      */
     public function toRoute($route, $scheme = false)
     {
@@ -187,6 +190,7 @@ class UrlHelper extends RequestHelperProxy
      *
      * @return string the generated URL
      * @throws InvalidArgumentException a relative route is given while there is no active controller
+     * @see \Reaction\Helpers\Url::to()
      */
     public function to($url = '', $scheme = false)
     {
@@ -220,7 +224,7 @@ class UrlHelper extends RequestHelperProxy
      * @param string $scheme the URI scheme used in URL (e.g. `http` or `https`). Use empty string to
      * create protocol-relative URL (e.g. `//example.com/path`)
      * @return string the processed URL
-     * @since 2.0.11
+     * @see \Reaction\Helpers\Url::ensureScheme()
      */
     public function ensureScheme($url, $scheme)
     {
@@ -253,6 +257,7 @@ class UrlHelper extends RequestHelperProxy
      * - string: returning an absolute base URL with the specified scheme (either `http`, `https` or empty string
      *   for protocol-relative URL).
      * @return string
+     * @see \Reaction\Helpers\Url::base()
      */
     public function base($scheme = false)
     {
@@ -274,6 +279,7 @@ class UrlHelper extends RequestHelperProxy
      * later by [[previous()]]. If not set, [[\yii\web\User::setReturnUrl()]] will be used with passed URL.
      * @see previous()
      * @see \yii\web\User::setReturnUrl()
+     * @see \Reaction\Helpers\Url::remember()
      */
     public function remember($url = '', $name = null)
     {
@@ -295,6 +301,7 @@ class UrlHelper extends RequestHelperProxy
      * and `$name` is not specified.
      * @see remember()
      * @see \yii\web\User::getReturnUrl()
+     * @see \Reaction\Helpers\Url::previous()
      */
     public function previous($name = null)
     {
@@ -317,6 +324,7 @@ class UrlHelper extends RequestHelperProxy
      * ```
      *
      * @return string the canonical URL of the currently requested page
+     * @see \Reaction\Helpers\Url::canonical()
      */
     public function canonical()
     {
@@ -337,6 +345,7 @@ class UrlHelper extends RequestHelperProxy
      *   for protocol-relative URL).
      *
      * @return string home URL
+     * @see \Reaction\Helpers\Url::home()
      */
     public function home($scheme = false)
     {
@@ -403,7 +412,7 @@ class UrlHelper extends RequestHelperProxy
      *   for protocol-relative URL).
      *
      * @return string the generated URL
-     * @since 2.0.3
+     * @see \Reaction\Helpers\Url::current()
      */
     public function current(array $params = [], $scheme = false)
     {
@@ -419,5 +428,13 @@ class UrlHelper extends RequestHelperProxy
     protected function getUrlManager()
     {
         return $this->request->urlManager;
+    }
+
+    /**
+     * Get request route
+     * @return Reaction\Routes\RouteInterface
+     */
+    protected function getRoute() {
+        return $this->request->getRoute();
     }
 }
