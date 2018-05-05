@@ -174,6 +174,39 @@ class UrlManager extends Component implements UrlManagerInterface
     }
 
     /**
+     * Extract static part from url (without placeholders)
+     * @param string $path
+     * @return bool|string
+     */
+    public function extractStaticPart($path) {
+        $pos = $this->findPlaceholderStartPos($path);
+        if ($pos !== false) {
+            $prefix = substr($path, 0, $pos);
+            return strlen($prefix) > 1 ? rtrim($prefix, '/') : $prefix;
+        }
+        return $path;
+    }
+
+    /**
+     * Finds a position with first placeholder
+     * @param string $path
+     * @return bool|int
+     */
+    protected function findPlaceholderStartPos($path) {
+        $brFgPos = strpos($path, '{');
+        $brSqPos = strpos($path, '[');
+        if ($brFgPos === false && $brSqPos === false) {
+            return false;
+        }
+        $len = strlen($path);
+        $positions = [
+            $brFgPos !== false ?: $len,
+            $brSqPos !== false ?: $len,
+        ];
+        return min($positions);
+    }
+
+    /**
      * Build route path with placeholders replace and searching in router paths
      * @param string $path
      * @param array  $params
