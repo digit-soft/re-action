@@ -26,6 +26,11 @@ return [
         //Components
         'components' => [
             'router' => 'Reaction\Routes\RouterInterface',
+            'urlManager' => [
+                'class' => 'Reaction\Routes\UrlManagerInterface',
+                'baseUrl' => '',
+                'hostInfo' => 'http://vitrager.loc',
+            ],
             'logger' => 'stdioLogger',
             'formatter' => 'formatterDefault',
             'security' => 'securityDefault',
@@ -89,6 +94,7 @@ return [
                 'loop' => Instance::of('React\EventLoop\LoopInterface'),
             ],
             'Reaction\Routes\RouteInterface' => 'Reaction\Routes\Route',
+            'Reaction\Routes\UrlManagerInterface' => 'Reaction\Routes\UrlManager',
         ],
         'singletons' => [
             //React event loop
