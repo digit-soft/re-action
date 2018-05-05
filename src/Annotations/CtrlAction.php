@@ -11,7 +11,7 @@ use Doctrine\Common\Annotations\Annotation\Target;
  * @Annotation
  * @Target({"METHOD"})
  * @Attributes({
- *   @Attribute("path", type = "string"),
+ *   @Attribute("path", type = "string", required = true),
  *   @Attribute("method",  type = "array"),
  * })
  *
@@ -49,8 +49,26 @@ class CtrlAction
             }
         }
 
+        $this->normalizePath();
+
         if(empty($this->path)) {
             throw new \Exception("Property 'path' is required");
         }
+    }
+
+    /**
+     * Normalize path
+     */
+    protected function normalizePath() {
+        if (!isset($this->path)) {
+            return;
+        }
+        $path = trim($this->path);
+        if (($qPos = strpos($path, '?')) !== false) {
+            $path = mb_substr($path, $path);
+        }
+        $path = rtrim($path, '/');
+        $this->path = $path;
+        $this->extractParams();
     }
 }
