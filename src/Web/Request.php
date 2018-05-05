@@ -290,6 +290,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
             $data = Reaction::$app->router->getDispatcherData($this);
             $this->_route = \Reaction::create([
                 'class' => RouteInterface::class,
+                'request' => $this,
                 'dispatchedData' => $data,
             ]);
         }
@@ -676,7 +677,10 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
      */
     public function _getQueryParams()
     {
-        return $this->reactRequest->getQueryParams();
+        if (!isset($this->_queryParams)) {
+            $this->_queryParams = $this->reactRequest->getQueryParams();
+        }
+        return $this->_queryParams;
     }
 
     /**
@@ -1792,6 +1796,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
             'rawBody' => 'setRawBody()',
             'headers' => 'setReactHeaders()',
             'cookies' => 'setReactCookies()',
+            'queryParams' => 'setQueryParams()',
         ];
     }
 
