@@ -39,20 +39,6 @@ use Reaction\Helpers\Url;
 class UrlManager extends RequestComponent
 {
     /**
-     * @var bool whether to enable pretty URLs. Instead of putting all parameters in the query
-     * string part of a URL, pretty URLs allow using path info to represent some of the parameters
-     * and can thus produce more user-friendly URLs, such as "/news/Yii-is-released", instead of
-     * "/index.php?r=news%2Fview&id=100".
-     */
-    public $enablePrettyUrl = true;
-    /**
-     * @var bool whether to enable strict parsing. If strict parsing is enabled, the incoming
-     * requested URL must match at least one of the [[rules]] in order to be treated as a valid request.
-     * Otherwise, the path info part of the request will be treated as the requested route.
-     * This property is used only when [[enablePrettyUrl]] is `true`.
-     */
-    public $enableStrictParsing = false;
-    /**
      * @var array the rules for creating and parsing URLs when [[enablePrettyUrl]] is `true`.
      * This property is used only if [[enablePrettyUrl]] is `true`. Each element in the array
      * is the configuration array for creating a single URL rule. The configuration will
@@ -125,23 +111,6 @@ class UrlManager extends RequestComponent
      * specified via [[rules]] will take precedence when the same property of the rule is configured.
      */
     public $ruleConfig = ['class' => 'yii\web\UrlRule'];
-    /**
-     * @var UrlNormalizer|array|string|false the configuration for [[UrlNormalizer]] used by this UrlManager.
-     * The default value is `false`, which means normalization will be skipped.
-     * If you wish to enable URL normalization, you should configure this property manually.
-     * For example:
-     *
-     * ```php
-     * [
-     *     'class' => 'yii\web\UrlNormalizer',
-     *     'collapseSlashes' => true,
-     *     'normalizeTrailingSlash' => true,
-     * ]
-     * ```
-     *
-     * @since 2.0.10
-     */
-    public $normalizer = false;
 
     /**
      * @var string the cache key for cached rules
@@ -165,10 +134,9 @@ class UrlManager extends RequestComponent
 
     /**
      * Parses the user request.
-     * @param Request $request the request component
+     * @param AppRequestInterface $request the request component
      * @return array|bool the route and the associated parameters. The latter is always empty
      * if [[enablePrettyUrl]] is `false`. `false` is returned if the current request cannot be successfully parsed.
-     * @throws InvalidConfigException
      */
     public function parseRequest($request)
     {
@@ -259,11 +227,12 @@ class UrlManager extends RequestComponent
      *
      * @param string|array $params use a string to represent a route (e.g. `site/index`),
      * or an array to represent a route with query parameters (e.g. `['site/index', 'param1' => 'value1']`).
-     * @param string|null $scheme the scheme to use for the URL (either `http`, `https` or empty string
+     * @param string|null  $scheme the scheme to use for the URL (either `http`, `https` or empty string
      * for protocol-relative URL).
      * If not specified the scheme of the current request will be used.
      * @return string the created URL
      * @see createUrl()
+     * @throws InvalidConfigException
      */
     public function createAbsoluteUrl($params, $scheme = null)
     {
