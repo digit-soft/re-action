@@ -11,7 +11,7 @@ use Reaction\Web\AppRequestInterface;
  * @package Reaction\Routes
  * @property Controller  $errorController
  * @property RouteParser $routeParser
- * @property string[]    $routePaths
+ * @property array       $routePaths
  */
 interface RouterInterface
 {

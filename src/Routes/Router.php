@@ -41,7 +41,7 @@ class Router extends Component implements RouterInterface
     protected $controllers = [];
     /** @var RouteParser */
     protected $_routeParser;
-    /** @var string[] Route path expressions. Used to build URLs */
+    /** @var array  Route path expressions. Used to build URLs */
     protected $_routePaths = [];
 
     /**
@@ -207,7 +207,7 @@ class Router extends Component implements RouterInterface
 
     /**
      * Get router path expressions
-     * @return string[]
+     * @return array
      */
     public function getRoutePaths() {
         return $this->_routePaths;
@@ -328,34 +328,56 @@ class Router extends Component implements RouterInterface
         $routes = $this->routes;
         foreach ($routes as $routeData) {
             $path = $routeData['route'];
-            $pathExpressions = $this->buildPathExpressions($path);
-            $this->_routePaths = ArrayHelper::merge($this->_routePaths, $pathExpressions);
+            $this->buildPathExpressions($path, true);
         }
-        \Reaction::info($this->_routePaths);
+        foreach ($this->_routePaths as &$routePaths) {
+            $prevCnt = 0;
+            ArrayHelper::multisort($routePaths, function ($row) use (&$prevCnt) {
+                return count($row['params']);
+            }, SORT_DESC);
+        }
     }
 
     /**
      * Build path expression from router path
      * @param string $path
-     * @param bool $unique
+     * @param bool $store
      * @return array
      */
-    protected function buildPathExpressions($path, $unique = false) {
+    protected function buildPathExpressions($path, $store = false) {
         $segments = $this->routeParser->parse($path);
         $expressions = [];
         foreach ($segments as $segmentGroup) {
             $expression = '';
+            $params = [];
+            $staticPart = '/';
+            $staticPartEnded = false;
             foreach ($segmentGroup as $segment) {
                 if (is_string($segment)) {
                     $expression .= $segment;
+                    if (!$staticPartEnded) {
+                        $staticPart .= $segment;
+                    }
                 } elseif (is_array($segment)) {
+                    $staticPartEnded = true;
                     $expression .= '{'.$segment[0].'}';
+                    $params[] = $segment[0];
                 }
             }
-            if ($unique && (array_search($expression, $expressions) !== false || array_search($expression, $this->_routePaths) !== false)) {
-                continue;
+            $staticPart = '/' . trim($staticPart, '/');
+            if ($store && !empty($params)) {
+                $row = [
+                    'exp' => $expression,
+                    'params' => $params,
+                ];
+                $this->_routePaths[$staticPart] = isset($this->_routePaths[$staticPart]) ? $this->_routePaths[$staticPart] : [];
+                $this->_routePaths[$staticPart][] = $row;
             }
-            $expressions[] = $expression;
+            $expressions[$expression] = [
+                'expression' => $expression,
+                'prefix' => $staticPart,
+                'params' => $params,
+            ];
         }
 
         return $expressions;
