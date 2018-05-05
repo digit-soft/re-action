@@ -8,9 +8,10 @@ use Reaction\Web\AppRequestInterface;
 /**
  * Interface RouteInterface
  * @package Reaction\Routes
- * @property Controller $controller
- * @property bool       $isError
- * @property \Throwable $exception
+ * @property AppRequestInterface $request
+ * @property Controller          $controller
+ * @property bool                $isError
+ * @property \Throwable          $exception
  */
 interface RouteInterface
 {
@@ -25,6 +26,12 @@ interface RouteInterface
      * @return Controller|null
      */
     public function getController();
+
+    /**
+     * Get controller route path (With possible regex)
+     * @return string|null
+     */
+    public function getRoutePath();
 
     /**
      * Check that route has error

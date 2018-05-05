@@ -22,12 +22,27 @@ use Reaction\Web\ResponseBuilderInterface;
  */
 class Route extends BaseObject implements RouteInterface
 {
+    /** @var AppRequestInterface */
+    public $request;
+
     protected $_dispatchedData;
     protected $_controller;
     protected $_action;
     protected $_params = [];
     protected $_exception;
     protected $_exceptionsCount = 0;
+    protected $_routePath;
+
+    /**
+     * Get controller route path (With possible regex)
+     * @return string|null
+     */
+    public function getRoutePath() {
+        if (!isset($this->_routePath) && isset($this->_controller)) {
+            $this->_routePath = $this->controller->getActionPath($this->_action);
+        }
+        return $this->_routePath;
+    }
 
     /**
      * Set data from dispatcher
