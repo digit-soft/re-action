@@ -2,6 +2,7 @@
 
 namespace Reaction\Routes;
 
+use FastRoute\RouteParser;
 use Reaction\Base\Component;
 use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\Annotations\Ctrl;
@@ -23,6 +24,8 @@ class Router extends Component implements RouterInterface
     ];
     public $dispatcherClass = '\FastRoute\simpleDispatcher';
     public $dispatcherOptions = [];
+    public $routeParserClass = '\FastRoute\RouteParser\Std';
+    public $routeParserOptions = [];
 
     /** @var array|string|object Error controller */
     public $_errorController = [
@@ -30,13 +33,16 @@ class Router extends Component implements RouterInterface
     ];
 
     private $routes = [];
-    private $errorHandlers = [];
     private $groupCurrent = '';
 
     /** @var Dispatcher */
     private $dispatcher;
     /** @var array Registered controllers */
     protected $controllers = [];
+    /** @var RouteParser */
+    protected $_routeParser;
+    /** @var string[] Route path expressions. Used to build URLs */
+    protected $_routePaths = [];
 
     /**
      * Add route handling
@@ -161,6 +167,7 @@ class Router extends Component implements RouterInterface
      */
     public function publishRoutes() {
         $routes = $this->routes;
+        $this->parseRoutesData();
         $this->dispatcher = $this->createDispatcher(function (\FastRoute\RouteCollector $r) use ($routes) {
             foreach ($routes as $routeRow) {
                 $r->addRoute($routeRow['httpMethod'], $routeRow['route'], $routeRow['handler']);
@@ -196,6 +203,14 @@ class Router extends Component implements RouterInterface
                 );
             }
         );
+    }
+
+    /**
+     * Get router path expressions
+     * @return string[]
+     */
+    public function getRoutePaths() {
+        return $this->_routePaths;
     }
 
     /**
@@ -276,7 +291,6 @@ class Router extends Component implements RouterInterface
      * Get controller for errors
      * @return Controller
      * @throws \Reaction\Exceptions\InvalidConfigException
-     * @throws \ReflectionException
      */
     public function getErrorController()
     {
@@ -293,5 +307,57 @@ class Router extends Component implements RouterInterface
     public function setErrorController($controller)
     {
         $this->_errorController = $controller;
+    }
+
+    /**
+     * Getter for $routeParser
+     * @return RouteParser
+     * @throws \Reaction\Exceptions\InvalidConfigException
+     */
+    public function getRouteParser() {
+        if (!isset($this->_routeParser)) {
+            $this->_routeParser = \Reaction::create($this->routeParserClass, $this->routeParserOptions);
+        }
+        return $this->_routeParser;
+    }
+
+    /**
+     * Parse routes data to obtain path expressions, those used for URL building
+     */
+    protected function parseRoutesData() {
+        $routes = $this->routes;
+        foreach ($routes as $routeData) {
+            $path = $routeData['route'];
+            $pathExpressions = $this->buildPathExpressions($path);
+            $this->_routePaths = ArrayHelper::merge($this->_routePaths, $pathExpressions);
+        }
+        \Reaction::info($this->_routePaths);
+    }
+
+    /**
+     * Build path expression from router path
+     * @param string $path
+     * @param bool $unique
+     * @return array
+     */
+    protected function buildPathExpressions($path, $unique = false) {
+        $segments = $this->routeParser->parse($path);
+        $expressions = [];
+        foreach ($segments as $segmentGroup) {
+            $expression = '';
+            foreach ($segmentGroup as $segment) {
+                if (is_string($segment)) {
+                    $expression .= $segment;
+                } elseif (is_array($segment)) {
+                    $expression .= '{'.$segment[0].'}';
+                }
+            }
+            if ($unique && (array_search($expression, $expressions) !== false || array_search($expression, $this->_routePaths) !== false)) {
+                continue;
+            }
+            $expressions[] = $expression;
+        }
+
+        return $expressions;
     }
 }

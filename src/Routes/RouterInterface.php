@@ -2,13 +2,16 @@
 
 namespace Reaction\Routes;
 
+use FastRoute\RouteParser;
 use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\Web\AppRequestInterface;
 
 /**
  * Interface RouterInterface
  * @package Reaction\Routes
- * @property Controller $errorController
+ * @property Controller  $errorController
+ * @property RouteParser $routeParser
+ * @property string[]    $routePaths
  */
 interface RouterInterface
 {
