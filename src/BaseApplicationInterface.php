@@ -5,6 +5,7 @@ namespace Reaction;
 use React\Filesystem\FilesystemInterface;
 use Reaction\Base\Logger\LoggerInterface;
 use Reaction\Events\EventEmitterWildcardInterface;
+use Reaction\Routes\UrlManager;
 use Reaction\Web\Sessions\SessionHandlerInterface;
 
 /**
@@ -26,6 +27,7 @@ use Reaction\Web\Sessions\SessionHandlerInterface;
  * @property \Reaction\I18n\Formatter         $formatter
  * @property SessionHandlerInterface          $sessionHandler
  * @property FilesystemInterface              $fs
+ * @property UrlManager                       $urlManager
  */
 interface BaseApplicationInterface extends EventEmitterWildcardInterface
 {

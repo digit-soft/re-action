@@ -39,8 +39,9 @@ class BaseApplication extends ServiceLocator implements BaseApplicationInterface
     /** @var Socket */
     public $socket;
 
+    /** @var array Added middleware */
     protected $middleware = [];
-
+    /** @var array Aliases defined */
     protected $aliases = [];
 
     /**
