@@ -36,4 +36,11 @@ interface ControllerInterface
      * @param Router $router
      */
     public function registerInRouter(Router $router);
+
+    /**
+     * Get path of action (Caution! With possible RegEx)
+     * @param string $action
+     * @return null|string
+     */
+    public function getActionPath($action);
 }

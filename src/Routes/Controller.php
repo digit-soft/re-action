@@ -3,6 +3,7 @@
 namespace Reaction\Routes;
 
 use React\Promise\PromiseInterface;
+use Reaction\Annotations\CtrlAction;
 use Reaction\Annotations\CtrlActionValidatorInterface;
 use Reaction\Base\Component;
 use Reaction\Base\ViewContextInterface;
@@ -182,6 +183,31 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
     public function renderAjax(AppRequestInterface $request, $viewName, $params = [], $asString = false)
     {
         return $this->renderInternal($request, $viewName, $params, true, $asString);
+    }
+
+    /**
+     * Get path of action (Caution! With possible RegEx)
+     * @param string $action
+     * @return null|string
+     */
+    public function getActionPath($action) {
+        try {
+            $action = $this->normalizeActionName($action);
+        } catch (NotFoundException $e) {
+            return null;
+        }
+        $annotations = \Reaction::$annotations->getMethod($this, $action);
+        if (isset($annotations[CtrlAction::class])) {
+            /** @var CtrlAction $actionAnnotation */
+            $actionAnnotation = $annotations[CtrlAction::class];
+            return $actionAnnotation->path;
+        } else {
+            $routes = ArrayHelper::map($this->routes(), 'handler', 'route');
+            if (isset($routes[$action])) {
+                return $routes[$action];
+            }
+        }
+        return null;
     }
 
     /**
