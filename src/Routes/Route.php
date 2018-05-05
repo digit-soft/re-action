@@ -11,6 +11,7 @@ use Reaction\Exceptions\Http\NotFoundException;
 use Reaction\Exceptions\InvalidArgumentException;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Exceptions\NotSupportedException;
+use Reaction\Helpers\ArrayHelper;
 use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\Promise\Promise;
 use Reaction\Web\AppRequestInterface;
@@ -28,6 +29,7 @@ class Route extends BaseObject implements RouteInterface
     protected $_dispatchedData;
     protected $_controller;
     protected $_action;
+    protected $_actionTrue;
     protected $_params = [];
     protected $_exception;
     protected $_exceptionsCount = 0;
@@ -39,7 +41,7 @@ class Route extends BaseObject implements RouteInterface
      */
     public function getRoutePath() {
         if (!isset($this->_routePath) && isset($this->_controller)) {
-            $this->_routePath = $this->controller->getActionPath($this->_action);
+            $this->_routePath = $this->controller->getActionPath($this->_actionTrue);
         }
         return $this->_routePath;
     }
@@ -158,11 +160,14 @@ class Route extends BaseObject implements RouteInterface
             //Parse params
             if (isset($data[2])) {
                 $this->_params = is_array($data[2]) ? $data[2] : (array)$data[2];
+                $queryParams = ArrayHelper::merge($this->request->_getQueryParams(), $this->_params);
+                $this->request->setQueryParams($queryParams);
             }
             //Parse controller and action
             if (is_array($callable) && count($callable) >= 2 && $callable[0] instanceof ControllerInterface) {
                 $this->_controller = $callable[0];
                 $this->_action = 'resolveAction';
+                $this->_actionTrue = $callable[1];
                 array_unshift($this->_params, $callable[1]);
             } else {
                 $this->_action = $callable;
