@@ -200,8 +200,8 @@ class UrlManager extends Component implements UrlManagerInterface
         }
         $len = strlen($path);
         $positions = [
-            $brFgPos !== false ?: $len,
-            $brSqPos !== false ?: $len,
+            $brFgPos !== false ? $brFgPos : $len,
+            $brSqPos !== false ? $brSqPos : $len,
         ];
         return min($positions);
     }
