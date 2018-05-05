@@ -5,6 +5,7 @@ namespace Reaction\Helpers;
 
 use Reaction;
 use Reaction\Exceptions\InvalidArgumentException;
+use Reaction\Web\AppRequestInterface;
 
 /**
  * Url provides a set of static methods for managing URLs.
@@ -120,10 +121,10 @@ class Url
      */
     protected static function normalizeRoute($route)
     {
-        $route = Yii::getAlias((string) $route);
+        $route = Reaction::$app->getAlias((string) $route);
         if (strncmp($route, '/', 1) === 0) {
             // absolute route
-            return ltrim($route, '/');
+            return $route;
         }
 
         // relative route
@@ -407,7 +408,7 @@ class Url
      * ]);
      * ```
      *
-     * @param array $params an associative array of parameters that will be merged with the current GET parameters.
+     * @param array       $params an associative array of parameters that will be merged with the current GET parameters.
      * If a parameter value is null, the corresponding GET parameter will be removed.
      * @param bool|string $scheme the URI scheme to use in the generated URL:
      *
@@ -416,23 +417,43 @@ class Url
      * - string: generating an absolute URL with the specified scheme (either `http`, `https` or empty string
      *   for protocol-relative URL).
      *
+     * @param AppRequestInterface $request
      * @return string the generated URL
-     * @since 2.0.3
      */
-    public static function current(array $params = [], $scheme = false)
+    public static function current(array $params = [], $scheme = false, $request)
     {
-        $currentParams = Yii::$app->getRequest()->getQueryParams();
-        $currentParams[0] = '/' . Yii::$app->controller->getRoute();
+        $routePath = static::getCurrentPath($request, true);
+        if ($routePath === null) {
+            return null;
+        }
+        $currentParams = $request->_getQueryParams();
+        $currentParams[0] = $routePath;
         $route = array_replace_recursive($currentParams, $params);
         return static::toRoute($route, $scheme);
     }
 
     /**
-     * @return \Reaction\Web\UrlManager URL manager used to create URLs
-     * @since 2.0.8
+     * Get current path from request & current controller
+     * @param AppRequestInterface $request
+     * @param bool                $onlyStaticPart
+     * @return bool|null|string
+     */
+    protected static function getCurrentPath(AppRequestInterface $request, $onlyStaticPart = false) {
+        $routePath = $request->getRoute()->getRoutePath();
+        if ($routePath === null) {
+            return null;
+        }
+        if ($onlyStaticPart) {
+            $routePath = Reaction::$app->urlManager->extractStaticPart($routePath);
+        }
+        return $routePath;
+    }
+
+    /**
+     * @return Reaction\Routes\UrlManager URL manager used to create URLs
      */
     protected static function getUrlManager()
     {
-        return static::$urlManager ?: Reaction::$app->getUrlManager();
+        return Reaction::$app->urlManager;
     }
 }

@@ -417,7 +417,7 @@ class UrlHelper extends RequestHelperProxy
     public function current(array $params = [], $scheme = false)
     {
         $currentParams = $this->request->_getQueryParams();
-        $currentParams[0] = '/' . Yii::$app->controller->getRoute();
+        $currentParams[0] = '/' . $this->request->getPathInfo();
         $route = array_replace_recursive($currentParams, $params);
         return static::toRoute($route, $scheme);
     }
