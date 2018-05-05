@@ -69,6 +69,5 @@ class CtrlAction
         }
         $path = rtrim($path, '/');
         $this->path = $path;
-        $this->extractParams();
     }
 }
