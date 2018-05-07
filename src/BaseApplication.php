@@ -20,6 +20,8 @@ class BaseApplication extends ServiceLocator implements BaseApplicationInterface
     public $envType = self::APP_ENV_DEV;
     /** @var bool */
     public $debug = false;
+    /** @var bool */
+    public $test = false;
     /** @var string */
     public $charset = 'UTF-8';
     /** @var string Default language */

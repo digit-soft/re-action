@@ -12,6 +12,7 @@ use Reaction\Web\Sessions\SessionHandlerInterface;
  * Interface BaseApplicationInterface
  * @package Reaction
  * @property bool                             $debug
+ * @property bool                             $test
  * @property string                           $envType
  * @property string                           $timeZone
  * @property string                           $charset
