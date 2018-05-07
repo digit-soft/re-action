@@ -38,11 +38,15 @@ class Route extends BaseObject implements RouteInterface
 
     /**
      * Get controller route path (With possible regex)
+     * @param bool $onlyStaticPart
      * @return string|null
      */
-    public function getRoutePath() {
+    public function getRoutePath($onlyStaticPart = false) {
         if (!isset($this->_routePath) && isset($this->_controller)) {
             $this->_routePath = $this->controller->getActionPath($this->_actionClean);
+        }
+        if ($onlyStaticPart) {
+            return \Reaction::$app->urlManager->extractStaticPart($this->_routePath);
         }
         return $this->_routePath;
     }

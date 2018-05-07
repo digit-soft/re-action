@@ -29,9 +29,10 @@ interface RouteInterface
 
     /**
      * Get controller route path (With possible regex)
+     * @param bool $onlyStaticPart
      * @return string|null
      */
-    public function getRoutePath();
+    public function getRoutePath($onlyStaticPart = false);
 
     /**
      * Get controller route params array
