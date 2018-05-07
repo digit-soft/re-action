@@ -29,8 +29,9 @@ class Route extends BaseObject implements RouteInterface
     protected $_dispatchedData;
     protected $_controller;
     protected $_action;
-    protected $_actionTrue;
+    protected $_actionClean;
     protected $_params = [];
+    protected $_paramsClean = [];
     protected $_exception;
     protected $_exceptionsCount = 0;
     protected $_routePath;
@@ -41,9 +42,17 @@ class Route extends BaseObject implements RouteInterface
      */
     public function getRoutePath() {
         if (!isset($this->_routePath) && isset($this->_controller)) {
-            $this->_routePath = $this->controller->getActionPath($this->_actionTrue);
+            $this->_routePath = $this->controller->getActionPath($this->_actionClean);
         }
         return $this->_routePath;
+    }
+
+    /**
+     * Get controller route params array
+     * @return array
+     */
+    public function getRouteParams() {
+        return $this->_paramsClean;
     }
 
     /**
@@ -160,6 +169,7 @@ class Route extends BaseObject implements RouteInterface
             //Parse params
             if (isset($data[2])) {
                 $this->_params = is_array($data[2]) ? $data[2] : (array)$data[2];
+                $this->_paramsClean = $this->_params;
                 $queryParams = ArrayHelper::merge($this->request->_getQueryParams(), $this->_params);
                 $this->request->setQueryParams($queryParams);
             }
@@ -167,7 +177,7 @@ class Route extends BaseObject implements RouteInterface
             if (is_array($callable) && count($callable) >= 2 && $callable[0] instanceof ControllerInterface) {
                 $this->_controller = $callable[0];
                 $this->_action = 'resolveAction';
-                $this->_actionTrue = $callable[1];
+                $this->_actionClean = $callable[1];
                 array_unshift($this->_params, $callable[1]);
             } else {
                 $this->_action = $callable;

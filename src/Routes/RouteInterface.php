@@ -34,6 +34,12 @@ interface RouteInterface
     public function getRoutePath();
 
     /**
+     * Get controller route params array
+     * @return array
+     */
+    public function getRouteParams();
+
+    /**
      * Check that route has error
      * @return bool
      */
