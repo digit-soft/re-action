@@ -151,6 +151,14 @@ class Reaction
     }
 
     /**
+     * Shortcut function to check that Application is in TESTING mode
+     * @return bool
+     */
+    public static function isTest() {
+        return Reaction::$app && Reaction::$app->test;
+    }
+
+    /**
      * Shortcut to Reaction::$app->logger->debug()
      * @param string|mixed $message
      * @param array $context
