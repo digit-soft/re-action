@@ -90,64 +90,64 @@ class FileHelperAsc
      */
     public static function putContents($filePath, $contents, $openFlags = 'cwt', $lock = true)
     {
+        $lockTimeout = is_int($lock) && !empty($lock) ? $lock : null;
+        $lock = !empty($lock);
         $file = static::ensureFileObject($filePath);
         $createMode = FileHelper::permissionsAsString(static::$fileCreateMode);
-        $writeCallback = function (WritableStreamInterface $stream) use(&$file, $contents) {
-            $stream->write($contents);
-            return $file->close();
-        };
-        $unlockCallback = function ($result = null) use ($filePath) {
-            static::unlock($filePath);
+        $unlockCallback = function ($result = null) use ($filePath, $lock) {
+            if ($lock) {
+                static::unlock($filePath);
+            }
             if (is_object($result) && $result instanceof \Throwable) {
                 throw $result;
             }
             return $result;
         };
-        if (!empty($lock) && static::isLocked($file->getPath())) {
-            $lockTimeout = is_int($lock) ? $lock : null;
-            return static::onUnlock($file->getPath())->then(
-                function () use (&$file, $filePath, $lockTimeout, $openFlags, $createMode) {
+        return static::onUnlock($filePath)->then(
+            function () use (&$file, $filePath, $lockTimeout, $openFlags, $createMode, $lock) {
+                if ($lock) {
                     static::lock($filePath, $lockTimeout);
-                    return $file->open($openFlags, $createMode);
                 }
-            )
-                ->then($writeCallback)
-                ->then($unlockCallback, $unlockCallback);
-        }
-        return $file->open($openFlags, $createMode)->then($writeCallback);
+                return $file->open($openFlags, $createMode);
+            }
+        )
+            ->then(function (WritableStreamInterface $stream) use(&$file, $contents) {
+                $stream->write($contents);
+                return $file->close();
+            })->then($unlockCallback, $unlockCallback);
     }
 
     /**
      * Get file contents
      * @param string|File $filePath
-     * @param bool|int    $lock Lock file for operation and check for a lock OR lock timeout
+     * @param bool|int    $lock Lock file for operation OR lock timeout
      * @return \React\Promise\PromiseInterface
      */
     public static function getContents($filePath, $lock = true)
     {
+        $lockTimeout = is_int($lock) && !empty($lock) ? $lock : null;
+        $lock = !empty($lock);
         $file = static::ensureFileObject($filePath);
-        $readCallback = function () use (&$file, $filePath) {
-            return $file->getContents();
-        };
-        $unlockCallback = function ($result = null) use ($filePath) {
-            static::unlock($filePath);
+        $unlockCallback = function ($result = null) use ($lock, $filePath) {
+            if ($lock) {
+                static::unlock($filePath);
+            }
             if (is_object($result) && $result instanceof \Throwable) {
                 throw $result;
             }
             return $result;
         };
-        if (!empty($lock) && static::isLocked($filePath)) {
-            $lockTimeout = is_int($lock) ? $lock : null;
-            return static::onUnlock($filePath)->then(
-                function () use (&$file, $filePath, $lockTimeout) {
+        return static::onUnlock($filePath)->then(
+            function () use (&$file, $filePath, $lock, $lockTimeout) {
+                if ($lock) {
                     static::lock($filePath, $lockTimeout);
-                    return $file->exists();
                 }
-            )
-                ->then($readCallback)
-                ->then($unlockCallback, $unlockCallback);
-        }
-        return $file->exists()->then($readCallback);
+                return $file->exists();
+            }
+        )
+            ->then(function () use (&$file, $filePath) {
+                return $file->getContents();
+            })->then($unlockCallback, $unlockCallback);
     }
 
     /**
