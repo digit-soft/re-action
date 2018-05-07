@@ -17,7 +17,7 @@ use function Reaction\Promise\resolve;
  * Class AFileHelper. Async file helper
  * @package Reaction\Helpers
  */
-class AFileHelper
+class FileHelperAsc
 {
     /** @var string File system component key in Application */
     public static $fileSystem = 'fs';
