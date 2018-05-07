@@ -1,5 +1,5 @@
 <?php
-//TODO: Come back later after making something like UrlManager
+//TODO: Come back later after making web User
 
 namespace Reaction\Helpers;
 
@@ -15,13 +15,6 @@ use Reaction\Web\AppRequestInterface;
  */
 class Url
 {
-
-    /**
-     * @var \Reaction\Web\UrlManager URL manager to use for creating URLs
-     */
-    public static $urlManager;
-
-
     /**
      * Creates a URL for the given route.
      *
@@ -78,67 +71,27 @@ class Url
      *
      * @param string|array $route use a string to represent a route (e.g. `index`, `site/index`),
      * or an array to represent a route with query parameters (e.g. `['site/index', 'param1' => 'value1']`).
-     * @param bool|string $scheme the URI scheme to use in the generated URL:
+     * @param bool|string  $scheme the URI scheme to use in the generated URL:
      *
      * - `false` (default): generating a relative URL.
      * - `true`: returning an absolute base URL whose scheme is the same as that in [[\yii\web\UrlManager::$hostInfo]].
      * - string: generating an absolute URL with the specified scheme (either `http`, `https` or empty string
      *   for protocol-relative URL).
      *
+     * @param AppRequestInterface $request
      * @return string the generated URL
-     * @throws InvalidArgumentException a relative route is given while there is no active controller
+     * @throws Reaction\Exceptions\InvalidConfigException
      */
-    public static function toRoute($route, $scheme = false)
+    public static function toRoute($route, $scheme = false, AppRequestInterface $request)
     {
         $route = (array) $route;
-        $route[0] = static::normalizeRoute($route[0]);
+        $route[0] = static::normalizeRoutePath($route[0], $request);
 
         if ($scheme !== false) {
             return static::getUrlManager()->createAbsoluteUrl($route, is_string($scheme) ? $scheme : null);
         }
 
         return static::getUrlManager()->createUrl($route);
-    }
-
-    /**
-     * Normalizes route and makes it suitable for UrlManager. Absolute routes are staying as is
-     * while relative routes are converted to absolute ones.
-     *
-     * A relative route is a route without a leading slash, such as "view", "post/view".
-     *
-     * - If the route is an empty string, the current [[\yii\web\Controller::route|route]] will be used;
-     * - If the route contains no slashes at all, it is considered to be an action ID
-     *   of the current controller and will be prepended with [[\yii\web\Controller::uniqueId]];
-     * - If the route has no leading slash, it is considered to be a route relative
-     *   to the current module and will be prepended with the module's uniqueId.
-     *
-     * Starting from version 2.0.2, a route can also be specified as an alias. In this case, the alias
-     * will be converted into the actual route first before conducting the above transformation steps.
-     *
-     * @param string $route the route. This can be either an absolute route or a relative route.
-     * @return string normalized route suitable for UrlManager
-     * @throws InvalidArgumentException a relative route is given while there is no active controller
-     */
-    protected static function normalizeRoute($route)
-    {
-        $route = Reaction::$app->getAlias((string) $route);
-        if (strncmp($route, '/', 1) === 0) {
-            // absolute route
-            return $route;
-        }
-
-        // relative route
-        if (Yii::$app->controller === null) {
-            throw new InvalidArgumentException("Unable to resolve the relative route: $route. No active controller is available.");
-        }
-
-        if (strpos($route, '/') === false) {
-            // empty or an action ID
-            return $route === '' ? Yii::$app->controller->getRoute() : Yii::$app->controller->getUniqueId() . '/' . $route;
-        }
-
-        // relative to module
-        return ltrim(Yii::$app->controller->module->getUniqueId() . '/' . $route, '/');
     }
 
     /**
@@ -193,25 +146,26 @@ class Url
      *
      *
      * @param array|string $url the parameter to be used to generate a valid URL
-     * @param bool|string $scheme the URI scheme to use in the generated URL:
+     * @param bool|string  $scheme the URI scheme to use in the generated URL:
      *
      * - `false` (default): generating a relative URL.
      * - `true`: returning an absolute base URL whose scheme is the same as that in [[\yii\web\UrlManager::$hostInfo]].
      * - string: generating an absolute URL with the specified scheme (either `http`, `https` or empty string
      *   for protocol-relative URL).
      *
+     * @param AppRequestInterface $request
      * @return string the generated URL
-     * @throws InvalidArgumentException a relative route is given while there is no active controller
+     * @throws Reaction\Exceptions\InvalidConfigException
      */
-    public static function to($url = '', $scheme = false)
+    public static function to($url = '', $scheme = false, AppRequestInterface $request = null)
     {
         if (is_array($url)) {
-            return static::toRoute($url, $scheme);
+            return isset($request) ? static::toRoute($url, $scheme, $request) : null;
         }
 
         $url = Reaction::$app->getAlias($url);
-        if ($url === '') {
-            $url = Yii::$app->getRequest()->getUrl();
+        if ($url === '' && isset($request)) {
+            $url = $request->getUrl();
         }
 
         if ($scheme === false) {
@@ -235,7 +189,6 @@ class Url
      * @param string $scheme the URI scheme used in URL (e.g. `http` or `https`). Use empty string to
      * create protocol-relative URL (e.g. `//example.com/path`)
      * @return string the processed URL
-     * @since 2.0.11
      */
     public static function ensureScheme($url, $scheme)
     {
@@ -331,12 +284,18 @@ class Url
      * $this->registerLinkTag(['rel' => 'canonical', 'href' => Url::canonical()]);
      * ```
      *
+     * @param AppRequestInterface $request
      * @return string the canonical URL of the currently requested page
+     * @throws Reaction\Exceptions\InvalidConfigException
      */
-    public static function canonical()
+    public static function canonical($request)
     {
-        $params = Yii::$app->controller->actionParams;
-        $params[0] = Yii::$app->controller->getRoute();
+        $routePath = static::getCurrentPath($request, true);
+        if ($routePath === null) {
+            return null;
+        }
+        $params = $request->getRoute()->getRouteParams();
+        $params[0] = $routePath;
 
         return static::getUrlManager()->createAbsoluteUrl($params);
     }
@@ -352,10 +311,11 @@ class Url
      *   for protocol-relative URL).
      *
      * @return string home URL
+     * @throws Reaction\Exceptions\InvalidConfigException
      */
     public static function home($scheme = false)
     {
-        $url = Yii::$app->getHomeUrl();
+        $url = Reaction::$app->urlManager->getHomeUrl();
 
         if ($scheme !== false) {
             $url = static::getUrlManager()->getHostInfo() . $url;
@@ -408,9 +368,9 @@ class Url
      * ]);
      * ```
      *
-     * @param array       $params an associative array of parameters that will be merged with the current GET parameters.
+     * @param array               $params an associative array of parameters that will be merged with the current GET parameters.
      * If a parameter value is null, the corresponding GET parameter will be removed.
-     * @param bool|string $scheme the URI scheme to use in the generated URL:
+     * @param bool|string         $scheme the URI scheme to use in the generated URL:
      *
      * - `false` (default): generating a relative URL.
      * - `true`: returning an absolute base URL whose scheme is the same as that in [[\yii\web\UrlManager::$hostInfo]].
@@ -419,8 +379,9 @@ class Url
      *
      * @param AppRequestInterface $request
      * @return string the generated URL
+     * @throws Reaction\Exceptions\InvalidConfigException
      */
-    public static function current(array $params = [], $scheme = false, $request)
+    public static function current(array $params = [], $scheme = false, AppRequestInterface $request)
     {
         $routePath = static::getCurrentPath($request, true);
         if ($routePath === null) {
@@ -429,24 +390,55 @@ class Url
         $currentParams = $request->_getQueryParams();
         $currentParams[0] = $routePath;
         $route = array_replace_recursive($currentParams, $params);
-        return static::toRoute($route, $scheme);
+        return static::toRoute($route, $scheme, $request);
+    }
+
+    /**
+     * Normalizes route and makes it suitable for UrlManager. Absolute routes are staying as is
+     * while relative routes are converted to absolute ones.
+     *
+     * A relative route is a route without a leading slash, such as "view", "post/view".
+     *
+     * - If the route is an empty string, the current [[\yii\web\Controller::route|route]] will be used;
+     * - If the route contains no slashes at all, it is considered to be an action ID
+     *   of the current controller and will be prepended with [[\yii\web\Controller::uniqueId]];
+     * - If the route has no leading slash, it is considered to be a route relative
+     *   to the current module and will be prepended with the module's uniqueId.
+     *
+     * Starting from version 2.0.2, a route can also be specified as an alias. In this case, the alias
+     * will be converted into the actual route first before conducting the above transformation steps.
+     *
+     * @param string              $routePath the route. This can be either an absolute route or a relative route.
+     * @param AppRequestInterface $request
+     * @return string normalized route suitable for UrlManager
+     */
+    protected static function normalizeRoutePath($routePath, AppRequestInterface $request)
+    {
+        $routePath = Reaction::$app->getAlias((string) $routePath);
+        if (strncmp($routePath, '/', 1) === 0) {
+            // absolute route
+            return $routePath;
+        }
+
+        $route = $request->getRoute();
+
+        // relative route
+        if ($route === null || $route->controller === null) {
+            throw new InvalidArgumentException("Unable to resolve the relative route: $routePath. No active controller is available.");
+        }
+
+        return $routePath === '' ? $route->getRoutePath(true) : $route->controller->group() . '/' . $routePath;
     }
 
     /**
      * Get current path from request & current controller
      * @param AppRequestInterface $request
      * @param bool                $onlyStaticPart
-     * @return bool|null|string
+     * @return null|string
      */
     protected static function getCurrentPath(AppRequestInterface $request, $onlyStaticPart = false) {
-        $routePath = $request->getRoute()->getRoutePath();
-        if ($routePath === null) {
-            return null;
-        }
-        if ($onlyStaticPart) {
-            $routePath = Reaction::$app->urlManager->extractStaticPart($routePath);
-        }
-        return $routePath;
+        $route = $request->getRoute();
+        return $route ? $route->getRoutePath($onlyStaticPart) : null;
     }
 
     /**
