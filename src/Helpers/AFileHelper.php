@@ -2,6 +2,7 @@
 
 namespace Reaction\Helpers;
 
+use React\EventLoop\Timer\TimerInterface;
 use React\Filesystem\FilesystemInterface;
 use React\Filesystem\Node\Directory;
 use React\Filesystem\Node\DirectoryInterface;
@@ -9,6 +10,8 @@ use React\Filesystem\Node\File;
 use React\Filesystem\Node\FileInterface;
 use React\Filesystem\Node\GenericOperationInterface;
 use React\Stream\WritableStreamInterface;
+use Reaction\Promise\Deferred;
+use function Reaction\Promise\resolve;
 
 /**
  * Class AFileHelper. Async file helper
@@ -20,6 +23,12 @@ class AFileHelper
     public static $fileSystem = 'fs';
     /** @var string File open mode (default to 0755 / rwxr-xr-x) */
     public static $fileCreateMode = 0755;
+    /** @var array Files those were locked by user for writing */
+    protected static $_lockedFiles = [];
+    /** @var Deferred[][] Files those were locked by user for writing */
+    protected static $_lockedFilesQueue = [];
+    /** @var TimerInterface Timer used to unlock "forgotten" files  */
+    protected static $_unlockTimer;
 
     /**
      * Get file object
@@ -151,6 +160,82 @@ class AFileHelper
     }
 
     /**
+     * Lock file for some time or until some operation is not finished
+     * @param string $filePath
+     * @param int $timeout
+     */
+    public static function lock($filePath, $timeout = 10)
+    {
+        $filePath = FileHelper::normalizePath($filePath);
+        $expire = time() + $timeout;
+        static::$_lockedFiles[$filePath] = $expire;
+        static::checkUnlockTimer();
+    }
+
+    /**
+     * Unlock file
+     * @param string $filePath
+     * @param bool   $processQueue
+     */
+    public static function unlock($filePath, $processQueue = true)
+    {
+        $filePath = FileHelper::normalizePath($filePath);
+        if (isset(static::$_lockedFiles[$filePath])) {
+            unset(static::$_lockedFiles[$filePath]);
+        }
+        if ($processQueue) {
+            static::processUnlockQueue($filePath);
+        }
+    }
+
+    /**
+     * Check file is locked or not
+     * @param string $filePath
+     * @return bool
+     */
+    public static function isLocked($filePath)
+    {
+        $filePath = FileHelper::normalizePath($filePath);
+        return isset(static::$_lockedFiles[$filePath]);
+    }
+
+    /**
+     * Get promise of unlocking file
+     * @param string $filePath
+     * @return \Reaction\Promise\ExtendedPromiseInterface
+     */
+    public static function onUnlock($filePath) {
+        $filePath = FileHelper::normalizePath($filePath);
+        if (!static::isLocked($filePath)) {
+            return resolve(true);
+        }
+        $deferred = new Deferred();
+        if (!isset(static::$_lockedFilesQueue[$filePath])) {
+            static::$_lockedFilesQueue[$filePath] = [];
+        }
+        static::$_lockedFilesQueue[$filePath][] = $deferred;
+        return $deferred->promise();
+    }
+
+    /**
+     * Process unlock waiting deferred(s) (and promises)
+     * @param string $filePath
+     */
+    protected static function processUnlockQueue($filePath) {
+        if (empty(static::$_lockedFilesQueue[$filePath])) {
+            return;
+        }
+        while (!empty(static::$_lockedFilesQueue[$filePath])) {
+            if (static::isLocked($filePath)) {
+                break;
+            }
+            /** @var Deferred $deferred */
+            $deferred = array_shift(static::$_lockedFilesQueue[$filePath]);
+            $deferred->resolve(true);
+        }
+    }
+
+    /**
      * Ensure that object is implementing FileInterface
      * @param File|Directory|string $pathOrObject
      * @return File
@@ -182,6 +267,23 @@ class AFileHelper
             return static::dir($pathOrObject);
         }
         return $pathOrObject;
+    }
+
+    /**
+     * Check if unlock timer is set or create it
+     */
+    protected static function checkUnlockTimer() {
+        if (static::$_unlockTimer instanceof TimerInterface) {
+            return;
+        }
+        static::$_unlockTimer = \Reaction::$app->loop->addPeriodicTimer(1, function () {
+            $now = time();
+            foreach (static::$_lockedFiles as $filePath => $timeout) {
+                if ($timeout <= $now) {
+                    static::unlock($filePath);
+                }
+            }
+        });
     }
 
     /**
