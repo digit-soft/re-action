@@ -624,6 +624,48 @@ class FileHelper
         }
     }
 
+    /** @var array Bytes map for permissions conversion */
+    protected static $_permissionsByteMap = [
+        0x0100 => 'r',
+        0x0080 => 'w',
+        0x0040 => 'x',
+        0x0020 => 'r',
+        0x0010 => 'w',
+        0x0008 => 'x',
+        0x0004 => 'r',
+        0x0002 => 'w',
+        0x0001 => 'x',
+    ];
+
+    /**
+     * Convert octal permissions to string
+     * @param int $modeOctal Octal mode (0755). Do not omit zero, must be octal, not decimal!
+     * @return string String permissions representation (rwxr-xr-x)
+     */
+    public static function permissionsAsString($modeOctal) {
+        $modeStr = '';
+        foreach (static::$_permissionsByteMap as $bytes => $flag) {
+            $modeStr .= (($modeOctal & $bytes) ? $flag : '-');
+        }
+        return $modeStr;
+    }
+
+    /**
+     * Convert string representation of permissions to octal
+     * @param string $modeStr String permissions (rwxr-xr-x)
+     * @return int Octal permissions representation
+     */
+    public static function permissionsAsOctal($modeStr) {
+        $modeStr = str_pad($modeStr, 9, '-', STR_PAD_RIGHT);
+        $modeOctal = 0x0;
+        $num = 0;
+        foreach (static::$_permissionsByteMap as $bytes => $flag) {
+            $modeOctal += (($modeStr[$num] === $flag) ? $bytes : 0x0);
+            $num++;
+        }
+        return $modeOctal;
+    }
+
     /**
      * Performs a simple comparison of file or directory names.
      *
