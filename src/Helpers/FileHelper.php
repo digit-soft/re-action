@@ -506,7 +506,9 @@ class FileHelper
     }
 
     /**
+     * Set basePath in options array
      * @param string $dir
+     * @param array  $options
      * @return array
      */
     private static function setBasePath($dir, $options)
