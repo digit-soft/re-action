@@ -155,12 +155,4 @@ class ClassFinderHelper
     protected static function getLoader() {
         return \Reaction::$composer;
     }
-
-    /**
-     * Get logger
-     * @return \Psr\Log\AbstractLogger
-     */
-    protected static function getLogger() {
-        return \Reaction::$app->logger;
-    }
 }
