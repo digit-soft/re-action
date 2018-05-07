@@ -194,7 +194,7 @@ class UrlManager extends Component implements UrlManagerInterface
     /**
      * Extract static part from url (without placeholders)
      * @param string $path
-     * @return bool|string
+     * @return string
      */
     public function extractStaticPart($path) {
         $pos = $this->findPlaceholderStartPos($path);
