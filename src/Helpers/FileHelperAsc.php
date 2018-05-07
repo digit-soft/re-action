@@ -23,6 +23,8 @@ class FileHelperAsc
     public static $fileSystem = 'fs';
     /** @var string File open mode (default to 0755 / rwxr-xr-x) */
     public static $fileCreateMode = 0755;
+    /** @var int File lock timeout */
+    public static $LockTimeout = 10;
     /** @var array Files those were locked by user for writing */
     protected static $_lockedFiles = [];
     /** @var Deferred[][] Files those were locked by user for writing */
@@ -35,7 +37,7 @@ class FileHelperAsc
      * @param string $filePath
      * @return FileInterface|File
      */
-    public static function file($filePath)
+    public static function file(&$filePath)
     {
         $filePath = \Reaction::$app->getAlias($filePath);
         $filePath = FileHelper::normalizePath($filePath);
@@ -47,7 +49,7 @@ class FileHelperAsc
      * @param string $dirPath
      * @return DirectoryInterface|Directory
      */
-    public static function dir($dirPath)
+    public static function dir(&$dirPath)
     {
         $dirPath = \Reaction::$app->getAlias($dirPath);
         $dirPath = FileHelper::normalizePath($dirPath);
@@ -82,32 +84,70 @@ class FileHelperAsc
      * Put contents into file
      * @param string|File $filePath
      * @param string      $contents
-     * @param string      $openMode
+     * @param string      $openFlags
+     * @param bool|int    $lock Lock file for operation and check for a lock OR lock timeout
      * @return \React\Promise\PromiseInterface
      */
-    public static function putContents($filePath, $contents, $openMode = 'cw')
+    public static function putContents($filePath, $contents, $openFlags = 'cwt', $lock = true)
     {
         $file = static::ensureFileObject($filePath);
         $createMode = FileHelper::permissionsAsString(static::$fileCreateMode);
-        return $file->open($openMode, $createMode)->then(function (WritableStreamInterface $stream) use ($file, $contents) {
+        $writeCallback = function (WritableStreamInterface $stream) use(&$file, $contents) {
             $stream->write($contents);
             return $file->close();
-        });
+        };
+        $unlockCallback = function ($result = null) use ($filePath) {
+            static::unlock($filePath);
+            if (is_object($result) && $result instanceof \Throwable) {
+                throw $result;
+            }
+            return $result;
+        };
+        if (!empty($lock) && static::isLocked($file->getPath())) {
+            $lockTimeout = is_int($lock) ? $lock : null;
+            return static::onUnlock($file->getPath())->then(
+                function () use (&$file, $filePath, $lockTimeout, $openFlags, $createMode) {
+                    static::lock($filePath, $lockTimeout);
+                    return $file->open($openFlags, $createMode);
+                }
+            )
+                ->then($writeCallback)
+                ->then($unlockCallback, $unlockCallback);
+        }
+        return $file->open($openFlags, $createMode)->then($writeCallback);
     }
 
     /**
      * Get file contents
      * @param string|File $filePath
+     * @param bool|int    $lock Lock file for operation and check for a lock OR lock timeout
      * @return \React\Promise\PromiseInterface
      */
-    public static function getContents($filePath)
+    public static function getContents($filePath, $lock = true)
     {
         $file = static::ensureFileObject($filePath);
-        return $file->exists()->then(
-            function () use ($file) {
-                return $file->getContents();
+        $readCallback = function () use (&$file, $filePath) {
+            return $file->getContents();
+        };
+        $unlockCallback = function ($result = null) use ($filePath) {
+            static::unlock($filePath);
+            if (is_object($result) && $result instanceof \Throwable) {
+                throw $result;
             }
-        );
+            return $result;
+        };
+        if (!empty($lock) && static::isLocked($filePath)) {
+            $lockTimeout = is_int($lock) ? $lock : null;
+            return static::onUnlock($filePath)->then(
+                function () use (&$file, $filePath, $lockTimeout) {
+                    static::lock($filePath, $lockTimeout);
+                    return $file->exists();
+                }
+            )
+                ->then($readCallback)
+                ->then($unlockCallback, $unlockCallback);
+        }
+        return $file->exists()->then($readCallback);
     }
 
     /**
@@ -164,10 +204,14 @@ class FileHelperAsc
      * @param string $filePath
      * @param int $timeout
      */
-    public static function lock($filePath, $timeout = 10)
+    public static function lock($filePath, $timeout = null)
     {
         $filePath = FileHelper::normalizePath($filePath);
+        $timeout = isset($timeout) ? $timeout : static::$LockTimeout;
         $expire = time() + $timeout;
+        if (isset(static::$_lockedFiles[$filePath])) {
+            $expire = static::$_lockedFiles[$filePath] <= $expire ? $expire : static::$_lockedFiles[$filePath];
+        }
         static::$_lockedFiles[$filePath] = $expire;
         static::checkUnlockTimer();
     }
@@ -240,7 +284,7 @@ class FileHelperAsc
      * @param File|Directory|string $pathOrObject
      * @return File
      */
-    protected static function ensureFileObject($pathOrObject)
+    protected static function ensureFileObject(&$pathOrObject)
     {
         if ($pathOrObject instanceof FileInterface) {
             return $pathOrObject;
@@ -257,7 +301,7 @@ class FileHelperAsc
      * @param FileInterface|DirectoryInterface|string $pathOrObject
      * @return DirectoryInterface
      */
-    protected static function ensureDirObject($pathOrObject)
+    protected static function ensureDirObject(&$pathOrObject)
     {
         if ($pathOrObject instanceof DirectoryInterface) {
             return $pathOrObject;
