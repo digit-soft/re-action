@@ -83,9 +83,33 @@ interface UrlManagerInterface
     public function getBaseUrl($request = null);
 
     /**
+     * Setter for $baseUrl
+     * @param string $baseUrl
+     */
+    public function setBaseUrl($baseUrl);
+
+    /**
      * Getter for $hostInfo
      * @param AppRequestInterface|null $request
      * @return string
      */
     public function getHostInfo($request = null);
+
+    /**
+     * Setter for $hostInfo
+     * @param string $hostInfo
+     */
+    public function setHostInfo($hostInfo);
+
+    /**
+     * Getter for $homeUrl
+     * @return string
+     */
+    public function getHomeUrl();
+
+    /**
+     * Setter for $homeUrl
+     * @param string $homeUrl
+     */
+    public function setHomeUrl($homeUrl);
 }

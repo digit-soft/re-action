@@ -22,6 +22,8 @@ class UrlManager extends Component implements UrlManagerInterface
     protected $_baseUrl;
     /** @var string Application host info. (http://www.example.com) */
     protected $_hostInfo;
+    /** @var string Application home URL */
+    protected $_homeUrl;
 
     /**
      * Creates a URL using the given route and query parameters.
@@ -171,6 +173,22 @@ class UrlManager extends Component implements UrlManagerInterface
     public function setHostInfo($hostInfo)
     {
         $this->_hostInfo = $hostInfo;
+    }
+
+    /**
+     * Getter for $homeUrl
+     * @return string
+     */
+    public function getHomeUrl() {
+        return $this->_homeUrl;
+    }
+
+    /**
+     * Setter for $homeUrl
+     * @param string $homeUrl
+     */
+    public function setHomeUrl($homeUrl) {
+        $this->_homeUrl = $homeUrl;
     }
 
     /**
