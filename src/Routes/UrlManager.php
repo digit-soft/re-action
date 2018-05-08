@@ -64,7 +64,6 @@ class UrlManager extends Component implements UrlManagerInterface
      * or an array to represent a route with query parameters (e.g. `['site/index', 'param1' => 'value1']`).
      * @param AppRequestInterface|null $request
      * @return string the created URL
-     * @throws InvalidConfigException
      */
     public function createUrl($params, $request = null)
     {
@@ -105,7 +104,6 @@ class UrlManager extends Component implements UrlManagerInterface
      * @param AppRequestInterface|null $request
      * @return string the created URL
      * @see createUrl()
-     * @throws InvalidConfigException
      */
     public function createAbsoluteUrl($params, $scheme = null, $request = null)
     {
@@ -127,7 +125,6 @@ class UrlManager extends Component implements UrlManagerInterface
      * Getter for $baseUrl
      * @param AppRequestInterface|null $request
      * @return string
-     * @throws InvalidConfigException
      */
     public function getBaseUrl($request = null)
     {
@@ -153,7 +150,6 @@ class UrlManager extends Component implements UrlManagerInterface
      * Getter for $hostInfo
      * @param AppRequestInterface|null $request
      * @return string
-     * @throws InvalidConfigException
      */
     public function getHostInfo($request = null)
     {

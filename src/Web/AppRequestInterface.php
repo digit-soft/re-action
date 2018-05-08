@@ -18,6 +18,7 @@ use Reaction\Web\Sessions\Session;
  * @property HelpersGroup             $helpers Helpers group
  * @property ResponseBuilderInterface $response
  * @property Session                  $session
+ * @property User                     $user
  * @property AssetManager             $assetManager
  * @property View                     $view
  * @property UrlManager               $urlManager

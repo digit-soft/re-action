@@ -77,6 +77,9 @@ return [
             'urlManager' => [
                 'class' => 'Reaction\Web\UrlManager',
             ],
+            'user' => [
+                'class' => 'Reaction\Web\UserInterface',
+            ],
         ],
     ],
     //DI definitions
@@ -91,6 +94,7 @@ return [
             ],
             'Reaction\Routes\RouteInterface' => 'Reaction\Routes\Route',
             'Reaction\Routes\UrlManagerInterface' => 'Reaction\Routes\UrlManager',
+            'Reaction\Web\UserInterface' => 'Reaction\Web\User',
         ],
         'singletons' => [
             //React event loop

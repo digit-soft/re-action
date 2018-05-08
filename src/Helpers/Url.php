@@ -18,7 +18,7 @@ class Url
     /**
      * Creates a URL for the given route.
      *
-     * This method will use [[\yii\web\UrlManager]] to create a URL.
+     * This method will use [[\Reaction\Web\UrlManager]] to create a URL.
      *
      * You may specify the route as a string, e.g., `site/index`. You may also use an array
      * if you want to specify additional query parameters for the URL being created. The
@@ -80,7 +80,6 @@ class Url
      *
      * @param AppRequestInterface $request
      * @return string the generated URL
-     * @throws Reaction\Exceptions\InvalidConfigException
      */
     public static function toRoute($route, $scheme = false, AppRequestInterface $request)
     {
@@ -238,19 +237,21 @@ class Url
      *
      * @param string|array $url the URL to remember. Please refer to [[to()]] for acceptable formats.
      * If this parameter is not specified, the currently requested URL will be used.
-     * @param string $name the name associated with the URL to be remembered. This can be used
-     * later by [[previous()]]. If not set, [[\yii\web\User::setReturnUrl()]] will be used with passed URL.
+     * @param string       $name the name associated with the URL to be remembered. This can be used
+     * later by [[previous()]]. If not set, [[\Reaction\Web\User::setReturnUrl()]] will be used with passed URL.
+     * @param AppRequestInterface $request
+     * @throws Reaction\Exceptions\InvalidConfigException
      * @see previous()
-     * @see \yii\web\User::setReturnUrl()
+     * @see \Reaction\Web\User::setReturnUrl()
      */
-    public static function remember($url = '', $name = null)
+    public static function remember($url = '', $name = null, $request)
     {
         $url = static::to($url);
 
         if ($name === null) {
-            Yii::$app->getUser()->setReturnUrl($url);
+            $request->user->setReturnUrl($url);
         } else {
-            Yii::$app->getSession()->set($name, $url);
+            $request->session->set($name, $url);
         }
     }
 
@@ -258,25 +259,26 @@ class Url
      * Returns the URL previously [[remember()|remembered]].
      *
      * @param string $name the named associated with the URL that was remembered previously.
-     * If not set, [[\yii\web\User::getReturnUrl()]] will be used to obtain remembered URL.
+     * If not set, [[\Reaction\Web\User::getReturnUrl()]] will be used to obtain remembered URL.
+     * @param AppRequestInterface $request
      * @return string|null the URL previously remembered. Null is returned if no URL was remembered with the given name
      * and `$name` is not specified.
      * @see remember()
-     * @see \yii\web\User::getReturnUrl()
+     * @see \Reaction\Web\User::getReturnUrl()
      */
-    public static function previous($name = null)
+    public static function previous($name = null, $request)
     {
         if ($name === null) {
-            return Yii::$app->getUser()->getReturnUrl();
+            return $request->user->getReturnUrl();
         }
 
-        return Yii::$app->getSession()->get($name);
+        return $request->session->get($name);
     }
 
     /**
      * Returns the canonical URL of the currently requested page.
      *
-     * The canonical URL is constructed using the current controller's [[\yii\web\Controller::route]] and
+     * The canonical URL is constructed using the current controller's [[\Reaction\Routes\Controller::route]] and
      * [[\yii\web\Controller::actionParams]]. You may use the following code in the layout view to add a link tag
      * about canonical URL:
      *
@@ -286,7 +288,6 @@ class Url
      *
      * @param AppRequestInterface $request
      * @return string the canonical URL of the currently requested page
-     * @throws Reaction\Exceptions\InvalidConfigException
      */
     public static function canonical($request)
     {
@@ -311,7 +312,6 @@ class Url
      *   for protocol-relative URL).
      *
      * @return string home URL
-     * @throws Reaction\Exceptions\InvalidConfigException
      */
     public static function home($scheme = false)
     {
@@ -405,7 +405,7 @@ class Url
      * - If the route has no leading slash, it is considered to be a route relative
      *   to the current module and will be prepended with the module's uniqueId.
      *
-     * Starting from version 2.0.2, a route can also be specified as an alias. In this case, the alias
+     * A route can also be specified as an alias. In this case, the alias
      * will be converted into the actual route first before conducting the above transformation steps.
      *
      * @param string              $routePath the route. This can be either an absolute route or a relative route.

@@ -378,7 +378,6 @@ class User extends RequestService implements UserInterface
      * Please refer to [[setReturnUrl()]] on accepted format of the URL.
      * @return string the URL that the user should be redirected to after login.
      * @see loginRequired()
-     * @throws InvalidConfigException
      */
     public function getReturnUrl($defaultUrl = null)
     {
