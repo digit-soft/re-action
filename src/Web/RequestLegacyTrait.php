@@ -9,6 +9,7 @@ use Psr\Http\Message\UriInterface;
 /**
  * Trait RequestLegacyTrait
  * @package Reaction\Web
+ * @property ServerRequestInterface $reactRequest
  */
 trait RequestLegacyTrait
 {
