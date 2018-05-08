@@ -379,7 +379,6 @@ class Url
      *
      * @param AppRequestInterface $request
      * @return string the generated URL
-     * @throws Reaction\Exceptions\InvalidConfigException
      */
     public static function current(array $params = [], $scheme = false, AppRequestInterface $request)
     {
