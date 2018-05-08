@@ -83,18 +83,14 @@ class View extends Component implements ViewInterface, DynamicContentAwareInterf
      * @var array|DynamicContentAwareInterface[] a list of currently active dynamic content class instances.
      * This property is used internally to implement the dynamic content caching feature. Do not modify it directly.
      * @internal
-     * @deprecated Do not use this property directly. Use methods [[getDynamicContents()]],
-     * [[pushDynamicContent()]], [[popDynamicContent()]] instead.
      */
-    public $cacheStack = [];
+    protected $cacheStack = [];
     /**
      * @var array a list of placeholders for embedding dynamic contents. This property
      * is used internally to implement the content caching feature. Do not modify it directly.
      * @internal
-     * @deprecated Since 2.0.14. Do not use this property directly. Use methods [[getDynamicPlaceholders()]],
-     * [[setDynamicPlaceholders()]], [[addDynamicPlaceholder()]] instead.
      */
-    public $dynamicPlaceholders = [];
+    protected $dynamicPlaceholders = [];
     /**
      * @var string View layout in which it will be rendered
      */
@@ -174,7 +170,6 @@ class View extends Component implements ViewInterface, DynamicContentAwareInterf
             // e.g. "//layouts/main"
             $file = Reaction::$app->getViewPath() . DIRECTORY_SEPARATOR . ltrim($view, '/');
         } elseif ($context instanceof ViewContextInterface) {
-            //TODO: Use controller as context
             $view = ltrim($view, '/');
             $file = $context->getViewPath() . DIRECTORY_SEPARATOR . $view;
         } elseif (($currentViewFile = $this->getViewFile()) !== false) {
@@ -183,7 +178,8 @@ class View extends Component implements ViewInterface, DynamicContentAwareInterf
             throw new InvalidCallException("Unable to resolve view file for view '$view': no active view context.");
         }
 
-        if (pathinfo($file, PATHINFO_EXTENSION) !== '') {
+        $pathInfo = pathinfo($file, PATHINFO_EXTENSION);
+        if ($pathInfo !== '' && !empty($pathInfo)) {
             return $file;
         }
         $path = $file . '.' . $this->defaultExtension;
