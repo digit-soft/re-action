@@ -127,7 +127,6 @@ class CachedSessionHandler extends SessionHandlerAbstract
      */
     public function gc()
     {
-        \Reaction::info($this->cache);
         if ($this->_gcIsRunning || empty($this->keys)) {
             return;
         }

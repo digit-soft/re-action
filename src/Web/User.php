@@ -2,10 +2,11 @@
 
 namespace Reaction\Web;
 
+use Reaction;
 use Reaction\Exceptions\Http\ForbiddenException;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Exceptions\InvalidValueException;
-use yii\rbac\CheckAccessInterface;
+use Reaction\Rbac\CheckAccessInterface;
 
 /**
  * User is the class for the `user` application component that manages the user authentication status.
@@ -48,7 +49,7 @@ use yii\rbac\CheckAccessInterface;
  * @property string $returnUrl The URL that the user should be redirected to after login. Note that the type
  * of this property differs in getter and setter. See [[getReturnUrl()]] and [[setReturnUrl()]] for details.
  */
-class User extends RequestService
+class User extends RequestService implements UserInterface
 {
     const EVENT_BEFORE_LOGIN = 'beforeLogin';
     const EVENT_AFTER_LOGIN = 'afterLogin';
@@ -145,6 +146,7 @@ class User extends RequestService
 
     /**
      * Initializes the application component.
+     * @throws InvalidConfigException
      */
     public function init()
     {
@@ -157,7 +159,7 @@ class User extends RequestService
             throw new InvalidConfigException('User::identityCookie must contain the "name" element.');
         }
         if (!empty($this->accessChecker) && is_string($this->accessChecker)) {
-            $this->accessChecker = \Reaction::create($this->accessChecker);
+            $this->accessChecker = Reaction::create($this->accessChecker);
         }
     }
 
@@ -169,7 +171,7 @@ class User extends RequestService
      * stored in session and reconstruct the corresponding identity object, if it has not done so before.
      * @param bool $autoRenew whether to automatically renew authentication status if it has not been done so before.
      * This is only useful when [[enableSession]] is true.
-     * @return IdentityInterface|null the identity object associated with the currently logged-in user.
+     * @return IdentityInterface|null|false the identity object associated with the currently logged-in user.
      * `null` is returned if the user is not logged in (not authenticated).
      * @see login()
      * @see logout()
@@ -252,7 +254,7 @@ class User extends RequestService
 
             $this->regenerateCsrfToken();
 
-            \Reaction::info($log);
+            Reaction::info($log);
             $this->afterLogin($identity, false, $duration);
         }
 
@@ -310,7 +312,7 @@ class User extends RequestService
                 $this->switchIdentity($identity, $this->autoRenewCookie ? $duration : 0);
                 $id = $identity->getId();
                 $ip = $this->request->getUserIP();
-                \Reaction::info("User '$id' logged in from $ip via cookie.");
+                Reaction::info("User '$id' logged in from $ip via cookie.");
                 $this->afterLogin($identity, true, $duration);
             }
         }
@@ -332,7 +334,7 @@ class User extends RequestService
             $this->switchIdentity(null);
             $id = $identity->getId();
             $ip = $this->request->getUserIP();
-            \Reaction::info("User '$id' logged out from $ip.");
+            Reaction::info("User '$id' logged out from $ip.");
             if ($destroySession && $this->enableSession) {
                 $this->request->session->destroy();
             }
@@ -383,13 +385,13 @@ class User extends RequestService
         $url = $this->request->session->get($this->returnUrlParam, $defaultUrl);
         if (is_array($url)) {
             if (isset($url[0])) {
-                return \Reaction::$app->urlManager->createUrl($url);
+                return Reaction::$app->urlManager->createUrl($url);
             }
 
             $url = null;
         }
 
-        return $url === null ? \Reaction::$app->urlManager->getHomeUrl() : $url;
+        return $url === null ? Reaction::$app->urlManager->getHomeUrl() : $url;
     }
 
     /**
@@ -446,7 +448,7 @@ class User extends RequestService
                 //return $this->request->response->redirect($this->loginUrl);
             }
         }
-        throw new ForbiddenException(\Reaction::t('yii', 'Login Required'));
+        throw new ForbiddenException(Reaction::t('yii', 'Login Required'));
     }
 
     /**
@@ -519,7 +521,7 @@ class User extends RequestService
         if ($value !== null) {
             $data = json_decode($value, true);
             if (is_array($data) && isset($data[2])) {
-                $cookie = \Reaction::create(array_merge($this->identityCookie, [
+                $cookie = Reaction::create(array_merge($this->identityCookie, [
                     'class' => 'Reaction\Web\Cookie',
                     'value' => $value,
                     'expire' => time() + (int) $data[2],
@@ -540,7 +542,7 @@ class User extends RequestService
      */
     protected function sendIdentityCookie($identity, $duration)
     {
-        $cookie = \Reaction::create(array_merge($this->identityCookie, [
+        $cookie = Reaction::create(array_merge($this->identityCookie, [
             'class' => 'Reaction\Web\Cookie',
             'value' => json_encode([
                 $identity->getId(),
@@ -577,7 +579,7 @@ class User extends RequestService
                 if (!$identity instanceof IdentityInterface) {
                     throw new InvalidValueException("$class::findIdentity() must return an object implementing IdentityInterface.");
                 } elseif (!$identity->validateAuthKey($authKey)) {
-                    \Reaction::warning("Invalid auth key attempted for user '$id': $authKey");
+                    Reaction::warning("Invalid auth key attempted for user '$id': $authKey");
                 } else {
                     return ['identity' => $identity, 'duration' => $duration];
                 }
@@ -594,7 +596,7 @@ class User extends RequestService
      */
     protected function removeIdentityCookie()
     {
-        $this->request->response->getCookies()->remove(\Reaction::create(array_merge($this->identityCookie, [
+        $this->request->response->getCookies()->remove(Reaction::create(array_merge($this->identityCookie, [
             'class' => 'Reaction\Web\Cookie',
         ])));
     }
@@ -627,7 +629,7 @@ class User extends RequestService
         }
 
         $session = $this->request->session;
-        if (!\Reaction::isTest()) {
+        if (!Reaction::isTest()) {
             $session->regenerateID(true);
         }
         $session->remove($this->idParam);
@@ -749,26 +751,11 @@ class User extends RequestService
     }
 
     /**
-     * Returns auth manager associated with the user component.
-     *
-     * By default this is the `authManager` application component.
-     * You may override this method to return a different auth manager instance if needed.
-     * @return \yii\rbac\ManagerInterface
-     * @since 2.0.6
-     * @deprecated since version 2.0.9, to be removed in 2.1. Use [[getAccessChecker()]] instead.
-     */
-    protected function getAuthManager()
-    {
-        return Yii::$app->getAuthManager();
-    }
-
-    /**
      * Returns the access checker used for checking access.
-     * @return CheckAccessInterface
-     * @since 2.0.9
+     * @return CheckAccessInterface|null
      */
     protected function getAccessChecker()
     {
-        return $this->accessChecker !== null ? $this->accessChecker : $this->getAuthManager();
+        return $this->accessChecker !== null ? $this->accessChecker : Reaction::$app->getAuthManager();
     }
 }
