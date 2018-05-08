@@ -319,7 +319,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
                 if (null === $className || !ReflectionHelper::isImplements($className, 'Reaction\Base\ComponentAutoloadInterface')) {
                     continue;
                 }
-                /** @var RequestComponent $component */
+                /** @var RequestComponentInterface|Reaction\Base\ComponentInitBlockingInterface $component */
                 $component = $this->get($componentName);
             }
             if ($component instanceof Reaction\Base\ComponentInitBlockingInterface && !$component->isInitialized()) {
@@ -327,9 +327,9 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
             }
         }
         if (!empty($promises)) {
-            return Reaction\Promise\all($promises);
+            return \Reaction\Promise\all($promises);
         } else {
-            return Reaction\Promise\resolve(true);
+            return \Reaction\Promise\resolve(true);
         }
     }
 
