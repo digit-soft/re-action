@@ -297,8 +297,7 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
                 }
             }
         } catch (\ReflectionException $exception) {
-            //TODO: Rewrite
-            App::app()->exceptions->throwToStdout($exception);
+            Reaction::error($exception);
             $names = [];
         }
 
@@ -339,7 +338,6 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
      * merge the parent hints with child hints using functions such as `array_merge()`.
      *
      * @return array attribute hints (name => hint)
-     * @since 2.0.4
      */
     public function attributeHints()
     {
@@ -490,8 +488,7 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
                 try {
                     $validator = Validator::createValidator($rule[1], $this, (array)$rule[0], array_slice($rule, 2));
                 } catch (\Exception $e) {
-                    //TODO: Rewrite
-                    App::app()->exceptions->throwToStdout($e);
+                    Reaction::error($e);
                 }
                 if (isset($validator)) {
                     $validators->append($validator);
@@ -569,7 +566,6 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
      * @param string $attribute the attribute name
      * @return string the attribute hint
      * @see attributeHints()
-     * @since 2.0.4
      */
     public function getAttributeHint($attribute)
     {
@@ -661,7 +657,6 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
      * @return array errors for all attributes as a one-dimensional array. Empty array is returned if no error.
      * @see getErrors()
      * @see getFirstErrors()
-     * @since 2.0.14
      */
     public function getErrorSummary($showAllErrors)
     {
@@ -785,7 +780,7 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
     public function onUnsafeAttribute($name, $value)
     {
         if (\Reaction::$app->envType !== BaseApplicationInterface::APP_ENV_PROD) {
-            \Reaction::$app->logger->debug("Failed to set unsafe attribute '$name' in '" . get_class($this) . "'.", __METHOD__);
+            \Reaction::debug("Failed to set unsafe attribute '$name' in '" . get_class($this) . "'.");
         }
     }
 
