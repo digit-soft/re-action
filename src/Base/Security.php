@@ -249,12 +249,12 @@ class Security extends Component
      * @param string $info optional info to bind the derived key material to application-
      * and context-specific information, e.g. a user ID or API version, see
      * [RFC 5869](https://tools.ietf.org/html/rfc5869)
-     * @param int $length length of the output key in bytes. If 0, the output key is
+     * @param int|string $length length of the output key in bytes. If 0, the output key is
      * the length of the hash algorithm output.
      * @throws InvalidArgumentException when HMAC generation fails.
      * @return string the derived key
      */
-    public function hkdf($algo, $inputKey, $salt = null, $info = null, $length = 0)
+    public function hkdf($algo, $inputKey, $salt = '', $info = '', $length = 0)
     {
         if (function_exists('hash_hkdf')) {
             $outputKey = hash_hkdf($algo, $inputKey, $length, $info, $salt);
@@ -278,7 +278,7 @@ class Security extends Component
         }
         $blocks = $length !== 0 ? ceil($length / $hashLength) : 1;
 
-        if ($salt === null) {
+        if ($salt === '') {
             $salt = str_repeat("\0", $hashLength);
         }
         $prKey = hash_hmac($algo, $inputKey, $salt, true);
@@ -304,9 +304,9 @@ class Security extends Component
      * @param string $algo a hash algorithm supported by `hash_hmac()`, e.g. 'SHA-256'
      * @param string $password the source password
      * @param string $salt the random salt
-     * @param int $iterations the number of iterations of the hash algorithm. Set as high as
+     * @param int|string $iterations the number of iterations of the hash algorithm. Set as high as
      * possible to hinder dictionary password attacks.
-     * @param int $length length of the output key in bytes. If 0, the output key is
+     * @param int|string $length length of the output key in bytes. If 0, the output key is
      * the length of the hash algorithm output.
      * @return string the derived key
      * @throws InvalidArgumentException when hash generation fails due to invalid params given.
@@ -482,7 +482,7 @@ class Security extends Component
         // mcrypt_create_iv() does not use libmcrypt. Since PHP 5.3.7 it directly reads
         // CryptGenRandom on Windows. Elsewhere it directly reads /dev/urandom.
         if (function_exists('mcrypt_create_iv')) {
-            $key = mcrypt_create_iv($length, MCRYPT_DEV_URANDOM);
+            $key = /** @scrutinizer ignore-deprecated */ mcrypt_create_iv($length, MCRYPT_DEV_URANDOM);
             if (StringHelper::byteLength($key) === $length) {
                 return $key;
             }
