@@ -80,7 +80,7 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
      */
     protected $_cookieParams = ['httponly' => true];
     /**
-     * @var $frozenSessionData array|null is used for saving session between recreations due to session parameters update.
+     * @var array|null is used for saving session between recreations due to session parameters update.
      */
     protected $frozenSessionData;
 
@@ -130,7 +130,8 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
      * Check that component was initialized earlier
      * @return bool
      */
-    public function isInitialized() {
+    public function isInitialized()
+    {
         return $this->_initialized;
     }
 
@@ -141,7 +142,7 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     public function open()
     {
         if ($this->getIsActive()) {
-            return Reaction\Promise\resolve(true);
+            return \Reaction\Promise\resolve(true);
         }
 
         $this->registerSessionHandler();
@@ -161,7 +162,8 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
      * Open session internal method
      * @return PromiseInterface
      */
-    protected function openInternal() {
+    protected function openInternal()
+    {
         $self = $this;
         if (!$this->getId()) {
             $self = $this;
@@ -190,13 +192,12 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     /**
      * Registers session handler.
      * @throws \Reaction\Exceptions\InvalidConfigException
-     * @throws \ReflectionException
      */
     protected function registerSessionHandler()
     {
         if ($this->handler !== null) {
             if (!is_object($this->handler)) {
-                if (Reaction::$app->has($this->handler)) {
+                if (is_string($this->handler) && Reaction::$app->has($this->handler)) {
                     $this->handler = Reaction::$app->get($this->handler);
                 } else {
                     $this->handler = Reaction::create($this->handler);
@@ -328,14 +329,14 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
      * @param bool $deleteOldSession Whether to delete the old associated session file or not.
      * @see open()
      * @see isActive
-     * @return \React\Promise\PromiseInterface|Reaction\Promise\FulfilledPromise|Reaction\Promise\Promise|Reaction\Promise\RejectedPromise
+     * @return \React\Promise\PromiseInterface
      */
     public function regenerateID($deleteOldSession = false)
     {
         if ($this->getIsActive()) {
             return $this->handler->regenerateId($this->id, $this->request, $deleteOldSession);
         }
-        return Reaction\Promise\reject(new Reaction\Exceptions\SessionException('Session is not active'));
+        return \Reaction\Promise\reject(new Reaction\Exceptions\SessionException('Session is not active'));
     }
 
     /**
@@ -445,7 +446,7 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     {
         $id = !isset($id) && isset($this->_sessionId) ? $this->_sessionId : $id;
         if (!isset($id)) {
-            return Reaction\Promise\reject(new Reaction\Exceptions\ErrorException('Param "$id" must be specified in "' . __METHOD__ . '"'));
+            return \Reaction\Promise\reject(new Reaction\Exceptions\ErrorException('Param "$id" must be specified in "' . __METHOD__ . '"'));
         }
         return $this->handler->read($id);
     }
@@ -461,7 +462,7 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     {
         $id = !isset($id) && isset($this->_sessionId) ? $this->_sessionId : $id;
         if (!isset($id)) {
-            return Reaction\Promise\reject(new Reaction\Exceptions\ErrorException('Param "$id" must be specified in "' . __METHOD__ . '"'));
+            return \Reaction\Promise\reject(new Reaction\Exceptions\ErrorException('Param "$id" must be specified in "' . __METHOD__ . '"'));
         }
         if (!isset($data)) {
             $data = $this->data;
@@ -479,7 +480,7 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     {
         $id = !isset($id) && isset($this->_sessionId) ? $this->_sessionId : $id;
         if (!isset($id)) {
-            return Reaction\Promise\reject(new Reaction\Exceptions\ErrorException('Param "$id" must be specified in "' . __METHOD__ . '"'));
+            return \Reaction\Promise\reject(new Reaction\Exceptions\ErrorException('Param "$id" must be specified in "' . __METHOD__ . '"'));
         }
         return $this->handler->destroy($id);
     }
@@ -730,7 +731,7 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     {
         $counters = $this->get($this->flashParam, []);
         $counters[$key] = $removeAfterAccess ? -1 : 0;
-        $th[$this->flashParam] = $counters;
+        $this->data[$this->flashParam] = $counters;
         if (empty($this->data[$key])) {
             $this->data[$key] = [$value];
         } else {
