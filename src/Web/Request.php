@@ -252,10 +252,6 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
      * @var string Application request language
      */
     public $language = 'en_US';
-    /**
-     * @var array Components to init first
-     */
-    public $autoloadComponents = [];
 
 
     /**
@@ -308,7 +304,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
     }
 
     /**
-     * Autoload components after init
+     * Autoload components after init (Function is called manually)
      * @return PromiseInterface
      * @throws InvalidConfigException
      * @throws Reaction\Exceptions\NotInstantiableException
@@ -317,16 +313,17 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
         $promises = [];
         foreach ($this->_definitions as $componentName => $definition) {
             if (isset($this->_components[$componentName])) {
-                continue;
+                $component = $this->_components[$componentName];
+            } else {
+                $className = Reaction::$di->resolveClassName($definition);
+                if (null === $className || !ReflectionHelper::isImplements($className, 'Reaction\Base\ComponentAutoloadInterface')) {
+                    continue;
+                }
+                /** @var RequestComponent $component */
+                $component = $this->get($componentName);
             }
-            $className = Reaction::$di->resolveClassName($definition);
-            if (null === $className || !ReflectionHelper::isImplements($className, Reaction\Base\ComponentAutoloadInterface::class)) {
-                continue;
-            }
-            /** @var RequestComponent $component */
-            $component = $this->getComponent($componentName);
-            if ($component instanceof Reaction\Base\ComponentInitBlockingInterface) {
-                $promises[] = $component->initComponent();
+            if ($component instanceof Reaction\Base\ComponentInitBlockingInterface && !$component->isInitialized()) {
+                $promises[] = $component->initComponent()->then(null, function () { return true; });
             }
         }
         if (!empty($promises)) {
@@ -335,28 +332,6 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
             return Reaction\Promise\resolve(true);
         }
     }
-
-//    /**
-//     * Resolves the current request into a route and the associated parameters.
-//     * @return array the first element is the route, and the second is the associated parameters.
-//     * @throws NotFoundHttpException if the request cannot be resolved.
-//     */
-//    public function resolve()
-//    {
-//        $result = Yii::$app->getUrlManager()->parseRequest($this);
-//        if ($result !== false) {
-//            list($route, $params) = $result;
-//            if ($this->_queryParams === null) {
-//                $_GET = $params + $_GET; // preserve numeric keys
-//            } else {
-//                $this->_queryParams = $params + $this->_queryParams;
-//            }
-//
-//            return [$route, $this->queryParams];
-//        }
-//
-//        throw new NotFoundHttpException(Yii::t('yii', 'Page not found.'));
-//    }
 
     /**
      * Filters headers according to the [[trustedHosts]].
