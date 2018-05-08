@@ -687,38 +687,65 @@ class Container extends Component
      * @throws NotInstantiableException
      */
     public function resolveClassName($definition, $parent = null) {
-        //Extract from Value object
-        if ($definition instanceof Value) {
-            $definition = $this->invoke($definition->callback, [$this]);
-            if (is_array($definition) && count($definition) === 2 && array_values($definition) === $definition) {
-                $definition = $definition[0];
-            }
-        //Extract from Instance object
-        } elseif ($definition instanceof Instance) {
-            $definition = $definition->id;
-        //Extract from Definition object
-        } elseif ($definition instanceof Definition) {
-            $definition = $definition->className;
-        //Object instance given, extract class name
-        } elseif (is_object($definition)) {
-            $definition = get_class($definition);
-        }
-        //Extract from array definition
-        if (is_array($definition)) {
-            $definition = isset($definition['class']) ? $definition['class'] : null;
-        }
-        if ($definition === null) {
+        $definition = $this->extractClassName($definition);
+
+        if ($definition === null || (is_string($definition) && $parent === $definition)) {
             return is_string($parent) ? $parent : null;
         }
         if (!is_string($definition)) {
             return $this->resolveClassName($definition);
         }
-        if ($parent === $definition) {
-            return $definition;
-        } elseif (isset($this->_singletons[$definition])) {
+
+        if (isset($this->_singletons[$definition])) {
             return $this->resolveClassName($this->_definitions[$definition], $definition);
         } elseif (isset($this->_definitions[$definition])) {
             return $this->resolveClassName($this->_definitions[$definition], $definition);
+        }
+        return $definition;
+    }
+
+    /**
+     * Extract class name from definition objects
+     * @param $definition
+     * @return mixed|null|string
+     * @throws InvalidConfigException
+     * @throws NotInstantiableException
+     */
+    protected function extractClassName($definition) {
+        if (is_string($definition)) {
+            return $definition;
+        }
+        //Extract from Closure object
+        if ($definition instanceof \Closure) {
+            $definition = $this->invoke($definition, [$this]);
+            if (is_object($definition)) {
+                return $this->extractClassName($definition);
+            }
+            //Extract from Value object
+        } elseif ($definition instanceof Value) {
+            $definition = $this->invoke($definition->callback, [$this]);
+            if (is_array($definition) && count($definition) === 2 && array_values($definition) === $definition) {
+                $definition = $definition[0];
+            } elseif (is_object($definition)) {
+                return $this->extractClassName($definition);
+            }
+            //Extract from Instance object
+        } elseif ($definition instanceof Instance) {
+            $definition = $definition->id;
+            //Extract from Definition object
+        } elseif ($definition instanceof Definition) {
+            $definition = $definition->className;
+            //Object instance given, extract class name
+        } elseif (is_object($definition)) {
+            $definition = get_class($definition);
+        }
+
+        if (is_array($definition)) {
+            //Extract config from  config + params array,
+            if (ArrayHelper::isIndexed($definition) && count($definition) === 2) {
+                $definition = $definition[0];
+            }
+            $definition = isset($definition['class']) ? $definition['class'] : null;
         }
         return $definition;
     }
