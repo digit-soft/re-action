@@ -31,7 +31,6 @@ class RequestReplacer implements Configurable
      * @param callable $next
      * @return mixed
      * @throws \Reaction\Exceptions\InvalidConfigException
-     * @throws \ReflectionException
      */
     public function __invoke(ServerRequestInterface $request, $next)
     {
