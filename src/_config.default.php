@@ -41,10 +41,6 @@ return [
     //Request config
     'request' => [
         'cookieValidationKey' => 'dmyyHbvzRjd7RjXJ',
-        //What components should be initialized after request creation
-        'autoloadComponents' => [
-            'session',
-        ],
         'components' => [
             'helpers' => [
                 'class' => 'Reaction\Helpers\Request\HelpersGroup',
