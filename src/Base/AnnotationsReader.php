@@ -25,14 +25,6 @@ class AnnotationsReader extends BaseObject
     protected $_reader;
 
     /**
-     * @inheritdoc
-     */
-    public function init()
-    {
-        parent::init();
-    }
-
-    /**
      * @param $class
      * @return array
      */
@@ -54,25 +46,24 @@ class AnnotationsReader extends BaseObject
     }
 
     /**
-     * @param string|\object $class
-     * @param $method
+     * @param string|object $class
+     * @param string        $method
      * @return array
      */
     public function getMethod($class, $method)
     {
         $reflector = $this->getMethodReflection($class, $method);
-        $test = $this->reader->getMethodAnnotations($reflector);
         return $this->reader->getMethodAnnotations($reflector);
     }
 
     /**
      * Get doctrine annotation reader
-     * @return mixed|\object
+     * @return mixed|object
      * @throws \Doctrine\Common\Annotations\AnnotationException
      */
     protected function getReader() {
         if(!isset($this->_reader)) {
-            $annotationClassNames = ClassFinderHelper::findClassesPsr4($this->annotationNamespaces);
+            ClassFinderHelper::findClassesPsr4($this->annotationNamespaces);
             $this->_reader = new CachedReader(
                 new IndexedReader(new AnnotationReader()),
                 new ArrayCache()
@@ -83,8 +74,9 @@ class AnnotationsReader extends BaseObject
 
     /**
      * Get class reflection
-     * @param string|\object $class
+     * @param string|object $class
      * @return \ReflectionClass
+     * @throws \ReflectionException
      */
     protected function getClassReflection($class) {
         if (is_object($class) && $class instanceof \ReflectionClass) {
@@ -95,8 +87,10 @@ class AnnotationsReader extends BaseObject
 
     /**
      * Get property reflection
-     * @param string|\object $class
-     * @param string $property
+     * @param string|object $class
+     * @param string        $property
+     * @return \ReflectionProperty
+     * @throws \ReflectionException
      */
     protected function getPropertyReflection($class, $property) {
         if (is_object($class) && $class instanceof \ReflectionProperty) {
@@ -108,7 +102,9 @@ class AnnotationsReader extends BaseObject
     /**
      * Get method reflection
      * @param string|\object $class
-     * @param string $method
+     * @param string         $method
+     * @return object|\ReflectionMethod
+     * @throws \ReflectionException
      */
     protected function getMethodReflection($class, $method) {
         if (is_object($class) && $class instanceof \ReflectionMethod) {
