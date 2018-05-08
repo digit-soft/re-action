@@ -17,4 +17,10 @@ interface ComponentInitBlockingInterface
      * @return PromiseInterface
      */
     public function initComponent();
+
+    /**
+     * Check that component was initialized earlier
+     * @return bool
+     */
+    public function isInitialized();
 }

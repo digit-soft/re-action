@@ -93,6 +93,8 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
 
     /** @var array Session data before changes */
     protected $_dataPrev;
+    /** @var bool */
+    protected $_initialized = false;
 
 
     /**
@@ -120,7 +122,16 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
      */
     public function initComponent()
     {
+        $this->_initialized = true;
         return $this->open();
+    }
+
+    /**
+     * Check that component was initialized earlier
+     * @return bool
+     */
+    public function isInitialized() {
+        return $this->_initialized;
     }
 
     /**
