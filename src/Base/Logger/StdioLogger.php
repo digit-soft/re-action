@@ -129,9 +129,9 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
     /**
      * System is unusable.
      *
-     * @param string $message
-     * @param array  $context
-     * @param int    $traceShift
+     * @param string|mixed $message
+     * @param array        $context
+     * @param int          $traceShift
      * @return void
      */
     public function emergency($message, array $context = array(), $traceShift = 0)
@@ -145,9 +145,9 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
      * Example: Entire website down, database unavailable, etc. This should
      * trigger the SMS alerts and wake you up.
      *
-     * @param string $message
-     * @param array  $context
-     * @param int    $traceShift
+     * @param string|mixed $message
+     * @param array        $context
+     * @param int          $traceShift
      *
      * @return void
      */
@@ -161,9 +161,9 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
      *
      * Example: Application component unavailable, unexpected exception.
      *
-     * @param string $message
-     * @param array  $context
-     * @param int    $traceShift
+     * @param string|mixed $message
+     * @param array        $context
+     * @param int          $traceShift
      *
      * @return void
      */
@@ -176,9 +176,9 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
      * Runtime errors that do not require immediate action but should typically
      * be logged and monitored.
      *
-     * @param string $message
-     * @param array  $context
-     * @param int    $traceShift
+     * @param string|mixed $message
+     * @param array        $context
+     * @param int          $traceShift
      *
      * @return void
      */
@@ -193,9 +193,9 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
      * Example: Use of deprecated APIs, poor use of an API, undesirable things
      * that are not necessarily wrong.
      *
-     * @param string $message
-     * @param array  $context
-     * @param int    $traceShift
+     * @param string|mixed $message
+     * @param array        $context
+     * @param int          $traceShift
      *
      * @return void
      */
@@ -207,9 +207,9 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
     /**
      * Normal but significant events.
      *
-     * @param string $message
-     * @param array  $context
-     * @param int    $traceShift
+     * @param string|mixed $message
+     * @param array        $context
+     * @param int          $traceShift
      *
      * @return void
      */
@@ -223,9 +223,9 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
      *
      * Example: User logs in, SQL logs.
      *
-     * @param string $message
-     * @param array  $context
-     * @param int    $traceShift
+     * @param string|mixed $message
+     * @param array        $context
+     * @param int          $traceShift
      *
      * @return void
      */
@@ -237,9 +237,9 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
     /**
      * Detailed debug information.
      *
-     * @param string $message
-     * @param array  $context
-     * @param int    $traceShift
+     * @param string|mixed $message
+     * @param array        $context
+     * @param int          $traceShift
      *
      * @return void
      */
@@ -315,10 +315,17 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
         $this->stdio->write($message);
     }
 
+    /**
+     * Convert message to string
+     * @param mixed $message
+     * @return mixed|string
+     */
     protected function convertMessageToString($message) {
         $messageStr = $message;
         if ($message === null) {
             $messageStr = 'NULL';
+        } elseif ($message instanceof \Throwable) {
+            $message = $this->convertErrorToString($message);
         } elseif (is_bool($message)) {
             $messageStr = $message ? 'TRUE' : 'FALSE';
         } elseif(!is_scalar($message)) {
@@ -327,6 +334,33 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
         return $messageStr;
     }
 
+    /**
+     * Convert exception to string
+     * @param \Throwable $e
+     * @param bool       $withTrace
+     * @return string
+     */
+    protected function convertErrorToString(\Throwable $e, $withTrace = true) {
+        $message = [
+            $e->getMessage(),
+            !empty($e->getFile()) ? $e->getFile()  . ' #' . $e->getLine() : "",
+            $e->getTraceAsString(),
+        ];
+        if ($withTrace) {
+            $message[] = $e->getTraceAsString();
+            if ($e->getPrevious() !== null) {
+                $message[] = $this->convertErrorToString($e->getPrevious(), false);
+            }
+        }
+        return implode("\n", $message);
+    }
+
+    /**
+     * Colorize text for console
+     * @param string $text
+     * @param mixed  ...$colors
+     * @return bool|string
+     */
     protected function colorizeText($text, ...$colors) {
         if (is_array($colors[0])) {
             $colors = $colors[0];
@@ -337,6 +371,11 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
         return $text;
     }
 
+    /**
+     * @param string $text
+     * @param string $color
+     * @return bool|string
+     */
     protected function _colorizeTextInternal($text, $color) {
         $off = static::STYLE_OFF;
         $newLineEnd = substr($text, -1) === "\n";
@@ -392,6 +431,7 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
 
 
     /**
+     * Replace placeholders in text
      * @param  string $message
      * @param  array  $context
      * @return string
@@ -410,6 +450,10 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
         return strtr($message, $replacements);
     }
 
+    /**
+     * @param string $level
+     * @return bool
+     */
     private function checkCorrectLogLevel(string $level): bool
     {
         $level = strtolower($level);
