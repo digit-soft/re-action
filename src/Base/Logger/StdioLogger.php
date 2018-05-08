@@ -325,7 +325,7 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
         if ($message === null) {
             $messageStr = 'NULL';
         } elseif ($message instanceof \Throwable) {
-            $message = $this->convertErrorToString($message);
+            $messageStr = $this->convertErrorToString($message);
         } elseif (is_bool($message)) {
             $messageStr = $message ? 'TRUE' : 'FALSE';
         } elseif(!is_scalar($message)) {
