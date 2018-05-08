@@ -101,7 +101,7 @@ class AnnotationsReader extends BaseObject
 
     /**
      * Get method reflection
-     * @param string|\object $class
+     * @param string|object $class
      * @param string         $method
      * @return object|\ReflectionMethod
      * @throws \ReflectionException
