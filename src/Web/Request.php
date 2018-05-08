@@ -3,8 +3,10 @@
 namespace Reaction\Web;
 
 use Psr\Http\Message\ServerRequestInterface;
+use React\Promise\PromiseInterface;
 use Reaction;
 use Reaction\Exceptions\InvalidConfigException;
+use Reaction\Helpers\ReflectionHelper;
 use Reaction\Routes\RouteInterface;
 use Reaction\Validators\IpValidator;
 
@@ -253,7 +255,7 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
     /**
      * @var array Components to init first
      */
-    public $initComponents = [];
+    public $autoloadComponents = [];
 
 
     /**
@@ -306,19 +308,32 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
     }
 
     /**
-     * @inheritdoc
+     * Autoload components after init
+     * @return PromiseInterface
+     * @throws InvalidConfigException
+     * @throws Reaction\Exceptions\NotInstantiableException
      */
-    public function initPromised()
-    {
-        $promises = [
-            \Reaction\Promise\resolve(true),
-        ];
-        foreach ($this->initComponents as $componentName) {
+    public function loadComponents() {
+        $promises = [];
+        foreach ($this->_definitions as $componentName => $definition) {
+            if (isset($this->_components[$componentName])) {
+                continue;
+            }
+            $className = Reaction::$di->resolveClassName($definition);
+            if (null === $className || !ReflectionHelper::isImplements($className, Reaction\Base\ComponentAutoloadInterface::class)) {
+                continue;
+            }
             /** @var RequestComponent $component */
             $component = $this->getComponent($componentName);
-            $promises[] = $component->initPromised()->then(null, function() { return true; });
+            if ($component instanceof Reaction\Base\ComponentInitBlockingInterface) {
+                $promises[] = $component->initComponent();
+            }
         }
-        return \Reaction\Promise\all($promises);
+        if (!empty($promises)) {
+            return Reaction\Promise\all($promises);
+        } else {
+            return Reaction\Promise\resolve(true);
+        }
     }
 
 //    /**

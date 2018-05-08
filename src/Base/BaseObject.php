@@ -51,17 +51,6 @@ class BaseObject implements Configurable
     }
 
     /**
-     * Initializes the object.
-     * This method is NOT invoked at the end of the constructor.
-     * You must call it manually to run
-     * @return PromiseInterface
-     */
-    public function initPromised()
-    {
-        return \Reaction\Promise\resolve(null);
-    }
-
-    /**
      * Returns the value of an object property.
      *
      * Do not call this method directly as it is a PHP magic method that

@@ -45,6 +45,6 @@ class RequestReplacer implements Configurable
         /** @var AppRequestInterface $newRequest */
         $newRequest = \Reaction::create($config);
         $initCallback = function () use ($next, &$newRequest) { return $next($newRequest); };
-        return $newRequest->initPromised()->then($initCallback, $initCallback);
+        return $newRequest->loadComponents()->then($initCallback, $initCallback);
     }
 }

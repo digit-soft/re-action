@@ -115,9 +115,10 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
     }
 
     /**
-     * @inheritdoc
+     * Init callback. Called by parent container/service/component on init and must return a fulfilled Promise
+     * @return PromiseInterface
      */
-    public function initPromised()
+    public function initComponent()
     {
         return $this->open();
     }

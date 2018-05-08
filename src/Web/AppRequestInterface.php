@@ -685,7 +685,7 @@ interface AppRequestInterface extends ServerRequestInterface, EventEmitterWildca
     /**
      * @return PromiseInterface
      */
-    public function initPromised();
+    public function loadComponents();
 
     /** OLD REQUEST METHODS */
 

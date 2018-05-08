@@ -42,7 +42,7 @@ return [
     'request' => [
         'cookieValidationKey' => 'dmyyHbvzRjd7RjXJ',
         //What components should be initialized after request creation
-        'initComponents' => [
+        'autoloadComponents' => [
             'session',
         ],
         'components' => [
