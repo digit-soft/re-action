@@ -680,8 +680,8 @@ class Container extends Component
 
     /**
      * Resolve class name from alias or definition
-     * @param string|array|Definition|Value|Instance $definition
-     * @param string|array|Definition|Value|Instance $parent
+     * @param string|array|mixed $definition
+     * @param string|array|mixed $parent
      * @return null|string
      * @throws InvalidConfigException
      * @throws NotInstantiableException
