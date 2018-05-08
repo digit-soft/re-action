@@ -679,6 +679,51 @@ class Container extends Component
     }
 
     /**
+     * Resolve class name from alias or definition
+     * @param string|array|Definition|Value|Instance $definition
+     * @param string|array|Definition|Value|Instance $parent
+     * @return null|string
+     * @throws InvalidConfigException
+     * @throws NotInstantiableException
+     */
+    public function resolveClassName($definition, $parent = null) {
+        //Extract from Value object
+        if ($definition instanceof Value) {
+            $definition = $this->invoke($definition->callback, [$this]);
+            if (is_array($definition) && count($definition) === 2 && array_values($definition) === $definition) {
+                $definition = $definition[0];
+            }
+        //Extract from Instance object
+        } elseif ($definition instanceof Instance) {
+            $definition = $definition->id;
+        //Extract from Definition object
+        } elseif ($definition instanceof Definition) {
+            $definition = $definition->className;
+        //Object instance given, extract class name
+        } elseif (is_object($definition)) {
+            $definition = get_class($definition);
+        }
+        //Extract from array definition
+        if (is_array($definition)) {
+            $definition = isset($definition['class']) ? $definition['class'] : null;
+        }
+        if ($definition === null) {
+            return is_string($parent) ? $parent : null;
+        }
+        if (!is_string($definition)) {
+            return $this->resolveClassName($definition);
+        }
+        if ($parent === $definition) {
+            return $definition;
+        } elseif (isset($this->_singletons[$definition])) {
+            return $this->resolveClassName($this->_definitions[$definition], $definition);
+        } elseif (isset($this->_definitions[$definition])) {
+            return $this->resolveClassName($this->_definitions[$definition], $definition);
+        }
+        return $definition;
+    }
+
+    /**
      * Extract array data from Definition instance
      * @param Definition $definition
      * @return array
