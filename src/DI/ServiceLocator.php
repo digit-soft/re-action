@@ -3,9 +3,12 @@
 namespace Reaction\DI;
 
 use Closure;
+use React\Promise\PromiseInterface;
+use Reaction\Base\ComponentInitBlockingInterface;
 use Reaction\Helpers\ArrayHelper;
 use Reaction\Base\Component;
 use Reaction\Exceptions\InvalidConfigException;
+use Reaction\Helpers\ReflectionHelper;
 
 /**
  * ServiceLocator implements a [service locator](http://en.wikipedia.org/wiki/Service_locator_pattern).
@@ -52,7 +55,19 @@ class ServiceLocator extends Component
      * @var array component definitions indexed by their IDs
      */
     protected $_definitions = [];
+    /**
+     * @var bool
+     */
+    protected $_checkComponentsAutoload = false;
 
+    /**
+     * @inheritdoc
+     */
+    public function init()
+    {
+        $this->_checkComponentsAutoload = $this instanceof ServiceLocatorAutoloadInterface;
+        parent::init();
+    }
 
     /**
      * Getter magic method.
@@ -152,11 +167,11 @@ class ServiceLocator extends Component
      *
      * ```php
      * // a class name
-     * $locator->set('cache', 'yii\caching\FileCache');
+     * $locator->set('cache', 'Reaction\Caching\FileCache');
      *
      * // a configuration array
      * $locator->set('db', [
-     *     'class' => 'yii\db\Connection',
+     *     'class' => 'Reaction\Db\Connection',
      *     'dsn' => 'mysql:host=127.0.0.1;dbname=demo',
      *     'username' => 'root',
      *     'password' => '',
@@ -165,11 +180,11 @@ class ServiceLocator extends Component
      *
      * // an anonymous function
      * $locator->set('cache', function ($params) {
-     *     return new \yii\caching\FileCache;
+     *     return new \Reaction\Caching\FileCache;
      * });
      *
      * // an instance
-     * $locator->set('cache', new \yii\caching\FileCache);
+     * $locator->set('cache', new \Reaction\Caching\FileCache);
      * ```
      *
      * If a component definition with the same ID already exists, it will be overwritten.
@@ -214,6 +229,10 @@ class ServiceLocator extends Component
             }
         } else {
             throw new InvalidConfigException("Unexpected configuration type for the \"$id\" component: " . gettype($definition));
+        }
+        //Check components auto loading possibility
+        if ($this->_checkComponentsAutoload) {
+            $this->checkComponentAutoload($id);
         }
     }
 
@@ -269,5 +288,56 @@ class ServiceLocator extends Component
         foreach ($components as $id => $component) {
             $this->set($id, $component);
         }
+    }
+
+    /**
+     * Load components after init (Function is called manually).
+     * Returns a promise which will be resolved after all components are initialized
+     * if components implementing ComponentInitBlockingInterface or immediately if not.
+     * @return PromiseInterface
+     * @throws InvalidConfigException
+     * @throws \Reaction\Exceptions\NotInstantiableException
+     */
+    public function loadComponents() {
+        $promises = [];
+        foreach ($this->_definitions as $componentName => $definition) {
+            if (isset($this->_components[$componentName])) {
+                $component = $this->_components[$componentName];
+            } else {
+                $className = \Reaction::$di->resolveClassName($definition);
+                if (null === $className || !ReflectionHelper::isImplements($className, 'Reaction\Base\ComponentAutoloadInterface')) {
+                    continue;
+                }
+                /** @var Component $component */
+                $component = $this->get($componentName);
+            }
+            if ($component instanceof ComponentInitBlockingInterface && !$component->isInitialized()) {
+                $promises[] = $component->initComponent()->then(null, function () { return true; });
+            }
+        }
+        if (!empty($promises)) {
+            return \Reaction\Promise\all($promises);
+        } else {
+            return \Reaction\Promise\resolve(true);
+        }
+    }
+
+    /**
+     * Check for component auto loading possibility
+     * @param string $componentName
+     * @return null|object
+     * @throws InvalidConfigException
+     * @throws \Reaction\Exceptions\NotInstantiableException
+     */
+    protected function checkComponentAutoload($componentName) {
+        if (!isset($this->_definitions[$componentName]) || isset($this->_components[$componentName])) {
+            return null;
+        }
+        $className = \Reaction::$di->resolveClassName($this->_definitions[$componentName]);
+        if (null !== $className && !ReflectionHelper::isImplements($className, 'Reaction\Base\ComponentAutoloadInterface')) {
+            $component = $this->get($componentName);
+            return $component;
+        }
+        return null;
     }
 }
