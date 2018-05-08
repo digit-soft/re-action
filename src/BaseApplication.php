@@ -277,4 +277,15 @@ class BaseApplication extends ServiceLocator implements BaseApplicationInterface
     {
         return $this->getAlias('@runtime');
     }
+
+    /**
+     * Get Application auth manager
+     * @return \Reaction\Rbac\ManagerInterface|null
+     * @throws Exceptions\InvalidConfigException
+     */
+    public function getAuthManager() {
+        /** @var \Reaction\Rbac\ManagerInterface|null $component */
+        $component = $this->has('authManager') ? $this->get('authManager') : null;
+        return $component;
+    }
 }

@@ -144,6 +144,13 @@ interface BaseApplicationInterface extends EventEmitterWildcardInterface
     public function getBasePath();
 
     /**
+     * Get Application auth manager
+     * @return \Reaction\Rbac\ManagerInterface|null
+     * @throws Exceptions\InvalidConfigException
+     */
+    public function getAuthManager();
+
+    /**
      * Returns a value indicating whether the locator has the specified component definition or has instantiated the component.
      * This method may return different results depending on the value of `$checkInstance`.
      *
