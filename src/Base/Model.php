@@ -3,7 +3,7 @@
 namespace Reaction\Base;
 /** TODO: VALIDATORS, EXCEPTIONS!!! */
 
-use Reaction\BaseApplicationInterface;
+use Reaction\StaticApplicationInterface;
 use Reaction\Exceptions\InvalidArgumentException;
 use Reaction\Exceptions\InvalidConfigException;
 use ArrayAccess;
@@ -779,7 +779,7 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
      */
     public function onUnsafeAttribute($name, $value)
     {
-        if (\Reaction::$app->envType !== BaseApplicationInterface::APP_ENV_PROD) {
+        if (\Reaction::$app->envType !== StaticApplicationInterface::APP_ENV_PROD) {
             \Reaction::debug("Failed to set unsafe attribute '$name' in '" . get_class($this) . "'.");
         }
     }

@@ -11,10 +11,10 @@ use Reaction\Exceptions\InvalidArgumentException;
 use Reaction\Middleware\RequestReplacer;
 
 /**
- * Class BaseApplication
+ * Class StaticApplication
  * @package Reaction
  */
-class BaseApplication extends ServiceLocator implements BaseApplicationInterface
+class StaticApplication extends ServiceLocator implements StaticApplicationInterface
 {
     /** @var string */
     public $envType = self::APP_ENV_DEV;

@@ -2,7 +2,7 @@
 
 namespace Reaction\Base;
 
-use Reaction\BaseApplicationInterface;
+use Reaction\StaticApplicationInterface;
 use Reaction\Exceptions\HttpExceptionInterface;
 use Reaction\Base\Logger\StdioLogger;
 use Reaction\Web\Response;
@@ -14,7 +14,7 @@ use Reaction\Helpers\ArrayHelper;
  */
 class ExceptionHandler extends BaseObject
 {
-    public $envType = BaseApplicationInterface::APP_ENV_PROD;
+    public $envType = StaticApplicationInterface::APP_ENV_PROD;
 
     /**
      * Throw error description to user (browser)
@@ -24,7 +24,7 @@ class ExceptionHandler extends BaseObject
      */
     public function throwToUser($exception, $asJson = false) {
         $httpCode = method_exists($exception, 'getHttpCode') ? call_user_func([$exception, 'getHttpCode']) : 500;
-        $full = $this->envType !== BaseApplicationInterface::APP_ENV_PROD;
+        $full = $this->envType !== StaticApplicationInterface::APP_ENV_PROD;
         if($asJson) {
             $exceptionData = $this->getExceptionData($exception, $full, false);
         } else {

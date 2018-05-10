@@ -9,7 +9,7 @@ use Reaction\Routes\UrlManager;
 use Reaction\Web\Sessions\SessionHandlerInterface;
 
 /**
- * Interface BaseApplicationInterface
+ * Interface StaticApplicationInterface
  * @package Reaction
  * @property bool                             $debug
  * @property bool                             $test
@@ -30,7 +30,7 @@ use Reaction\Web\Sessions\SessionHandlerInterface;
  * @property FilesystemInterface              $fs
  * @property UrlManager                       $urlManager
  */
-interface BaseApplicationInterface extends EventEmitterWildcardInterface
+interface StaticApplicationInterface extends EventEmitterWildcardInterface
 {
     const APP_ENV_PROD  = 'production';
     const APP_ENV_DEV   = 'development';

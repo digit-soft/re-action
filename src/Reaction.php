@@ -14,7 +14,7 @@ class Reaction
     public static $composer;
     /** @var \Reaction\DI\Container */
     public static $di;
-    /** @var \Reaction\BaseApplicationInterface */
+    /** @var \Reaction\StaticApplicationInterface */
     public static $app;
     /** @var \Reaction\Base\ConfigReader */
     public static $config;
@@ -131,7 +131,7 @@ class Reaction
      * @return bool
      */
     public static function isDev() {
-        return empty(Reaction::$app) || Reaction::$app->envType === \Reaction\BaseApplicationInterface::APP_ENV_DEV;
+        return empty(Reaction::$app) || Reaction::$app->envType === \Reaction\StaticApplicationInterface::APP_ENV_DEV;
     }
 
     /**
@@ -139,7 +139,7 @@ class Reaction
      * @return bool
      */
     public static function isProd() {
-        return Reaction::$app && Reaction::$app->envType === \Reaction\BaseApplicationInterface::APP_ENV_PROD;
+        return Reaction::$app && Reaction::$app->envType === \Reaction\StaticApplicationInterface::APP_ENV_PROD;
     }
 
     /**
@@ -218,7 +218,7 @@ class Reaction
      */
     protected static function initApp() {
         $config = static::$config->get('app');
-        $config['class'] = \Reaction\BaseApplicationInterface::class;
+        $config['class'] = \Reaction\StaticApplicationInterface::class;
         static::$app = static::create($config);
     }
 

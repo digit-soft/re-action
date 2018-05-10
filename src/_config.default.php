@@ -113,7 +113,7 @@ return [
                 'class' => \React\Http\Server::class,
             ],
             //Application
-            'Reaction\BaseApplicationInterface' => \Reaction\BaseApplication::class,
+            'Reaction\StaticApplicationInterface' => \Reaction\StaticApplication::class,
             //'Reaction\BaseApplication' => \Reaction\BaseApplication::class,
             //Router
             'Reaction\Routes\RouterInterface' => \Reaction\Routes\Router::class,
