@@ -3,8 +3,9 @@
 namespace Reaction\Routes;
 
 use FastRoute\RouteParser;
+use Psr\Http\Message\ServerRequestInterface;
 use Reaction\Promise\ExtendedPromiseInterface;
-use Reaction\Web\AppRequestInterface;
+use Reaction\RequestApplicationInterface;
 
 /**
  * Interface RouterInterface
@@ -104,10 +105,10 @@ interface RouterInterface
 
     /**
      * Resolve request
-     * @param AppRequestInterface $request
+     * @param ServerRequestInterface $request
      * @return ExtendedPromiseInterface
      */
-    public function resolveRequest(AppRequestInterface $request);
+    public function resolveRequest(ServerRequestInterface $request);
 
     /**
      * Get controller for errors
@@ -123,8 +124,8 @@ interface RouterInterface
 
     /**
      * Get data from dispatcher
-     * @param AppRequestInterface $request
+     * @param RequestApplicationInterface $app
      * @return array
      */
-    public function getDispatcherData(AppRequestInterface $request);
+    public function getDispatcherData(RequestApplicationInterface $app);
 }

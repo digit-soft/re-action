@@ -3,6 +3,7 @@
 namespace Reaction\Routes;
 
 use FastRoute\RouteParser;
+use Psr\Http\Message\ServerRequestInterface;
 use Reaction\Base\Component;
 use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\Annotations\Ctrl;
@@ -11,7 +12,7 @@ use FastRoute\BadRouteException;
 use FastRoute\Dispatcher;
 use Reaction\Helpers\ArrayHelper;
 use Reaction\Helpers\ClassFinderHelper;
-use Reaction\Web\AppRequestInterface;
+use Reaction\RequestApplicationInterface;
 
 /**
  * Class Router
@@ -177,26 +178,26 @@ class Router extends Component implements RouterInterface
 
     /**
      * Get data from dispatcher
-     * @param AppRequestInterface$request
+     * @param RequestApplicationInterface $app
      * @return array
      */
-    public function getDispatcherData(AppRequestInterface$request) {
-        $path = '/' . (string)$request->pathInfo;
+    public function getDispatcherData(RequestApplicationInterface $app) {
+        $path = '/' . (string)$app->reqHelper->pathInfo;
         $path = rtrim($path, '/');
-        $method = $request->method;
+        $method = $app->reqHelper->getMethod();
         return $this->dispatcher->dispatch($method, $path);
     }
 
     /**
      * Dispatch requested route
-     * @param AppRequestInterface $request
+     * @param ServerRequestInterface $request
      * @return ExtendedPromiseInterface
      */
-    public function resolveRequest(AppRequestInterface $request) {
-        $route = $request->getRoute();
-        return $route->resolve($request)->then(
-            function ($response) use (&$request) {
-                return $request->emitAndWait(AppRequestInterface::EVENT_REQUEST_END, [$request])->then(
+    public function resolveRequest(ServerRequestInterface $request) {
+        $app = $this->createRequestApplication($request);
+        return $app->getRoute()->resolve()->then(
+            function ($response) use (&$app) {
+                return $app->emitAndWait(RequestApplicationInterface::EVENT_REQUEST_END, [$app])->then(
                     function () use ($response) {
                         return $response;
                     }
@@ -211,6 +212,17 @@ class Router extends Component implements RouterInterface
      */
     public function getRoutePaths() {
         return $this->_routePaths;
+    }
+
+    /**
+     * Create application from request
+     * @param ServerRequestInterface $request
+     * @return RequestApplicationInterface
+     */
+    protected function createRequestApplication(ServerRequestInterface $request) {
+        $config = \Reaction::$config->get('requestApp');
+        $config = ['request' => $request] + $config;
+        return \Reaction::createNoExc($config);
     }
 
     /**
