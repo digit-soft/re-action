@@ -1620,7 +1620,6 @@ class Request extends Reaction\Base\Component implements AppRequestInterface
             return $this->getCookies()->getValue($this->csrfParam);
         }
 
-        //TODO: Rewrite
         return $this->session->get($this->csrfParam);
     }
 
