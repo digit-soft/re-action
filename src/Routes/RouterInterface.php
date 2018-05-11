@@ -4,6 +4,7 @@ namespace Reaction\Routes;
 
 use FastRoute\RouteParser;
 use Psr\Http\Message\ServerRequestInterface;
+use React\Promise\PromiseInterface;
 use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\RequestApplicationInterface;
 
@@ -106,7 +107,7 @@ interface RouterInterface
     /**
      * Resolve request
      * @param ServerRequestInterface $request
-     * @return ExtendedPromiseInterface
+     * @return PromiseInterface
      */
     public function resolveRequest(ServerRequestInterface $request);
 

@@ -4,6 +4,8 @@ namespace Reaction\Routes;
 
 use FastRoute\RouteParser;
 use Psr\Http\Message\ServerRequestInterface;
+use React\Promise\PromiseInterface;
+use Reaction;
 use Reaction\Base\Component;
 use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\Annotations\Ctrl;
@@ -191,11 +193,15 @@ class Router extends Component implements RouterInterface
     /**
      * Dispatch requested route
      * @param ServerRequestInterface $request
-     * @return ExtendedPromiseInterface
+     * @return PromiseInterface
      */
     public function resolveRequest(ServerRequestInterface $request) {
         $app = $this->createRequestApplication($request);
-        return $app->getRoute()->resolve()->then(
+        return $app->loadComponents()->then(
+            function () use (&$app) {
+                return $app->getRoute()->resolve();
+            }
+        )->then(
             function ($response) use (&$app) {
                 return $app->emitAndWait(RequestApplicationInterface::EVENT_REQUEST_END, [$app])->then(
                     function () use ($response) {
@@ -220,9 +226,10 @@ class Router extends Component implements RouterInterface
      * @return RequestApplicationInterface
      */
     protected function createRequestApplication(ServerRequestInterface $request) {
-        $config = \Reaction::$config->get('requestApp');
+        $config = Reaction::$config->get('requestApp');
         $config = ['request' => $request] + $config;
-        return \Reaction::createNoExc($config);
+        $app = Reaction::createNoExc($config);
+        return $app;
     }
 
     /**
@@ -245,7 +252,7 @@ class Router extends Component implements RouterInterface
             return;
         }
         $this->controllers[] = $_className;
-        $classAnnotations = \Reaction::$annotations->getClass($className);
+        $classAnnotations = Reaction::$annotations->getClass($className);
         if (isset($classAnnotations[Ctrl::class])) {
             $this->registerControllerWithAnnotations($className, $classAnnotations[Ctrl::class]);
         } else {
@@ -270,7 +277,7 @@ class Router extends Component implements RouterInterface
         }
         $controller = is_string($className) ? new $className() : $className;
         for ($i = 0; $i < count($actions); $i++) {
-            $actionAnnotations = \Reaction::$annotations->getMethod($className, $actions[$i]);
+            $actionAnnotations = Reaction::$annotations->getMethod($className, $actions[$i]);
             if(!isset($actionAnnotations[CtrlAction::class])) continue;
             /** @var CtrlAction $ctrlAction */
             $ctrlAction = $actionAnnotations[CtrlAction::class];
@@ -307,7 +314,7 @@ class Router extends Component implements RouterInterface
     public function getErrorController()
     {
         if (!is_object($this->_errorController)) {
-            $this->_errorController = \Reaction::create($this->_errorController);
+            $this->_errorController = Reaction::create($this->_errorController);
         }
         return $this->_errorController;
     }
@@ -328,7 +335,7 @@ class Router extends Component implements RouterInterface
      */
     public function getRouteParser() {
         if (!isset($this->_routeParser)) {
-            $this->_routeParser = \Reaction::create($this->routeParserClass, $this->routeParserOptions);
+            $this->_routeParser = Reaction::create($this->routeParserClass, $this->routeParserOptions);
         }
         return $this->_routeParser;
     }
