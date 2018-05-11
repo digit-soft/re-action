@@ -10,7 +10,6 @@ use Reaction\Base\Model;
 use Reaction\RequestApplicationInterface;
 use yii\db\ActiveRecordInterface;
 use Reaction\Validators\StringValidator;
-use Reaction\Web\AppRequestInterface;
 
 /**
  * Html provides a set of static methods for generating commonly used HTML tags.
@@ -305,7 +304,7 @@ class Html
      * Generates the meta tags containing CSRF token information.
      * @param RequestApplicationInterface $app
      * @return string the generated meta tags
-     * @see AppRequestInterface::enableCsrfValidation
+     * @see \Reaction\Web\RequestHelper::enableCsrfValidation
      */
     public static function csrfMetaTags(RequestApplicationInterface $app)
     {
@@ -325,7 +324,7 @@ class Html
      * Since most browsers only support "post" and "get", if other methods are given, they will
      * be simulated using "post", and a hidden input will be added which contains the actual method type.
      * See [[\yii\web\Request::methodParam]] for more details.
-     * @param array               $options the tag options in terms of name-value pairs. These will be rendered as
+     * @param array                       $options the tag options in terms of name-value pairs. These will be rendered as
      * the attributes of the resulting tag. The values will be HTML-encoded using [[encode()]].
      * If a value is null, the corresponding attribute will not be rendered.
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
@@ -334,27 +333,27 @@ class Html
      *
      *  - `csrf`: whether to generate the CSRF hidden input. Defaults to true.
      *
-     * @param AppRequestInterface $request
+     * @param RequestApplicationInterface $app
      * @return string the generated form start tag.
      * @see endForm()
      */
-    public static function beginForm($action = '', $method = 'post', $options = [], $request = null)
+    public static function beginForm($action = '', $method = 'post', $options = [], $app = null)
     {
-        $action = Url::to($action);
+        $action = $app->helpers->url->to($action);
 
         $hiddenInputs = [];
-        $encoding = $request instanceof AppRequestInterface ? $request->charset : 'UTF-8';
+        $encoding = $app instanceof RequestApplicationInterface ? $app->charset : 'UTF-8';
 
-        if ($request instanceof AppRequestInterface) {
+        if ($app instanceof RequestApplicationInterface) {
             if (strcasecmp($method, 'get') && strcasecmp($method, 'post')) {
                 // simulate PUT, DELETE, etc. via POST
-                $hiddenInputs[] = static::hiddenInput($request->methodParam, $method, [], $encoding);
+                $hiddenInputs[] = static::hiddenInput($app->reqHelper->methodParam, $method, [], $encoding);
                 $method = 'post';
             }
             $csrf = ArrayHelper::remove($options, 'csrf', true);
 
-            if ($csrf && $request->enableCsrfValidation && strcasecmp($method, 'post') === 0) {
-                $hiddenInputs[] = static::hiddenInput($request->csrfParam, $request->getCsrfToken());
+            if ($csrf && $app->reqHelper->methodParam && strcasecmp($method, 'post') === 0) {
+                $hiddenInputs[] = static::hiddenInput($app->reqHelper->csrfParam, $app->reqHelper->getCsrfToken());
             }
         }
 

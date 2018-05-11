@@ -6,6 +6,7 @@ use Reaction\Base\Model;
 use Reaction\Exceptions\InvalidArgumentException;
 use Reaction\Helpers\Html;
 use Reaction\Helpers\Url;
+use Reaction\Web\RequestHelper;
 
 /**
  * Class HtmlHelper. Proxy to \Reaction\Helpers\Html
@@ -182,7 +183,7 @@ class HtmlHelper extends RequestAppHelperProxy
     /**
      * Generates the meta tags containing CSRF token information.
      * @return string the generated meta tags
-     * @see Request::enableCsrfValidation
+     * @see RequestHelper::enableCsrfValidation
      * @see Html::csrfMetaTags()
      */
     public function csrfMetaTags()
@@ -205,15 +206,13 @@ class HtmlHelper extends RequestAppHelperProxy
      * Special options:
      *
      *  - `csrf`: whether to generate the CSRF hidden input. Defaults to true.
-     *
-     * @param string       $encoding
      * @return string the generated form start tag.
      * @see endForm()
      * @see Html::beginForm()
      */
-    public function beginForm($action = '', $method = 'post', $options = [], $encoding = null)
+    public function beginForm($action = '', $method = 'post', $options = [])
     {
-        return $this->proxyWithCharset(__FUNCTION__, func_get_args());
+        return $this->proxyWithApp(__FUNCTION__, func_get_args());
     }
 
     /**
