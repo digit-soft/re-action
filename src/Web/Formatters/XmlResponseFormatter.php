@@ -42,12 +42,10 @@ class XmlResponseFormatter extends Component implements ResponseFormatterInterfa
     /**
      * @var bool whether to interpret objects implementing the [[\Traversable]] interface as arrays.
      * Defaults to `true`.
-     * @since 2.0.7
      */
     public $useTraversableAsArray = true;
     /**
      * @var bool if object tags should be added
-     * @since 2.0.11
      */
     public $useObjectTags = true;
 
@@ -128,7 +126,6 @@ class XmlResponseFormatter extends Component implements ResponseFormatterInterfa
      *
      * @param int|string|bool|float $value a scalar value.
      * @return string string representation of the value.
-     * @since 2.0.11
      */
     protected function formatScalarValue($value)
     {
@@ -152,7 +149,6 @@ class XmlResponseFormatter extends Component implements ResponseFormatterInterfa
      *
      * @param mixed $name
      * @return string
-     * @since 2.0.12
      */
     protected function getValidXmlElementName($name)
     {
@@ -169,7 +165,6 @@ class XmlResponseFormatter extends Component implements ResponseFormatterInterfa
      * @param mixed $name
      * @return bool
      * @see http://stackoverflow.com/questions/2519845/how-to-check-if-string-is-a-valid-xml-element-name/2519943#2519943
-     * @since 2.0.12
      */
     protected function isValidXmlName($name)
     {

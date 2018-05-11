@@ -1,9 +1,4 @@
 <?php
-/**
- * @link http://www.yiiframework.com/
- * @copyright Copyright (c) 2008 Yii Software LLC
- * @license http://www.yiiframework.com/license/
- */
 
 namespace Reaction\Web\Formatters;
 
@@ -16,9 +11,6 @@ use Reaction\Web\ResponseFormatterInterface;
  * HtmlResponseFormatter formats the given data into an HTML response content.
  *
  * It is used by [[Response]] to format response data.
- *
- * @author Qiang Xue <qiang.xue@gmail.com>
- * @since 2.0
  */
 class HtmlResponseFormatter extends Component implements ResponseFormatterInterface
 {

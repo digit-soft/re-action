@@ -6,6 +6,7 @@ use Reaction;
 use Reaction\Base\Component;
 use Reaction\Helpers\Json;
 use Reaction\Web\ResponseBuilderInterface;
+use Reaction\Web\ResponseFormatterInterface;
 
 /**
  * JsonResponseFormatter formats the given data into a JSON or JSONP response content.
@@ -20,32 +21,26 @@ use Reaction\Web\ResponseBuilderInterface;
  *     // ...
  *     'formatters' => [
  *         \Reaction\Web\Response::FORMAT_JSON => [
- *              'class' => 'yii\web\JsonResponseFormatter',
- *              'prettyPrint' => YII_DEBUG, // use "pretty" output in debug mode
+ *              'class' => 'Reaction\Web\Formatters\JsonResponseFormatter',
+ *              'prettyPrint' => Reaction::isDev(), // use "pretty" output in debug mode
  *              // ...
  *         ],
  *     ],
  * ],
  * ```
- *
- * @author Qiang Xue <qiang.xue@gmail.com>
- * @since 2.0
  */
 class JsonResponseFormatter extends Component implements ResponseFormatterInterface
 {
     /**
      * JSON Content Type
-     * @since 2.0.14
      */
     const CONTENT_TYPE_JSONP = 'application/javascript; charset=UTF-8';
     /**
      * JSONP Content Type
-     * @since 2.0.14
      */
     const CONTENT_TYPE_JSON = 'application/json; charset=UTF-8';
     /**
      * HAL JSON Content Type
-     * @since 2.0.14
      */
     const CONTENT_TYPE_HAL_JSON = 'application/hal+json; charset=UTF-8';
 
@@ -66,7 +61,6 @@ class JsonResponseFormatter extends Component implements ResponseFormatterInterf
      * <http://www.php.net/manual/en/function.json-encode.php>.
      * Default is `JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE`.
      * This property has no effect, when [[useJsonp]] is `true`.
-     * @since 2.0.7
      */
     public $encodeOptions = 320;
     /**
@@ -74,7 +68,6 @@ class JsonResponseFormatter extends Component implements ResponseFormatterInterf
      * If this is true, `JSON_PRETTY_PRINT` will be added to [[encodeOptions]].
      * Defaults to `false`.
      * This property has no effect, when [[useJsonp]] is `true`.
-     * @since 2.0.7
      */
     public $prettyPrint = false;
 
@@ -82,6 +75,7 @@ class JsonResponseFormatter extends Component implements ResponseFormatterInterf
     /**
      * Formats the specified response.
      * @param ResponseBuilderInterface $response the response to be formatted.
+     * @return string
      */
     public function format($response)
     {
@@ -104,19 +98,18 @@ class JsonResponseFormatter extends Component implements ResponseFormatterInterf
     /**
      * Formats response data in JSON format.
      * @param ResponseBuilderInterface $response
-     * @return array|\Psr\Http\Message\StreamInterface|string
+     * @return string
      */
     protected function formatJson($response)
     {
         $bodyRaw = $response->getRawBody();
-        $request = $response->request;
         if ($bodyRaw !== null) {
             $options = $this->encodeOptions;
             if ($this->prettyPrint) {
                 $options |= JSON_PRETTY_PRINT;
             }
-            return $request instanceof Reaction\Web\AppRequestInterface
-                ? $request->helpers->json->encode($bodyRaw, $options)
+            return $response->app instanceof Reaction\RequestApplicationInterface
+                ? $response->app->helpers->json->encode($bodyRaw, $options)
                 : Json::encode($bodyRaw, $options);
         }
         return '';
@@ -130,18 +123,16 @@ class JsonResponseFormatter extends Component implements ResponseFormatterInterf
     protected function formatJsonp($response)
     {
         $bodyRaw = $response->getRawBody();
-        $request = $response->request;
         if (is_array($bodyRaw)
             && isset($bodyRaw['data'], $bodyRaw['callback'])
         ) {
-            $data = $request instanceof Reaction\Web\AppRequestInterface
-                ? $request->helpers->json->htmlEncode($bodyRaw['data'])
+            $data = $response->app instanceof Reaction\RequestApplicationInterface
+                ? $response->app->helpers->json->htmlEncode($bodyRaw['data'])
                 : Json::htmlEncode($bodyRaw['data']);
             return sprintf('%s(%s);', $bodyRaw['callback'], $data);
         } elseif ($bodyRaw !== null) {
-            Reaction::$app->logger->warning(
-                "The 'jsonp' response requires that the data be an array consisting of both 'data' and 'callback' elements.",
-                __METHOD__
+            Reaction::warning(
+                "The 'jsonp' response requires that the data be an array consisting of both 'data' and 'callback' elements."
             );
         }
         return '';
