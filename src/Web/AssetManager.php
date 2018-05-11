@@ -3,7 +3,6 @@
 namespace Reaction\Web;
 
 use Reaction;
-use Reaction\Base\Component;
 use Reaction\Exceptions\InvalidArgumentException;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Helpers\FileHelper;
@@ -31,7 +30,7 @@ use Reaction\Helpers\Url;
  * @property AssetConverterInterface $converter The asset converter. Note that the type of this property
  * differs in getter and setter. See [[getConverter()]] and [[setConverter()]] for details.
  */
-class AssetManager extends RequestComponent
+class AssetManager extends Reaction\Base\RequestAppComponent
 {
     /**
      * @var array|bool list of asset bundle configurations. This property is provided to customize asset bundles.
@@ -159,7 +158,6 @@ class AssetManager extends RequestComponent
      * last modification time of the published asset file.
      * You normally would want to set this property to true when you have enabled HTTP caching for assets,
      * because it allows you to bust caching when the assets are updated.
-     * @since 2.0.3
      */
     public $appendTimestamp = false;
     /**
@@ -185,8 +183,6 @@ class AssetManager extends RequestComponent
      *     return hash('md4', $path);
      * }
      * ```
-     *
-     * @since 2.0.6
      */
     public $hashCallback;
 

@@ -100,11 +100,11 @@ class AssetConverter extends Component implements AssetConverterInterface
         $status = proc_close($proc);
 
         if ($status === 0) {
-            Reaction::$app->logger->debug("Converted $asset into $result:\nSTDOUT:\n$stdout\nSTDERR:\n$stderr", __METHOD__);
-        } elseif (Reaction::$app->envType === Reaction\StaticApplicationInterface::APP_ENV_DEV) {
+            Reaction::$app->logger->debug("Converted $asset into $result:\nSTDOUT:\n$stdout\nSTDERR:\n$stderr");
+        } elseif (Reaction::isDev()) {
             throw new Exception("AssetConverter command '$command' failed with exit code $status:\nSTDOUT:\n$stdout\nSTDERR:\n$stderr");
         } else {
-            Reaction::$app->logger->error("AssetConverter command '$command' failed with exit code $status:\nSTDOUT:\n$stdout\nSTDERR:\n$stderr", __METHOD__);
+            Reaction::error("AssetConverter command '$command' failed with exit code $status:\nSTDOUT:\n$stdout\nSTDERR:\n$stderr");
         }
 
         return $status === 0;
