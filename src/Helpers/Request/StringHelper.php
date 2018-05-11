@@ -4,9 +4,9 @@ namespace Reaction\Helpers\Request;
 
 /**
  * Class StringHelper. Proxy To \Reaction\Helpers\StringHelper
- * @package Reaction\Web\RequestComponents
+ * @package Reaction\Helpers\Request
  */
-class StringHelper extends RequestHelperProxy
+class StringHelper extends RequestAppHelperProxy
 {
     public $helperClass = 'Reaction\Helpers\StringHelper';
 

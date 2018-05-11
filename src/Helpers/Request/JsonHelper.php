@@ -7,9 +7,9 @@ use Reaction\Exceptions\InvalidArgumentException;
 
 /**
  * Class JsonHelper. Proxy to \Reaction\Helpers\Json
- * @package Reaction\Web\RequestComponents
+ * @package Reaction\Helpers\Request
  */
-class JsonHelper extends RequestHelperProxy
+class JsonHelper extends RequestAppHelperProxy
 {
     public $helperClass = 'Reaction\Helpers\Json';
 

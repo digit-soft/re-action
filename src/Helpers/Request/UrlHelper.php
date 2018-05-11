@@ -5,7 +5,12 @@ namespace Reaction\Helpers\Request;
 use Reaction;
 use Reaction\Exceptions\InvalidArgumentException;
 
-class UrlHelper extends RequestHelperProxy
+/**
+ * Class UrlHelper
+ * @package Reaction\Helpers\Request
+ * @property Reaction\Web\RequestHelper $request
+ */
+class UrlHelper extends RequestAppHelperProxy
 {
     public $helperClass = 'Reaction\Helpers\Url';
 
@@ -41,7 +46,7 @@ class UrlHelper extends RequestHelperProxy
      * - If the route has no leading slash (e.g. `site/index`), it is considered to be a route relative
      *   to the current module and will be prepended with the module's [[\yii\base\Module::uniqueId|uniqueId]].
      *
-     * Starting from version 2.0.2, a route can also be specified as an alias. In this case, the alias
+     * A route can also be specified as an alias. In this case, the alias
      * will be converted into the actual route first before conducting the above transformation steps.
      *
      * Below are some examples of using this method:
@@ -79,54 +84,13 @@ class UrlHelper extends RequestHelperProxy
     public function toRoute($route, $scheme = false)
     {
         $route = (array) $route;
-        $route[0] = static::normalizeRoute($route[0]);
+        $route[0] = $this->normalizeRoutePath($route[0]);
 
         if ($scheme !== false) {
             return $this->getUrlManager()->createAbsoluteUrl($route, is_string($scheme) ? $scheme : null);
         }
 
         return $this->getUrlManager()->createUrl($route);
-    }
-
-    /**
-     * Normalizes route and makes it suitable for UrlManager. Absolute routes are staying as is
-     * while relative routes are converted to absolute ones.
-     *
-     * A relative route is a route without a leading slash, such as "view", "post/view".
-     *
-     * - If the route is an empty string, the current [[\yii\web\Controller::route|route]] will be used;
-     * - If the route contains no slashes at all, it is considered to be an action ID
-     *   of the current controller and will be prepended with [[\yii\web\Controller::uniqueId]];
-     * - If the route has no leading slash, it is considered to be a route relative
-     *   to the current module and will be prepended with the module's uniqueId.
-     *
-     * Starting from version 2.0.2, a route can also be specified as an alias. In this case, the alias
-     * will be converted into the actual route first before conducting the above transformation steps.
-     *
-     * @param string $route the route. This can be either an absolute route or a relative route.
-     * @return string normalized route suitable for UrlManager
-     * @throws InvalidArgumentException a relative route is given while there is no active controller
-     */
-    protected function normalizeRoute($route)
-    {
-        $route = Reaction::$app->getAlias((string) $route);
-        if (strncmp($route, '/', 1) === 0) {
-            // absolute route
-            return ltrim($route, '/');
-        }
-
-        // relative route
-        if ($this->request->controller === null) {
-            throw new InvalidArgumentException("Unable to resolve the relative route: $route. No active controller is available.");
-        }
-
-        if (strpos($route, '/') === false) {
-            // empty or an action ID
-            return $route === '' ? Yii::$app->controller->getRoute() : Yii::$app->controller->getUniqueId() . '/' . $route;
-        }
-
-        // relative to module
-        return ltrim(Yii::$app->controller->module->getUniqueId() . '/' . $route, '/');
     }
 
     /**
@@ -207,7 +171,7 @@ class UrlHelper extends RequestHelperProxy
             return $url;
         }
 
-        if (static::isRelative($url)) {
+        if ($this->isRelative($url)) {
             // turn relative URL into absolute
             $url = $this->getUrlManager()->getHostInfo() . '/' . ltrim($url, '/');
         }
@@ -228,7 +192,7 @@ class UrlHelper extends RequestHelperProxy
      */
     public function ensureScheme($url, $scheme)
     {
-        if (static::isRelative($url) || !is_string($scheme)) {
+        if ($this->isRelative($url) || !is_string($scheme)) {
             return $url;
         }
 
@@ -276,9 +240,9 @@ class UrlHelper extends RequestHelperProxy
      * @param string|array $url the URL to remember. Please refer to [[to()]] for acceptable formats.
      * If this parameter is not specified, the currently requested URL will be used.
      * @param string $name the name associated with the URL to be remembered. This can be used
-     * later by [[previous()]]. If not set, [[\yii\web\User::setReturnUrl()]] will be used with passed URL.
+     * later by [[previous()]]. If not set, [[\Reaction\Web\User::setReturnUrl()]] will be used with passed URL.
      * @see previous()
-     * @see \yii\web\User::setReturnUrl()
+     * @see \Reaction\Web\User::setReturnUrl()
      * @see \Reaction\Helpers\Url::remember()
      */
     public function remember($url = '', $name = null)
@@ -286,9 +250,9 @@ class UrlHelper extends RequestHelperProxy
         $url = $this->to($url);
 
         if ($name === null) {
-            Yii::$app->getUser()->setReturnUrl($url);
+            $this->app->user->setReturnUrl($url);
         } else {
-            $this->request->session->set($name, $url);
+            $this->app->session->set($name, $url);
         }
     }
 
@@ -296,20 +260,20 @@ class UrlHelper extends RequestHelperProxy
      * Returns the URL previously [[remember()|remembered]].
      *
      * @param string $name the named associated with the URL that was remembered previously.
-     * If not set, [[\yii\web\User::getReturnUrl()]] will be used to obtain remembered URL.
+     * If not set, [[\Reaction\Web\User::getReturnUrl()]] will be used to obtain remembered URL.
      * @return string|null the URL previously remembered. Null is returned if no URL was remembered with the given name
      * and `$name` is not specified.
      * @see remember()
-     * @see \yii\web\User::getReturnUrl()
+     * @see \Reaction\Web\User::getReturnUrl()
      * @see \Reaction\Helpers\Url::previous()
      */
     public function previous($name = null)
     {
         if ($name === null) {
-            return Yii::$app->getUser()->getReturnUrl();
+            return $this->app->user->getReturnUrl();
         }
 
-        return $this->request->session->get($name);
+        return $this->app->session->get($name);
     }
 
     /**
@@ -328,8 +292,12 @@ class UrlHelper extends RequestHelperProxy
      */
     public function canonical()
     {
-        $params = Yii::$app->controller->actionParams;
-        $params[0] = Yii::$app->controller->getRoute();
+        $routePath = $this->getCurrentPath(true);
+        if ($routePath === null) {
+            return null;
+        }
+        $params = $this->app->getRoute()->getRouteParams();
+        $params[0] = $routePath;
 
         return $this->getUrlManager()->createAbsoluteUrl($params);
     }
@@ -349,11 +317,14 @@ class UrlHelper extends RequestHelperProxy
      */
     public function home($scheme = false)
     {
-        $url = Yii::$app->getHomeUrl();
+        $url = $this->app->getHomeUrl();
 
         if ($scheme !== false) {
             $url = $this->getUrlManager()->getHostInfo() . $url;
             $url = $this->ensureScheme($url, $scheme);
+        }
+        if (strpos($url, '/') !== 0) {
+            $url = '/' . $url;
         }
 
         return $url;
@@ -365,7 +336,7 @@ class UrlHelper extends RequestHelperProxy
      * @param string $url the URL to be checked
      * @return bool whether the URL is relative
      */
-    public static function isRelative($url)
+    public function isRelative($url)
     {
         return strncmp($url, '//', 2) && strpos($url, '://') === false;
     }
@@ -416,25 +387,76 @@ class UrlHelper extends RequestHelperProxy
      */
     public function current(array $params = [], $scheme = false)
     {
-        $currentParams = $this->request->_getQueryParams();
-        $currentParams[0] = '/' . $this->request->getPathInfo();
+        $routePath = $this->getCurrentPath(true);
+        if ($routePath === null) {
+            return null;
+        }
+        $currentParams = $this->request->getQueryParams();
+        $currentParams[0] = $routePath;
         $route = array_replace_recursive($currentParams, $params);
-        return static::toRoute($route, $scheme);
+        return $this->toRoute($route, $scheme);
     }
 
+
+
+    /**
+     * Normalizes route and makes it suitable for UrlManager. Absolute routes are staying as is
+     * while relative routes are converted to absolute ones.
+     *
+     * A relative route is a route without a leading slash, such as "view", "post/view".
+     *
+     * - If the route is an empty string, the current [[\yii\web\Controller::route|route]] will be used;
+     * - If the route contains no slashes at all, it is considered to be an action ID
+     *   of the current controller and will be prepended with [[\yii\web\Controller::uniqueId]];
+     * - If the route has no leading slash, it is considered to be a route relative
+     *   to the current module and will be prepended with the module's uniqueId.
+     *
+     * A route can also be specified as an alias. In this case, the alias
+     * will be converted into the actual route first before conducting the above transformation steps.
+     *
+     * @param string              $routePath the route. This can be either an absolute route or a relative route.
+     * @return string normalized  route suitable for UrlManager
+     */
+    protected function normalizeRoutePath($routePath)
+    {
+        $routePath = Reaction::$app->getAlias((string) $routePath);
+        if (strncmp($routePath, '/', 1) === 0) {
+            // absolute route
+            return $routePath;
+        }
+
+        $route = $this->app->getRoute();
+
+        // relative route
+        if ($route === null || $route->controller === null) {
+            throw new InvalidArgumentException("Unable to resolve the relative route: $routePath. No active controller is available.");
+        }
+
+        return $routePath === '' ? $route->getRoutePath(true) : $route->controller->group() . '/' . $routePath;
+    }
+
+    /**
+     * Get current path from request & current controller
+     * @param bool $onlyStaticPart
+     * @return null|string
+     */
+    protected function getCurrentPath($onlyStaticPart = false) {
+        $route = $this->app->getRoute();
+        return $route ? $route->getRoutePath($onlyStaticPart) : null;
+    }
+
+    /**
+     * Get RequestHelper
+     * @return Reaction\Web\RequestHelper
+     */
+    protected function getRequest() {
+        return $this->app->reqHelper;
+    }
     /**
      * @return \Reaction\Web\UrlManager URL manager used to create URLs
      */
     protected function getUrlManager()
     {
-        return $this->request->urlManager;
-    }
-
-    /**
-     * Get request route
-     * @return Reaction\Routes\RouteInterface
-     */
-    protected function getRoute() {
-        return $this->request->getRoute();
+        return $this->app->getUrlManager();
     }
 }

@@ -6,9 +6,9 @@ use Reaction\Exceptions\InvalidArgumentException;
 
 /**
  * Class ArrayHelper. Proxy to \Reaction\Helpers\ArrayHelper
- * @package Reaction\Web\RequestComponents
+ * @package Reaction\Helpers\Request
  */
-class ArrayHelper extends RequestHelperProxy
+class ArrayHelper extends RequestAppHelperProxy
 {
     public $helperClass = 'Reaction\Helpers\ArrayHelper';
 

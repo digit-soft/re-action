@@ -11,13 +11,13 @@ use Reaction\Helpers\Url;
  * Class HtmlHelper. Proxy to \Reaction\Helpers\Html
  * @package Reaction\Helpers\Request
  */
-class HtmlHelper extends RequestHelperProxy
+class HtmlHelper extends RequestAppHelperProxy
 {
     public $helperClass = 'Reaction\Helpers\Html';
 
     /**
      * Encodes special characters into HTML entities.
-     * The [[\yii\base\Application::charset|application charset]] will be used for encoding.
+     * The [[\Reaction\RequestApplicationInterface::charset|application charset]] will be used for encoding.
      * @param string $content the content to be encoded
      * @param bool   $doubleEncode whether to encode HTML entities in `$content`. If false,
      * HTML entities in `$content` will not be further encoded.
@@ -187,7 +187,7 @@ class HtmlHelper extends RequestHelperProxy
      */
     public function csrfMetaTags()
     {
-        return $this->proxy(__FUNCTION__, [$this->request]);
+        return $this->proxy(__FUNCTION__, [$this->app]);
     }
 
     /**
@@ -196,7 +196,7 @@ class HtmlHelper extends RequestHelperProxy
      * @param string       $method the form submission method, such as "post", "get", "put", "delete" (case-insensitive).
      * Since most browsers only support "post" and "get", if other methods are given, they will
      * be simulated using "post", and a hidden input will be added which contains the actual method type.
-     * See [[\yii\web\Request::methodParam]] for more details.
+     * See [[\Reaction\Web\RequestHelper::methodParam]] for more details.
      * @param array        $options the tag options in terms of name-value pairs. These will be rendered as
      * the attributes of the resulting tag. The values will be HTML-encoded using [[encode()]].
      * If a value is null, the corresponding attribute will not be rendered.

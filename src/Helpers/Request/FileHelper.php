@@ -2,15 +2,13 @@
 
 namespace Reaction\Helpers\Request;
 
-use Reaction\Exceptions\ErrorException;
 use Reaction\Exceptions\InvalidArgumentException;
-use Reaction\Exceptions\InvalidConfigException;
 
 /**
  * Class FileHelper. Proxy to \Reaction\Helpers\FileHelper
- * @package Reaction\Web\RequestComponents
+ * @package Reaction\Helpers\Request
  */
-class FileHelper extends RequestHelperProxy
+class FileHelper extends RequestAppHelperProxy
 {
     public $helperClass = 'Reaction\Helpers\FileHelper';
 
@@ -74,7 +72,6 @@ class FileHelper extends RequestHelperProxy
      * @param bool $checkExtension whether to use the file extension to determine the MIME type in case
      * `finfo_open()` cannot determine it.
      * @return string the MIME type (e.g. `text/plain`). Null is returned if the MIME type cannot be determined.
-     * @throws InvalidConfigException when the `fileinfo` PHP extension is not installed and `$checkExtension` is `false`.
      * @see \Reaction\Helpers\FileHelper::getMimeType()
      */
     public function getMimeType($file, $magicFile = null, $checkExtension = true)
@@ -191,7 +188,6 @@ class FileHelper extends RequestHelperProxy
      *   Defaults to `false`, meaning the content of the symlinked directory would not be deleted.
      *   Only symlink would be removed in that default case.
      *
-     * @throws ErrorException in case of failure
      * @see \Reaction\Helpers\FileHelper::removeDirectory()
      */
     public function removeDirectory($dir, $options = [])
@@ -298,7 +294,6 @@ class FileHelper extends RequestHelperProxy
      * @param int $mode the permission to be set for the created directory.
      * @param bool $recursive whether to create parent directories if they do not exist.
      * @return bool whether the directory is created successfully
-     * @throws \Reaction\Exceptions\Exception if the directory could not be created (i.e. php error due to parallel changes)
      * @see \Reaction\Helpers\FileHelper::createDirectory()
      */
     public function createDirectory($path, $mode = 0775, $recursive = true)

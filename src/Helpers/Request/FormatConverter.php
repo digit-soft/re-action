@@ -6,7 +6,7 @@ namespace Reaction\Helpers\Request;
  * Class FormatConverter. Proxy to \Reaction\Helpers\FormatConverter
  * @package Reaction\Helpers\Request
  */
-class FormatConverter extends RequestHelperProxy
+class FormatConverter extends RequestAppHelperProxy
 {
     public $helperClass = 'Reaction\Helpers\FormatConverter';
 

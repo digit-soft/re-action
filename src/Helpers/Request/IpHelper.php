@@ -4,9 +4,9 @@ namespace Reaction\Helpers\Request;
 
 /**
  * Class IpHelper. Proxy to \Reaction\Helpers\IpHelper
- * @package Reaction\Web\RequestComponents
+ * @package Reaction\Helpers\Request
  */
-class IpHelper extends RequestHelperProxy
+class IpHelper extends RequestAppHelperProxy
 {
     public $helperClass = 'Reaction\Helpers\IpHelper';
 

@@ -2,11 +2,11 @@
 
 namespace Reaction\Helpers\Request;
 
-use Reaction\Web\RequestService;
+use Reaction\Base\RequestAppServiceLocator;
 
 /**
  * Class Helpers
- * @package Reaction\Web\RequestGroups
+ * @package Reaction\Helpers\Request
  * @property Inflector    $inflector
  * @property StringHelper $string
  * @property ArrayHelper  $array
@@ -15,7 +15,8 @@ use Reaction\Web\RequestService;
  * @property HtmlHelper   $html
  * @property HtmlPurifier $htmlPurifier
  * @property FileHelper   $file
+ * @property UrlHelper    $url
  */
-class HelpersGroup extends RequestService
+class HelpersGroup extends RequestAppServiceLocator
 {
 }

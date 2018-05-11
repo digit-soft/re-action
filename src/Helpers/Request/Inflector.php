@@ -2,13 +2,11 @@
 
 namespace Reaction\Helpers\Request;
 
-use Reaction\Helpers\Inflector as InflectorStatic;
-
 /**
  * Class Inflector. Proxy to \Reaction\Helpers\Inflector
- * @package Reaction\Web\RequestComponents
+ * @package Reaction\Helpers\Request
  */
-class Inflector extends RequestHelperProxy
+class Inflector extends RequestAppHelperProxy
 {
     public $helperClass = 'Reaction\Helpers\Inflector';
 

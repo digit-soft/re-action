@@ -2,13 +2,13 @@
 
 namespace Reaction\Helpers\Request;
 
-use Reaction\Web\RequestComponent;
+use Reaction\Base\RequestAppComponent;
 
 /**
  * Class RequestHelperProxy
- * @package Reaction\Web\RequestComponents
+ * @package Reaction\Helpers\Request
  */
-class RequestHelperProxy extends RequestComponent
+class RequestAppHelperProxy extends RequestAppComponent
 {
     /** @var string Helper static class name */
     public $helperClass = '';
@@ -21,7 +21,7 @@ class RequestHelperProxy extends RequestComponent
      * @return mixed
      */
     protected function proxyWithCharset($method, $arguments = [], $position = -1) {
-        return $this->proxyWithRequestProperty($method, $arguments, $position, 'charset');
+        return $this->proxyWithAppProperty($method, $arguments, $position, 'charset');
     }
 
     /**
@@ -32,7 +32,7 @@ class RequestHelperProxy extends RequestComponent
      * @return mixed
      */
     protected function proxyWithLanguage($method, $arguments = [], $position = -1) {
-        return $this->proxyWithRequestProperty($method, $arguments, $position, 'language');
+        return $this->proxyWithAppProperty($method, $arguments, $position, 'language');
     }
 
     /**
@@ -43,8 +43,8 @@ class RequestHelperProxy extends RequestComponent
      * @param string $propertyName
      * @return mixed
      */
-    private function proxyWithRequestProperty($method, $arguments = [], $position = -1, $propertyName = 'charset') {
-        $this->injectVariableToArguments($this->request->{$propertyName}, $arguments, $position);
+    private function proxyWithAppProperty($method, $arguments = [], $position = -1, $propertyName = 'charset') {
+        $this->injectVariableToArguments($this->app->{$propertyName}, $arguments, $position);
         return $this->proxy($method, $arguments);
     }
 

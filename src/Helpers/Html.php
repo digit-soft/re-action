@@ -7,6 +7,7 @@ namespace Reaction\Helpers;
 use Reaction;
 use Reaction\Exceptions\InvalidArgumentException;
 use Reaction\Base\Model;
+use Reaction\RequestApplicationInterface;
 use yii\db\ActiveRecordInterface;
 use Reaction\Validators\StringValidator;
 use Reaction\Web\AppRequestInterface;
@@ -302,16 +303,16 @@ class Html
 
     /**
      * Generates the meta tags containing CSRF token information.
-     * @param AppRequestInterface $request
+     * @param RequestApplicationInterface $app
      * @return string the generated meta tags
      * @see AppRequestInterface::enableCsrfValidation
      */
-    public static function csrfMetaTags(AppRequestInterface $request)
+    public static function csrfMetaTags(RequestApplicationInterface $app)
     {
-        $encoding = $request->charset;
-        if ($request->enableCsrfValidation) {
-            return static::tag('meta', '', ['name' => 'csrf-param', 'content' => $request->csrfParam], $encoding) . "\n    "
-                . static::tag('meta', '', ['name' => 'csrf-token', 'content' => $request->getCsrfToken()], $encoding) . "\n";
+        $encoding = $app->charset;
+        if ($app->reqHelper->enableCsrfValidation) {
+            return static::tag('meta', '', ['name' => 'csrf-param', 'content' => $app->reqHelper->csrfParam], $encoding) . "\n    "
+                . static::tag('meta', '', ['name' => 'csrf-token', 'content' => $app->reqHelper->getCsrfToken()], $encoding) . "\n";
         }
 
         return '';

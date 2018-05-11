@@ -21,7 +21,7 @@ namespace Reaction\Helpers\Request;
  *
  * For more details please refer to [HTMLPurifier documentation](http://htmlpurifier.org/).
  */
-class HtmlPurifier extends RequestHelperProxy
+class HtmlPurifier extends RequestAppHelperProxy
 {
     public $helperClass = 'Reaction\Helpers\HtmlPurifier';
 
