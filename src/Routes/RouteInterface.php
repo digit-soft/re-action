@@ -2,18 +2,19 @@
 
 namespace Reaction\Routes;
 
+use Reaction\Base\RequestAppComponentInterface;
 use Reaction\Promise\ExtendedPromiseInterface;
-use Reaction\Web\AppRequestInterface;
+use Reaction\RequestApplicationInterface;
 
 /**
  * Interface RouteInterface
  * @package Reaction\Routes
- * @property AppRequestInterface $request
- * @property Controller          $controller
- * @property bool                $isError
- * @property \Throwable          $exception
+ * @property RequestApplicationInterface $app
+ * @property Controller                  $controller
+ * @property bool                        $isError
+ * @property \Throwable                  $exception
  */
-interface RouteInterface
+interface RouteInterface extends RequestAppComponentInterface
 {
     /**
      * Set data from dispatcher
@@ -60,8 +61,7 @@ interface RouteInterface
 
     /**
      * Resolve route for request
-     * @param AppRequestInterface $request
      * @return ExtendedPromiseInterface
      */
-    public function resolve(AppRequestInterface $request);
+    public function resolve();
 }

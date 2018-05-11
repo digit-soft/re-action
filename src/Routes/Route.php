@@ -4,7 +4,7 @@ namespace Reaction\Routes;
 
 use FastRoute\Dispatcher;
 use Psr\Http\Message\ResponseInterface;
-use Reaction\Base\BaseObject;
+use Reaction\Base\RequestAppComponent;
 use Reaction\Exceptions\Exception;
 use Reaction\Exceptions\Http\MethodNotAllowedException;
 use Reaction\Exceptions\Http\NotFoundException;
@@ -14,18 +14,14 @@ use Reaction\Exceptions\NotSupportedException;
 use Reaction\Helpers\ArrayHelper;
 use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\Promise\Promise;
-use Reaction\Web\AppRequestInterface;
 use Reaction\Web\ResponseBuilderInterface;
 
 /**
  * Class Route
  * @package Reaction\Routes
  */
-class Route extends BaseObject implements RouteInterface
+class Route extends RequestAppComponent implements RouteInterface
 {
-    /** @var AppRequestInterface */
-    public $request;
-
     protected $_dispatchedData;
     protected $_controller;
     protected $_action;
@@ -136,14 +132,13 @@ class Route extends BaseObject implements RouteInterface
 
     /**
      * Resolve route for request
-     * @param AppRequestInterface $request
      * @return ExtendedPromiseInterface
      */
-    public function resolve(AppRequestInterface $request)
+    public function resolve()
     {
         $callable = isset($this->_controller) ? [$this->_controller, $this->_action] : $this->_action;
         $args = $this->_params;
-        array_unshift($args, $request);
+        array_unshift($args, $this->app);
         $promise = new Promise(function ($r) use ($callable, $args) {
             $result = call_user_func_array($callable, $args);
             $r($result);
@@ -154,9 +149,9 @@ class Route extends BaseObject implements RouteInterface
                 return $self->processResponse($response);
             }
         )->otherwise(
-            function ($error) use ($self, &$request) {
+            function ($error) use ($self) {
                 $self->convertToError($error);
-                return $self->resolve($request);
+                return $self->resolve();
             }
         );
     }
@@ -174,8 +169,8 @@ class Route extends BaseObject implements RouteInterface
             if (isset($data[2])) {
                 $this->_params = is_array($data[2]) ? $data[2] : (array)$data[2];
                 $this->_paramsClean = $this->_params;
-                $queryParams = ArrayHelper::merge($this->request->_getQueryParams(), $this->_params);
-                $this->request->setQueryParams($queryParams);
+                $queryParams = ArrayHelper::merge($this->app->reqHelper->getQueryParams(), $this->_params);
+                $this->app->reqHelper->setQueryParams($queryParams);
             }
             //Parse controller and action
             if (is_array($callable) && count($callable) >= 2 && $callable[0] instanceof ControllerInterface) {
