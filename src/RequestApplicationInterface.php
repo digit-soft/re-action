@@ -3,6 +3,7 @@
 namespace Reaction;
 
 use Psr\Http\Message\ServerRequestInterface;
+use React\Promise\PromiseInterface;
 use Reaction\Events\EventEmitterWildcardInterface;
 use Reaction\Helpers\Request\HelpersGroup;
 use Reaction\Routes\RouteInterface;
@@ -59,4 +60,12 @@ interface RequestApplicationInterface extends EventEmitterWildcardInterface
      * @return string
      */
     public function getHomeUrl();
+
+    /**
+     * Load components after init (Function is called manually).
+     * Returns a promise which will be resolved after all components are initialized
+     * if components implementing ComponentInitBlockingInterface or immediately if not.
+     * @return PromiseInterface
+     */
+    public function loadComponents();
 }

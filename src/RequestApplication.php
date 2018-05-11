@@ -12,7 +12,7 @@ use Reaction\Routes\RouteInterface;
  * Class RequestApplication
  * @package Reaction
  */
-class RequestApplication extends ServiceLocator implements RequestApplicationInterface
+class RequestApplication extends ServiceLocator implements RequestApplicationInterface, Reaction\DI\ServiceLocatorAutoloadInterface
 {
     /** @var ServerRequestInterface Application request instance */
     public $request;
