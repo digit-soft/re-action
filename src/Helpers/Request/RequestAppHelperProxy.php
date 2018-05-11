@@ -43,8 +43,22 @@ class RequestAppHelperProxy extends RequestAppComponent
      * @param string $propertyName
      * @return mixed
      */
-    private function proxyWithAppProperty($method, $arguments = [], $position = -1, $propertyName = 'charset') {
+    private function proxyWithAppProperty($method, $arguments = [], $position = -1, $propertyName = 'charset')
+    {
         $this->injectVariableToArguments($this->app->{$propertyName}, $arguments, $position);
+        return $this->proxy($method, $arguments);
+    }
+
+    /**
+     * Proxy to Helper with added RequestApplicationInterface parameter at given position
+     * @param string $method
+     * @param array  $arguments
+     * @param int    $position
+     * @return mixed
+     */
+    protected function proxyWithApp($method, $arguments = [], $position = -1)
+    {
+        $this->injectVariableToArguments($this->app, $arguments, $position);
         return $this->proxy($method, $arguments);
     }
 
