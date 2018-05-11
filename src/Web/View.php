@@ -89,10 +89,6 @@ class View extends \Reaction\Base\View implements Reaction\Base\RequestAppCompon
      */
     public $app;
     /**
-     * @var AppRequestInterface  Application request that is currently processed
-     */
-    public $request;
-    /**
      * @var AssetBundle[] list of the registered asset bundles. The keys are the bundle names, and the values
      * are the registered [[AssetBundle]] objects.
      * @see registerAssetBundle()

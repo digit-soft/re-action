@@ -89,7 +89,6 @@ return [
     //DI definitions
     'container' => [
         'definitions' => [
-            'Reaction\Web\RequestServiceInterface' => 'Reaction\Web\RequestService',
             'Reaction\Web\ResponseBuilderInterface' => 'Reaction\Web\ResponseBuilder',
             'Reaction\Web\Sessions\SessionHandlerInterface' => [
                 'class' => 'Reaction\Web\Sessions\CachedSessionHandler',

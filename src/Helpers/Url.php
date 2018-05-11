@@ -47,7 +47,7 @@ class Url
      * - If the route has no leading slash (e.g. `site/index`), it is considered to be a route relative
      *   to the current module and will be prepended with the module's [[\yii\base\Module::uniqueId|uniqueId]].
      *
-     * Starting from version 2.0.2, a route can also be specified as an alias. In this case, the alias
+     * Route can also be specified as an alias. In this case, the alias
      * will be converted into the actual route first before conducting the above transformation steps.
      *
      * Below are some examples of using this method:

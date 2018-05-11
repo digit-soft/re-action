@@ -5,7 +5,6 @@ namespace Reaction\Web\Sessions;
 use Reaction\Base\ComponentAutoloadInterface;
 use Reaction\Base\ComponentInitBlockingInterface;
 use Reaction\Base\RequestAppComponentInterface;
-use Reaction\Web\RequestComponentInterface;
 
 /**
  * Interface RequestSessionInterface

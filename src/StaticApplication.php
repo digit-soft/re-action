@@ -8,7 +8,6 @@ use React\Socket\Server as Socket;
 use React\Socket\ServerInterface as SocketServerInterface;
 use Reaction\DI\ServiceLocator;
 use Reaction\Exceptions\InvalidArgumentException;
-use Reaction\Middleware\RequestReplacer;
 
 /**
  * Class StaticApplication

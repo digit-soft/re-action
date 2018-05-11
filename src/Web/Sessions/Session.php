@@ -107,7 +107,7 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
         parent::init();
         $self = $this;
         //Close session on end of request
-        $this->app->once(Reaction\Web\AppRequestInterface::EVENT_REQUEST_END, function () use (&$self) {
+        $this->app->once(Reaction\RequestApplicationInterface::EVENT_REQUEST_END, function () use (&$self) {
             return $self->close();
         });
 
