@@ -121,6 +121,7 @@ class UrlManager extends RequestAppComponent
     private $_baseUrl;
     private $_scriptUrl;
     private $_hostInfo;
+    private $_homeUrl;
 
 
     /**
@@ -129,33 +130,6 @@ class UrlManager extends RequestAppComponent
     public function init()
     {
         parent::init();
-    }
-
-    /**
-     * Parses the user request.
-     * @param AppRequestInterface $request the request component
-     * @return array|bool the route and the associated parameters. The latter is always empty
-     * if [[enablePrettyUrl]] is `false`. `false` is returned if the current request cannot be successfully parsed.
-     */
-    public function parseRequest($request)
-    {
-        $suffix = (string) $this->suffix;
-        $pathInfo = $request->getPathInfo();
-        if ($suffix !== '' && $pathInfo !== '') {
-            $n = strlen($this->suffix);
-            if (substr_compare($pathInfo, $this->suffix, -$n, $n) === 0) {
-                $pathInfo = substr($pathInfo, 0, -$n);
-                if ($pathInfo === '') {
-                    // suffix alone is not allowed
-                    return false;
-                }
-            } else {
-                // suffix doesn't match
-                return false;
-            }
-        }
-
-        return [$pathInfo, []];
     }
 
     /**
@@ -191,7 +165,9 @@ class UrlManager extends RequestAppComponent
     {
         $params = (array) $params;
         $anchor = isset($params['#']) ? '#' . $params['#'] : '';
-        unset($params['#'], $params[$this->routeParam]);
+        if (isset($params['#'])) {
+            unset($params['#']);
+        }
 
         $route = trim($params[0], '/');
         unset($params[0]);
@@ -335,5 +311,21 @@ class UrlManager extends RequestAppComponent
     public function setHostInfo($value)
     {
         $this->_hostInfo = $value === null ? null : rtrim($value, '/');
+    }
+
+    /**
+     * Getter for $homeUrl
+     * @return string
+     */
+    public function getHomeUrl() {
+        return $this->_homeUrl !== null ? $this->_homeUrl : Reaction::$app->urlManager->getHomeUrl();
+    }
+
+    /**
+     * Setter for $homeUrl
+     * @param string $homeUrl
+     */
+    public function setHomeUrl($homeUrl) {
+        $this->_homeUrl = $homeUrl;
     }
 }
