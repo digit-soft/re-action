@@ -10,6 +10,8 @@ coding_style:
             before_parentheses:
                 function_declaration: false
                 closure_definition: false
+            within:
+                brackets: false
 filter:
     excluded_paths:
       - src/Helpers/
