@@ -11,7 +11,7 @@ use React\Stream\WritableStreamInterface;
 use Reaction\Base\Component;
 use Reaction\Exceptions\SessionException;
 use Reaction\Helpers\Json;
-use Reaction\Web\AppRequestInterface;
+use Reaction\RequestApplicationInterface;
 use function Reaction\Promise\resolve;
 
 abstract class SessionHandlerAbstract extends Component implements SessionHandlerInterface
@@ -87,11 +87,11 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
     /**
      * Regenerate session id
      * @param string              $idOld
-     * @param AppRequestInterface $request
+     * @param RequestApplicationInterface $app
      * @param bool                $deleteOldSession
      * @return PromiseInterface  with new session ID (string)
      */
-    public function regenerateId($idOld, AppRequestInterface $request, $deleteOldSession = false)
+    public function regenerateId($idOld, RequestApplicationInterface $app, $deleteOldSession = false)
     {
         $self = $this;
         $dataOld = [];
@@ -103,8 +103,8 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
             $dataOld = $data;
             return $this->destroy($idOld)->then(null, function () { return true; });
         })->then(
-            function () use ($self, $request) {
-                return $self->createId($request);
+            function () use ($self, &$app) {
+                return $self->createId($app);
             }
         )->then(
             function ($newId) use ($self, &$dataOld, $deleteOldSession) {
@@ -132,12 +132,12 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
 
     /**
      * Return a new session ID
-     * @param AppRequestInterface $request
+     * @param RequestApplicationInterface $app
      * @return PromiseInterface  with session ID valid for session handler
      */
-    public function createId(AppRequestInterface $request)
+    public function createId(RequestApplicationInterface $app)
     {
-        $ip = $request->remoteIP;
+        $ip = $app->reqHelper->getRemoteIP();
         if (empty($ip)) {
             $ip = '127.0.0.1';
         }
@@ -151,7 +151,7 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
         $self = $this;
         return $this->checkSessionId($id)->then(
             function () use($id) { return $id; },
-            function () use ($self, $request) { return $self->createId($request); }
+            function () use ($self, &$app) { return $self->createId($app); }
         );
     }
 

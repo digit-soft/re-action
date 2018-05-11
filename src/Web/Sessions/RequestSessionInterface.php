@@ -4,6 +4,7 @@ namespace Reaction\Web\Sessions;
 
 use Reaction\Base\ComponentAutoloadInterface;
 use Reaction\Base\ComponentInitBlockingInterface;
+use Reaction\Base\RequestAppComponentInterface;
 use Reaction\Web\RequestComponentInterface;
 
 /**
@@ -11,7 +12,7 @@ use Reaction\Web\RequestComponentInterface;
  * @package Reaction\Web
  * @property array $data
  */
-interface RequestSessionInterface extends RequestComponentInterface, ComponentAutoloadInterface, ComponentInitBlockingInterface
+interface RequestSessionInterface extends RequestAppComponentInterface, ComponentAutoloadInterface, ComponentInitBlockingInterface
 {
     /**
      * Returns the session variable value with the session variable name.

@@ -5,9 +5,9 @@ namespace Reaction\Web\Sessions;
 use React\Promise\ExtendedPromiseInterface;
 use React\Promise\PromiseInterface;
 use Reaction;
+use Reaction\Base\RequestAppComponent;
 use Reaction\Exceptions\InvalidArgumentException;
 use Reaction\Exceptions\InvalidConfigException;
-use Reaction\Web\RequestComponent;
 
 /**
  * Session provides session data management and the related configurations.
@@ -54,7 +54,7 @@ use Reaction\Web\RequestComponent;
  * @property string $name The current session name.
  * @property bool|null $useCookies The value indicating whether cookies should be used to store session IDs.
  */
-class Session extends RequestComponent implements \IteratorAggregate, \ArrayAccess, \Countable, RequestSessionInterface
+class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayAccess, \Countable, RequestSessionInterface
 {
     /**
      * @var string the name of the session variable that stores the flash message data.
@@ -106,12 +106,12 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
         parent::init();
         $self = $this;
         //Close session on end of request
-        $this->request->once(Reaction\Web\AppRequestInterface::EVENT_REQUEST_END, function () use (&$self) {
+        $this->app->once(Reaction\Web\AppRequestInterface::EVENT_REQUEST_END, function () use (&$self) {
             return $self->close();
         });
 
         if ($this->getIsActive()) {
-            Reaction::$app->logger->warning('Session is already started');
+            Reaction::warning('Session is already started');
             $this->updateFlashCounters();
         }
     }
@@ -172,7 +172,7 @@ class Session extends RequestComponent implements \IteratorAggregate, \ArrayAcce
                     $self->_isActive = true;
                     $self->setId($id);
                     $cookie = $self->createSessionCookie();
-                    $self->request->response->cookies->add($cookie);
+                    $self->app->response->cookies->add($cookie);
                 }
             );
         } else {

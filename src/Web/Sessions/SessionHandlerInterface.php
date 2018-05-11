@@ -3,7 +3,7 @@
 namespace Reaction\Web\Sessions;
 
 use React\Promise\PromiseInterface;
-use Reaction\Web\AppRequestInterface;
+use Reaction\RequestApplicationInterface;
 
 /**
  * Interface SessionHandlerInterface
@@ -35,12 +35,12 @@ interface SessionHandlerInterface
 
     /**
      * Regenerate session id
-     * @param string              $idOld
-     * @param AppRequestInterface $request
-     * @param bool                $deleteOldSession
+     * @param string                      $idOld
+     * @param RequestApplicationInterface $app
+     * @param bool                        $deleteOldSession
      * @return PromiseInterface With new session ID (string)
      */
-    public function regenerateId($idOld, AppRequestInterface $request, $deleteOldSession = false);
+    public function regenerateId($idOld, RequestApplicationInterface $app, $deleteOldSession = false);
 
     /**
      * Check session id for uniqueness
@@ -74,10 +74,10 @@ interface SessionHandlerInterface
 
     /**
      * Return a new session ID
-     * @param AppRequestInterface $request
+     * @param RequestApplicationInterface $app
      * @return PromiseInterface  A session ID valid for session handler
      */
-    public function createId(AppRequestInterface $request);
+    public function createId(RequestApplicationInterface $app);
 
     /**
      * Update timestamp of a session
