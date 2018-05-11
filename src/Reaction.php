@@ -26,7 +26,8 @@ class Reaction
 
     /**
      * Initialize whole application
-     * @param string $configsPath
+     * @param \Composer\Autoload\ClassLoader $composer
+     * @param string                         $configsPath
      */
     public static function init(Composer\Autoload\ClassLoader $composer, $configsPath = null) {
         static::$composer = $composer;
@@ -37,7 +38,7 @@ class Reaction
         static::$config = static::getConfigReader();
         static::initAnnotationReader();
         static::initContainer();
-        static::initApp();
+        static::initStaticApp();
     }
 
     /**
@@ -216,8 +217,8 @@ class Reaction
     /**
      * Initialize application object
      */
-    protected static function initApp() {
-        $config = static::$config->get('app');
+    protected static function initStaticApp() {
+        $config = static::$config->get('appStatic');
         $config['class'] = \Reaction\StaticApplicationInterface::class;
         static::$app = static::create($config);
     }

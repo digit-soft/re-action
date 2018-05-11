@@ -5,8 +5,8 @@ use Reaction\DI\Instance;
 
 /** Default config */
 return [
-    //Application config
-    'app' => [
+    //Static application config
+    'appStatic' => [
         'debug' => true,
         'charset' => 'utf-8',
         'hostname' => '127.0.0.1',
@@ -38,10 +38,14 @@ return [
             'fs' => 'fileSystemDefault',
         ],
     ],
-    //Request config
-    'request' => [
-        'cookieValidationKey' => 'dmyyHbvzRjd7RjXJ',
+    //Request application config
+    'appRequest' => [
+        'class' => 'Reaction\RequestApplicationInterface',
         'components' => [
+            'reqHelper' => [
+                'class' => 'Reaction\Web\RequestHelper',
+                'cookieValidationKey' => 'dmyyHbvzRjd7RjXJ',
+            ],
             'helpers' => [
                 'class' => 'Reaction\Helpers\Request\HelpersGroup',
                 'components' => [
@@ -55,37 +59,36 @@ return [
                     'file' => 'Reaction\Helpers\Request\FileHelper',
                 ],
             ],
+            //Response builder config
+            'response' => [
+                'class' => 'Reaction\Web\ResponseBuilderInterface',
+            ],
+            'urlManager' => [
+                'class' => 'Reaction\Web\UrlManager',
+            ],
+            'view' => [
+                'class' => 'Reaction\Web\View',
+            ],
+            'assetManager' => [
+                'class' => 'Reaction\Web\AssetManager',
+            ],
             'i18n' => [
                 'class' => 'Reaction\I18n\Request\I18nGroup',
                 'components' => [
                     'formatter' => 'Reaction\I18n\Request\Formatter',
                 ],
             ],
-            //Response builder config
-            'response' => [
-                'class' => 'Reaction\Web\ResponseBuilderInterface',
-            ],
             'session' => [
                 'class' => 'Reaction\Web\Sessions\Session',
             ],
-            'assetManager' => [
-                'class' => 'Reaction\Web\AssetManager',
-            ],
-            'view' => [
-                'class' => 'Reaction\Web\View',
-            ],
-            'urlManager' => [
-                'class' => 'Reaction\Web\UrlManager',
-            ],
             'user' => [
-                'class' => 'Reaction\Web\UserInterface',
+                'class' => 'Reaction\Web\UserInterface', //TODO: User
             ],
         ],
     ],
     //DI definitions
     'container' => [
         'definitions' => [
-            'Reaction\Web\AppRequestInterface' => 'Reaction\Web\Request',
             'Reaction\Web\RequestServiceInterface' => 'Reaction\Web\RequestService',
             'Reaction\Web\ResponseBuilderInterface' => 'Reaction\Web\ResponseBuilder',
             'Reaction\Web\Sessions\SessionHandlerInterface' => [
@@ -95,6 +98,7 @@ return [
             'Reaction\Routes\RouteInterface' => 'Reaction\Routes\Route',
             'Reaction\Routes\UrlManagerInterface' => 'Reaction\Routes\UrlManager',
             'Reaction\Web\UserInterface' => 'Reaction\Web\User',
+            'Reaction\RequestApplicationInterface' => 'Reaction\RequestApplication',
         ],
         'singletons' => [
             //React event loop

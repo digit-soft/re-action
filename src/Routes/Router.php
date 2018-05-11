@@ -226,7 +226,7 @@ class Router extends Component implements RouterInterface
      * @return RequestApplicationInterface
      */
     protected function createRequestApplication(ServerRequestInterface $request) {
-        $config = Reaction::$config->get('requestApp');
+        $config = Reaction::$config->get('appRequest');
         $config = ['request' => $request] + $config;
         $app = Reaction::createNoExc($config);
         return $app;
