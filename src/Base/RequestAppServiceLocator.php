@@ -9,7 +9,7 @@ use Reaction\RequestApplicationInterface;
  * Class RequestAppServiceLocator
  * @package Reaction\Base
  */
-class RequestAppServiceLocator extends ServiceLocator
+class RequestAppServiceLocator extends ServiceLocator implements RequestAppComponentInterface
 {
     /** @var RequestApplicationInterface An request application instance reference */
     public $app;

@@ -8,7 +8,7 @@ use Reaction\RequestApplicationInterface;
  * Class RequestAppComponent
  * @package Reaction\Base
  */
-class RequestAppComponent extends Component
+class RequestAppComponent extends Component implements RequestAppComponentInterface
 {
     /** @var RequestApplicationInterface An request application instance reference */
     public $app;
