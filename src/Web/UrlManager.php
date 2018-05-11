@@ -3,6 +3,7 @@
 namespace Reaction\Web;
 
 use Reaction;
+use Reaction\Base\RequestAppComponent;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Helpers\Url;
 
@@ -36,7 +37,7 @@ use Reaction\Helpers\Url;
  * @property string $scriptUrl The entry script URL that is used by [[createUrl()]] to prepend to created
  * URLs.
  */
-class UrlManager extends RequestComponent
+class UrlManager extends RequestAppComponent
 {
     /**
      * @var array the rules for creating and parsing URLs when [[enablePrettyUrl]] is `true`.
@@ -114,14 +115,12 @@ class UrlManager extends RequestComponent
 
     /**
      * @var string the cache key for cached rules
-     * @since 2.0.8
      */
     protected $cacheKey = __CLASS__;
 
     private $_baseUrl;
     private $_scriptUrl;
     private $_hostInfo;
-    private $_ruleCache;
 
 
     /**
@@ -247,7 +246,6 @@ class UrlManager extends RequestComponent
             }
         }
 
-        //TODO: Rewrite to request helper
         return Url::ensureScheme($url, $scheme);
     }
 
@@ -261,8 +259,8 @@ class UrlManager extends RequestComponent
     public function getBaseUrl()
     {
         if ($this->_baseUrl === null) {
-            $request = $this->request;
-            if ($request instanceof AppRequestInterface) {
+            $request = $this->app->reqHelper;
+            if ($request instanceof RequestHelper) {
                 $this->_baseUrl = $request->getBaseUrl();
             } else {
                 throw new InvalidConfigException('Please configure UrlManager::baseUrl correctly as you are running a console application.');
@@ -292,8 +290,8 @@ class UrlManager extends RequestComponent
     public function getScriptUrl()
     {
         if ($this->_scriptUrl === null) {
-            if ($this->request instanceof AppRequestInterface) {
-                $this->_scriptUrl = $this->request->getScriptUrl();
+            if ($this->app->reqHelper instanceof RequestHelper) {
+                $this->_scriptUrl = $this->app->reqHelper->getScriptUrl();
             } else {
                 throw new InvalidConfigException('Please configure UrlManager::scriptUrl correctly as you are running a console application.');
             }
@@ -320,8 +318,8 @@ class UrlManager extends RequestComponent
     public function getHostInfo()
     {
         if ($this->_hostInfo === null) {
-            if ($this->request instanceof AppRequestInterface) {
-                $this->_hostInfo = $this->request->getHostInfo();
+            if ($this->app->reqHelper instanceof RequestHelper) {
+                $this->_hostInfo = $this->app->reqHelper->getHostInfo();
             } else {
                 throw new InvalidConfigException('Please configure UrlManager::hostInfo correctly as you are running a console application.');
             }
