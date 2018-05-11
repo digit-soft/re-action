@@ -95,7 +95,9 @@ abstract class ExpiringCache extends ExtendedCache implements ExpiringCacheInter
     protected function packRecord($record = []) {
         $tsKey = $this->timestampKey;
         $dtKey = $this->dataKey;
-        if (is_array($record) && isset($record[$tsKey]) && ArrayHelper::keyExists($dtKey, $record)) return $record;
+        if (is_array($record) && isset($record[$tsKey]) && ArrayHelper::keyExists($dtKey, $record)) {
+            return $record;
+        }
         $data = $record;
         $record = [ ];
         $record[$dtKey] = $data;
@@ -111,7 +113,9 @@ abstract class ExpiringCache extends ExtendedCache implements ExpiringCacheInter
     protected function unpackRecord($record = []) {
         $tsKey = $this->timestampKey;
         $dtKey = $this->dataKey;
-        if (!is_array($record) || !isset($record[$tsKey]) || !ArrayHelper::keyExists($dtKey, $record)) return $record;
+        if (!is_array($record) || !isset($record[$tsKey]) || !ArrayHelper::keyExists($dtKey, $record)) {
+            return $record;
+        }
         return $record[$dtKey];
     }
 

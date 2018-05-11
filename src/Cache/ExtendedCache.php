@@ -43,7 +43,7 @@ abstract class ExtendedCache extends BaseObject implements ExtendedCacheInterfac
         $promises = [];
         foreach ($keys as $key) {
             //Ensure that Promise is always fulfilled
-            $promises[] = $this->remove($key)->otherwise(function () { return true; });
+            $promises[] = $this->remove($key)->otherwise(function() { return true; });
         }
         return \Reaction\Promise\all($promises);
     }

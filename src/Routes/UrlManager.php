@@ -12,7 +12,8 @@ use Reaction\RequestApplicationInterface;
  * @package Reaction\Routes
  */
 class UrlManager extends Component implements UrlManagerInterface
-{    /**
+{
+    /**
      * @var string the URL suffix used.
      * For example, ".html" can be used so that the URL looks like pointing to a static HTML page.
      */

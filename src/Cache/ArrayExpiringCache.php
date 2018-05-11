@@ -10,7 +10,7 @@ use function Reaction\Promise\resolve;
 class ArrayExpiringCache extends ExpiringCache
 {
     /** @var array Data storage */
-    protected $storage = [ ];
+    protected $storage = [];
 
     /**
      * Get data from cache

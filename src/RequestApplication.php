@@ -101,7 +101,7 @@ class RequestApplication extends ServiceLocator implements RequestApplicationInt
         }
 
         //Extract definition from DI Definition
-        if($definition instanceof \Reaction\DI\Definition) {
+        if ($definition instanceof \Reaction\DI\Definition) {
             $definition = $definition->dumpArrayDefinition();
         }
 
@@ -130,7 +130,7 @@ class RequestApplication extends ServiceLocator implements RequestApplicationInt
                 throw new InvalidConfigException("The configuration for the \"$id\" component must contain a \"class\" element.");
             }
         } else {
-            throw new InvalidConfigException("Unexpected configuration type for the \"$id\" component: " . gettype($definition));
+            throw new InvalidConfigException("Unexpected configuration type for the \"$id\" component: ".gettype($definition));
         }
     }
 }

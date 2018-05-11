@@ -86,9 +86,9 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
 
     /**
      * Regenerate session id
-     * @param string              $idOld
+     * @param string                      $idOld
      * @param RequestApplicationInterface $app
-     * @param bool                $deleteOldSession
+     * @param bool                        $deleteOldSession
      * @return PromiseInterface  with new session ID (string)
      */
     public function regenerateId($idOld, RequestApplicationInterface $app, $deleteOldSession = false)
@@ -97,22 +97,22 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
         $dataOld = [];
         /** @var ExtendedPromiseInterface $promise */
         $promise = $this->read($idOld)->then(
-            function ($data) { return $data; },
-            function () { return []; }
-        )->then(function ($data) use ($idOld, &$dataOld) {
+            function($data) { return $data; },
+            function() { return []; }
+        )->then(function($data) use ($idOld, &$dataOld) {
             $dataOld = $data;
-            return $this->destroy($idOld)->then(null, function () { return true; });
+            return $this->destroy($idOld)->then(null, function() { return true; });
         })->then(
-            function () use ($self, &$app) {
+            function() use ($self, &$app) {
                 return $self->createId($app);
             }
         )->then(
-            function ($newId) use ($self, &$dataOld, $deleteOldSession) {
-                $retCallback = function () use ($newId) { return $newId; };
+            function($newId) use ($self, &$dataOld, $deleteOldSession) {
+                $retCallback = function() use ($newId) { return $newId; };
                 $dataNew = $deleteOldSession ? [] : $dataOld;
                 return $self->write($newId, $dataNew)->then($retCallback, $retCallback);
             },
-            function () use ($idOld) {
+            function() use ($idOld) {
                 $message = sprintf('Failed to regenerate session ID for session "%s"', $idOld);
                 throw new SessionException($message);
             }
@@ -150,8 +150,8 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
         $id = md5($ip . ':' . $time . ':' . $rand);
         $self = $this;
         return $this->checkSessionId($id)->then(
-            function () use($id) { return $id; },
-            function () use ($self, &$app) { return $self->createId($app); }
+            function() use($id) { return $id; },
+            function() use ($self, &$app) { return $self->createId($app); }
         );
     }
 
@@ -189,23 +189,23 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
         /** @var FileInterface $file */
         $file = null;
         $writePromise = $this->getArchiveFilePath($sessionId)->then(
-            function ($filePath) use (&$file) {
+            function($filePath) use (&$file) {
                 $file = \Reaction::$app->fs->file($filePath);
                 return \Reaction::$app->fs->file($filePath)->exists();
             }
         )->then(null,
-            function () use (&$file) { return $file->create(); }
+            function() use (&$file) { return $file->create(); }
         )->then(
-            function () use (&$file) { return $file->chmod(0777); }
+            function() use (&$file) { return $file->chmod(0777); }
         )->then(
-            function () use (&$file) { return $file->open('wf'); }
+            function() use (&$file) { return $file->open('wf'); }
         )->then(
-            function (WritableStreamInterface $stream) use ($dataSr) {
+            function(WritableStreamInterface $stream) use ($dataSr) {
                 $stream->write($dataSr);
                 $stream->close();
                 return true;
             }
-        )->then(null, function ($error = null) {
+        )->then(null, function($error = null) {
             $message = $error instanceof \Throwable
                 ? $error->getMessage() . "\n" . $error->getFile() . ' #' . $error->getLine() : $error;
             \Reaction::$app->logger->error($message);
@@ -226,12 +226,12 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
         /** @var FileInterface $file */
         $file = null;
         return $this->getArchiveFilePath($sessionId, true)->then(
-            function ($filePath) use (&$file) {
+            function($filePath) use (&$file) {
                 $file = \Reaction::$app->fs->file($filePath);
                 return $file->getContents();
             }
         )->then(
-            function ($dataStr) use ($self, &$file, $deleteFromArchive) {
+            function($dataStr) use ($self, &$file, $deleteFromArchive) {
                 try {
                     $data = $self->unserializeSessionData($dataStr);
                 } catch (\InvalidArgumentException $exception) {
@@ -239,12 +239,12 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
                 }
                 $data = is_array($data) ? $data : null;
                 if ($deleteFromArchive) {
-                    $callback = function () use ($data) { return $data; };
+                    $callback = function() use ($data) { return $data; };
                     return $file->remove()->then($callback, $callback);
                 }
                 return $data;
             },
-            function () use ($sessionId) {
+            function() use ($sessionId) {
                 $message = sprintf('Failed to restore session "%s"', $sessionId);
                 throw new SessionException($message);
             }
@@ -255,30 +255,33 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
      * GC cleanup callback for archived sessions.
      * For file archive
      */
-    protected function gcCleanupArchive() {
+    protected function gcCleanupArchive()
+    {
         $self = $this;
         return $this->getArchivePath()->then(
-            function ($pathArchive) {
+            function($pathArchive) {
                 $path = \Reaction::$app->fs->dir($pathArchive);
                 return $path->ls();
             }
         )->then(
-            function ($list) use ($self) {
+            function($list) use ($self) {
                 $promises = [];
                 $expiredTime = time() - $self->sessionLifetime;
                 foreach ($list as $node) {
                     /** @var FileInterface $node */
                     if (!($node instanceof FileInterface)) continue;
                     $promises[] = $node->time()->then(
-                        function ($data) use ($expiredTime, $node) {
+                        function($data) use ($expiredTime, $node) {
                             /** @var \DateTime $date */
                             $date = $data['mtime'];
                             if ($date->getTimestamp() < $expiredTime) {
-                                return $node->remove()->then(null, function () { return true; });
+                                return $node->remove()->then(null, function() {
+                                    return true;
+                                });
                             }
                             return true;
                         },
-                        function () { return false; }
+                        function() { return false; }
                     );
                 }
                 if (empty($promises)) {
@@ -286,7 +289,9 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
                 }
                 return \Reaction\Promise\all($promises);
             }
-        )->then(null, function () { return \Reaction\Promise\resolve(false); });
+        )->then(null, function() {
+            return \Reaction\Promise\resolve(false);
+        });
     }
 
     /**
@@ -294,19 +299,20 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
      * @param string $sessionId
      * @return PromiseInterface
      */
-    protected function removeFromArchive($sessionId) {
+    protected function removeFromArchive($sessionId)
+    {
         /** @var FileInterface $file */
         $file = null;
         return $this->getArchiveFilePath($sessionId)->then(
-            function ($filePath) use (&$file) {
+            function($filePath) use (&$file) {
                 $file = \Reaction::$app->fs->file($filePath);
                 return $file->exists();
             }
-        )->then(function () use (&$file) {
+        )->then(function() use (&$file) {
             return $file->remove();
-        })->then(function () {
+        })->then(function() {
             return true;
-        }, function () use ($sessionId) {
+        }, function() use ($sessionId) {
             $message = sprintf('Failed to remove session "%s"', $sessionId);
             throw new SessionException($message);
         });
@@ -316,7 +322,8 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
      * Get real archive path
      * @return PromiseInterface
      */
-    protected function getArchivePath() {
+    protected function getArchivePath()
+    {
         if (!isset($this->_archivePath)) {
             $path = \Reaction::$app->getAlias($this->archivePath);
             $self = $this;
@@ -325,15 +332,15 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
             $dirAsFile = $fs->file($path);
             return $dirAsFile->exists()->then(
                 null,
-                function () use ($dir) { return $dir->createRecursive(); }
+                function() use ($dir) { return $dir->createRecursive(); }
             )->then(
-                function () use ($dir) { return $dir->chmodRecursive(0777); }
+                function() use ($dir) { return $dir->chmodRecursive(0777); }
             )->then(
-                function () use ($self, $path) {
+                function() use ($self, $path) {
                     $self->_archivePath = $path;
                     return $path;
                 },
-                function () {
+                function() {
                     throw new SessionException("Failed to get session archive path");
                 }
             );
@@ -347,17 +354,18 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
      * @param bool   $existCheck
      * @return PromiseInterface
      */
-    protected function getArchiveFilePath($sessionId, $existCheck = false) {
+    protected function getArchiveFilePath($sessionId, $existCheck = false)
+    {
         $fileName = $sessionId . '.json';
         return $this->getArchivePath()->then(
-            function ($dirPath) use ($fileName) {
+            function($dirPath) use ($fileName) {
                 return rtrim($dirPath) . DIRECTORY_SEPARATOR . $fileName;
             }
         )->then(
-            function ($filePath) use ($existCheck) {
+            function($filePath) use ($existCheck) {
                 if ($existCheck) {
                     return \Reaction::$app->fs->file($filePath)->exists()->then(
-                        function () use ($filePath) {
+                        function() use ($filePath) {
                             return $filePath;
                         }
                     );
@@ -372,7 +380,8 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
      * @param array $sessionData
      * @return string
      */
-    protected function serializeSessionData($sessionData) {
+    protected function serializeSessionData($sessionData)
+    {
         if (is_string($sessionData)) return $sessionData;
         return Json::encode($sessionData);
     }
@@ -382,7 +391,8 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
      * @param string $sessionData
      * @return array
      */
-    protected function unserializeSessionData($sessionData) {
+    protected function unserializeSessionData($sessionData)
+    {
         if (is_array($sessionData)) {
             return $sessionData;
         }
@@ -392,7 +402,8 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
     /**
      * Create GC periodic timer
      */
-    protected function createGcTimer() {
+    protected function createGcTimer()
+    {
         if (isset($this->_timer) && $this->_timer instanceof TimerInterface) {
             $this->loop->cancelTimer($this->_timer);
         }

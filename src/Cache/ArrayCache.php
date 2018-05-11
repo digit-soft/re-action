@@ -15,7 +15,7 @@ class ArrayCache extends ExtendedCache
 {
 
     /** @var array Data storage */
-    protected $storage = [ ];
+    protected $storage = [];
 
     /**
      * Get data from cache

@@ -102,7 +102,7 @@ return [
         'singletons' => [
             //React event loop
             'React\EventLoop\LoopInterface' => function() { return \React\EventLoop\Factory::create(); },
-            'React\Filesystem\FilesystemInterface' => function (\Reaction\DI\Container $di) {
+            'React\Filesystem\FilesystemInterface' => function(\Reaction\DI\Container $di) {
                 $loop = $di->get('React\EventLoop\LoopInterface');
                 return \React\Filesystem\Filesystem::create($loop);
             },

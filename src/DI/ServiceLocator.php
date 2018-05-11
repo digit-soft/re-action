@@ -136,11 +136,11 @@ class ServiceLocator extends Component
                 return $this->_components[$id] = $definition;
             }
             $params = [];
-            if(is_array($definition) && isset($definition[0])) {
+            if (is_array($definition) && isset($definition[0])) {
                 $config = is_array($definition[0]) ? $definition[0] : ['class' => $definition[0]];
                 unset($definition[0]);
-                if(isset($definition[1])) {
-                    $params = (array)$definition[1];
+                if (isset($definition[1])) {
+                    $params = (array) $definition[1];
                     unset($definition[1]);
                 }
                 $definition = ArrayHelper::merge($definition, $config);
@@ -206,7 +206,7 @@ class ServiceLocator extends Component
         }
 
         //Extract definition from DI Definition
-        if($definition instanceof Definition) {
+        if ($definition instanceof Definition) {
             $definition = $definition->dumpArrayDefinition();
         }
 
@@ -221,7 +221,7 @@ class ServiceLocator extends Component
                 throw new InvalidConfigException("The configuration for the \"$id\" component must contain a \"class\" element.");
             }
         } else {
-            throw new InvalidConfigException("Unexpected configuration type for the \"$id\" component: " . gettype($definition));
+            throw new InvalidConfigException("Unexpected configuration type for the \"$id\" component: ".gettype($definition));
         }
         //Check components autoloading possibility
         if ($this->componentsAutoloadEnabled) {
@@ -305,7 +305,7 @@ class ServiceLocator extends Component
                 $component = $this->get($componentName);
             }
             if ($component instanceof ComponentInitBlockingInterface && !$component->isInitialized()) {
-                $promises[] = $component->initComponent()->then(null, function () { return true; });
+                $promises[] = $component->initComponent()->then(null, function() { return true; });
             }
         }
         if (!empty($promises)) {

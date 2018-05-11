@@ -107,7 +107,7 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
         parent::init();
         $self = $this;
         //Close session on end of request
-        $this->app->once(Reaction\RequestApplicationInterface::EVENT_REQUEST_END, function () use (&$self) {
+        $this->app->once(Reaction\RequestApplicationInterface::EVENT_REQUEST_END, function() use (&$self) {
             return $self->close();
         });
 
@@ -150,7 +150,7 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
 
         $self = $this;
         return $this->openInternal()->then(
-            function () use ($self) {
+            function() use ($self) {
                 if (Reaction::isDebug()) {
                     Reaction::info('Session started');
                 }
@@ -169,7 +169,7 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
         if (!$this->getId()) {
             $self = $this;
             return $this->handler->createId($this->app)->then(
-                function ($id = null) use ($self) {
+                function($id = null) use ($self) {
                     $self->_isActive = true;
                     $self->setId($id);
                     $cookie = $self->createSessionCookie();
@@ -179,11 +179,11 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
         } else {
             $this->_isActive = true;
             return $this->readSession()->then(
-                function ($data) use ($self) {
+                function($data) use ($self) {
                     $self->data = is_array($data) ? $data : [];
                     return true;
                 },
-                function () use ($self) {
+                function() use ($self) {
                     $self->data = [];
                 }
             );
@@ -205,10 +205,10 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
                 }
             }
             if (!$this->handler instanceof SessionHandlerInterface) {
-                throw new InvalidConfigException('"' . get_class($this) . '::handler" must implement the \Reaction\Web\Sessions\SessionHandlerInterface.');
+                throw new InvalidConfigException('"'.get_class($this).'::handler" must implement the \Reaction\Web\Sessions\SessionHandlerInterface.');
             }
         } else {
-            throw new InvalidConfigException('"' . get_class($this) . '::handler" can not be empty.');
+            throw new InvalidConfigException('"'.get_class($this).'::handler" can not be empty.');
         }
     }
 
@@ -352,7 +352,7 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
                 $key = $this->request->cookieValidationKey;
                 $bytesLn = Reaction\Helpers\StringHelper::byteLength($key);
                 $strLn = mb_strlen($key);
-                $this->_cookieName = $this->cookieName . md5(crypt($bytesLn  . ':' . $strLn, $key));
+                $this->_cookieName = $this->cookieName.md5(crypt($bytesLn.':'.$strLn, $key));
             }
         }
         return $this->_cookieName;
@@ -447,7 +447,7 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
     {
         $id = !isset($id) && isset($this->_sessionId) ? $this->_sessionId : $id;
         if (!isset($id)) {
-            return \Reaction\Promise\reject(new Reaction\Exceptions\ErrorException('Param "$id" must be specified in "' . __METHOD__ . '"'));
+            return \Reaction\Promise\reject(new Reaction\Exceptions\ErrorException('Param "$id" must be specified in "'.__METHOD__.'"'));
         }
         return $this->handler->read($id);
     }
@@ -463,7 +463,7 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
     {
         $id = !isset($id) && isset($this->_sessionId) ? $this->_sessionId : $id;
         if (!isset($id)) {
-            return \Reaction\Promise\reject(new Reaction\Exceptions\ErrorException('Param "$id" must be specified in "' . __METHOD__ . '"'));
+            return \Reaction\Promise\reject(new Reaction\Exceptions\ErrorException('Param "$id" must be specified in "'.__METHOD__.'"'));
         }
         if (!isset($data)) {
             $data = $this->data;
@@ -481,7 +481,7 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
     {
         $id = !isset($id) && isset($this->_sessionId) ? $this->_sessionId : $id;
         if (!isset($id)) {
-            return \Reaction\Promise\reject(new Reaction\Exceptions\ErrorException('Param "$id" must be specified in "' . __METHOD__ . '"'));
+            return \Reaction\Promise\reject(new Reaction\Exceptions\ErrorException('Param "$id" must be specified in "'.__METHOD__.'"'));
         }
         return $this->handler->destroy($id);
     }

@@ -587,14 +587,14 @@ class RequestHelper extends RequestAppComponent
             $serverName = $this->getServerParam('SERVER_NAME');
 
             if ($this->getHeaders()->has('X-Forwarded-Host')) {
-                $this->_hostInfo = $http . '://' . $this->getHeaders()->get('X-Forwarded-Host');
+                $this->_hostInfo = $http.'://'.$this->getHeaders()->get('X-Forwarded-Host');
             } elseif ($this->getHeaders()->has('Host')) {
-                $this->_hostInfo = $http . '://' . $this->getHeaders()->get('Host');
+                $this->_hostInfo = $http.'://'.$this->getHeaders()->get('Host');
             } elseif (isset($serverName)) {
-                $this->_hostInfo = $http . '://' . $serverName;
+                $this->_hostInfo = $http.'://'.$serverName;
                 $port = $secure ? $this->getSecurePort() : $this->getPort();
                 if (($port !== 80 && !$secure) || ($port !== 443 && $secure)) {
-                    $this->_hostInfo .= ':' . $port;
+                    $this->_hostInfo .= ':'.$port;
                 }
             }
         }
@@ -679,8 +679,8 @@ class RequestHelper extends RequestAppComponent
                 $this->_scriptUrl = $server['PHP_SELF'];
             } elseif (isset($server['ORIG_SCRIPT_NAME']) && basename($server['ORIG_SCRIPT_NAME']) === $scriptName) {
                 $this->_scriptUrl = $server['ORIG_SCRIPT_NAME'];
-            } elseif (isset($server['PHP_SELF']) && ($pos = strpos($server['PHP_SELF'], '/' . $scriptName)) !== false) {
-                $this->_scriptUrl = substr($server['SCRIPT_NAME'], 0, $pos) . '/' . $scriptName;
+            } elseif (isset($server['PHP_SELF']) && ($pos = strpos($server['PHP_SELF'], '/'.$scriptName)) !== false) {
+                $this->_scriptUrl = substr($server['SCRIPT_NAME'], 0, $pos).'/'.$scriptName;
             } elseif (!empty($server['DOCUMENT_ROOT']) && strpos($scriptFile, $server['DOCUMENT_ROOT']) === 0) {
                 $this->_scriptUrl = str_replace([$server['DOCUMENT_ROOT'], '\\'], ['', '/'], $scriptFile);
             } else {
@@ -699,7 +699,7 @@ class RequestHelper extends RequestAppComponent
      */
     public function setScriptUrl($value)
     {
-        $this->_scriptUrl = $value === null ? null : '/' . trim($value, '/');
+        $this->_scriptUrl = $value === null ? null : '/'.trim($value, '/');
     }
 
     /**
@@ -767,7 +767,7 @@ class RequestHelper extends RequestAppComponent
      */
     public function getAbsoluteUrl()
     {
-        return $this->getHostInfo() . rtrim($this->getUrl(), '/');
+        return $this->getHostInfo().rtrim($this->getUrl(), '/');
     }
 
     /**
@@ -1233,8 +1233,8 @@ class RequestHelper extends RequestAppComponent
 
                 if (
                     $normalizedLanguage === $acceptableLanguage // en-us==en-us
-                    || strpos($acceptableLanguage, $normalizedLanguage . '-') === 0 // en==en-us
-                    || strpos($normalizedLanguage, $acceptableLanguage . '-') === 0 // en-us==en
+                    || strpos($acceptableLanguage, $normalizedLanguage.'-') === 0 // en==en-us
+                    || strpos($normalizedLanguage, $acceptableLanguage.'-') === 0 // en-us==en
                 ) {
                     return $language;
                 }
@@ -1461,7 +1461,7 @@ class RequestHelper extends RequestAppComponent
     {
         $reactPath = $this->reactRequest->getUri()->getPath();
         $reactQuery = $this->getQueryString();
-        $reactPath = $reactQuery !== "" ? $reactPath . '?' . $reactQuery : $reactPath;
+        $reactPath = $reactQuery !== "" ? $reactPath.'?'.$reactQuery : $reactPath;
         if ($this->getHeaders()->has('X-Rewrite-Url')) { // IIS
             $requestUri = $this->getHeaders()->get('X-Rewrite-Url');
         } elseif (isset($reactPath)) {
@@ -1489,7 +1489,7 @@ class RequestHelper extends RequestAppComponent
         $cookiesSource = $this->reactRequest->getCookieParams();
         if ($this->enableCookieValidation) {
             if ($this->cookieValidationKey == '') {
-                throw new InvalidConfigException(get_class($this) . '::cookieValidationKey must be configured with a secret key.');
+                throw new InvalidConfigException(get_class($this).'::cookieValidationKey must be configured with a secret key.');
             }
             foreach ($cookiesSource as $name => $value) {
                 if (!is_string($value)) {
@@ -1597,7 +1597,7 @@ class RequestHelper extends RequestAppComponent
     protected function getDefaultServerParams() {
         $params = [
             'DOCUMENT_ROOT' => getcwd(),
-            'SCRIPT_FILENAME' => getcwd() . DIRECTORY_SEPARATOR . $_SERVER['SCRIPT_FILENAME'],
+            'SCRIPT_FILENAME' => getcwd().DIRECTORY_SEPARATOR.$_SERVER['SCRIPT_FILENAME'],
         ];
 
         return $params;
