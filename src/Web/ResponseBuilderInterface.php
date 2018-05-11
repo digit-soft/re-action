@@ -2,18 +2,18 @@
 
 namespace Reaction\Web;
 
-use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
+use Reaction\RequestApplicationInterface;
 
 /**
  * Interface ResponseBuilderInterface
  * @package Reaction\Web
- * @property int                 $statusCode
- * @property string              $charset
- * @property HeaderCollection    $headers
- * @property CookieCollection    $cookies
- * @property AppRequestInterface $request
- * @property string              $format
+ * @property int                         $statusCode
+ * @property string                      $charset
+ * @property HeaderCollection            $headers
+ * @property CookieCollection            $cookies
+ * @property RequestApplicationInterface $app
+ * @property string                      $format
  */
 interface ResponseBuilderInterface
 {

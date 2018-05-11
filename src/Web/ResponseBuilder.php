@@ -3,6 +3,7 @@
 namespace Reaction\Web;
 
 use Psr\Http\Message\StreamInterface;
+use Reaction\Base\RequestAppComponent;
 use Reaction\Exceptions\HttpException;
 use Reaction\Exceptions\InvalidArgumentException;
 use Reaction\Exceptions\InvalidConfigException;
@@ -12,7 +13,7 @@ use Reaction\Helpers\ArrayHelper;
  * Class ResponseBuilder
  * @package Reaction\Web
  */
-class ResponseBuilder extends RequestComponent implements ResponseBuilderInterface
+class ResponseBuilder extends RequestAppComponent implements ResponseBuilderInterface
 {
     /**
      * @var string|array Response class config array or class name
@@ -84,8 +85,8 @@ class ResponseBuilder extends RequestComponent implements ResponseBuilderInterfa
      */
     public function init()
     {
-        if (!isset($this->charset) && isset($this->request)) {
-            $this->charset = $this->request->charset;
+        if (!isset($this->charset) && isset($this->app)) {
+            $this->charset = $this->app->charset;
         }
         $this->formatters = array_merge($this->defaultFormatters(), $this->formatters);
     }
@@ -315,7 +316,7 @@ class ResponseBuilder extends RequestComponent implements ResponseBuilderInterfa
     protected function getCookiesPrepared() {
         $cookies = [];
         if ($this->_cookies) {
-            $request = $this->request;
+            $request = $this->app->reqHelper;
             if ($request->enableCookieValidation) {
                 if ($request->cookieValidationKey == '') {
                     throw new InvalidConfigException(get_class($request) . '::cookieValidationKey must be configured with a secret key.');
