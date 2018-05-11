@@ -36,7 +36,7 @@ use Reaction\Helpers\Json;
  *
  * Borrowed from yii2
  */
-class View extends \Reaction\Base\View implements RequestComponentInterface
+class View extends \Reaction\Base\View implements Reaction\Base\RequestAppComponentInterface
 {
     /**
      * @event Event an event that is triggered by [[beginBody()]].
@@ -84,6 +84,10 @@ class View extends \Reaction\Base\View implements RequestComponentInterface
      */
     const PH_BODY_END = '<![CDATA[REACTION-BLOCK-BODY-END]]>';
 
+    /**
+     * @var Reaction\RequestApplicationInterface  Current request application
+     */
+    public $app;
     /**
      * @var AppRequestInterface  Application request that is currently processed
      */
@@ -221,7 +225,7 @@ class View extends \Reaction\Base\View implements RequestComponentInterface
      */
     public function getAssetManager()
     {
-        return $this->_assetManager ?: $this->request->assetManager;
+        return $this->_assetManager ? $this->_assetManager : $this->app->assetManager;
     }
 
     /**
@@ -463,8 +467,7 @@ class View extends \Reaction\Base\View implements RequestComponentInterface
         $key = $key ?: md5($js);
         $this->js[$position][$key] = $js;
         if ($position === self::POS_READY || $position === self::POS_LOAD) {
-            //TODO: Make standard assets
-            //JqueryAsset::register($this);
+            Reaction\Assets\JqueryAsset::register($this);
         }
     }
 
@@ -496,7 +499,7 @@ class View extends \Reaction\Base\View implements RequestComponentInterface
     {
         $url = \Reaction::$app->getAlias($url);
         $key = $key ?: $url;
-        $helpers = $this->request->helpers;
+        $helpers = $this->app->helpers;
 
         $depends = ArrayHelper::remove($options, 'depends', []);
 
