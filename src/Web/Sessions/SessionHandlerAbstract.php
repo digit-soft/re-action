@@ -14,6 +14,10 @@ use Reaction\Helpers\Json;
 use Reaction\RequestApplicationInterface;
 use function Reaction\Promise\resolve;
 
+/**
+ * Class SessionHandlerAbstract
+ * @package Reaction\Web\Sessions
+ */
 abstract class SessionHandlerAbstract extends Component implements SessionHandlerInterface
 {
     /**

@@ -73,6 +73,10 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
      * @var array Session data array
      */
     public $data = [];
+    /** @var string[] Ignore data in this keys if it is empty (on ::isEmpty() check) */
+    public $ignoredEmptyKeys = ['__flash'];
+    /** @var string[] Ignore data in this keys (on ::isEmpty() check) */
+    public $ignoredKeys = [];
 
     /**
      * @var array parameter-value pairs to override default session cookie parameters that are used for session_set_cookie_params() function
@@ -213,6 +217,26 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
     }
 
     /**
+     * Check if session is empty, e.g. has no important data
+     * @return bool
+     */
+    public function isEmpty() {
+        $data = $this->data;
+        $keys = !empty($this->ignoredEmptyKeys) ? array_fill_keys($this->ignoredEmptyKeys, 1) : [];
+        $_keys = !empty($this->ignoredKeys) ? array_fill_keys($this->ignoredKeys, 0) : [];
+        $keys = Reaction\Helpers\ArrayHelper::merge($keys, $_keys);
+        foreach ($keys as $key => $checkEmpty) {
+            if (!Reaction\Helpers\ArrayHelper::keyExists($key, $data)) {
+                continue;
+            }
+            if (!$checkEmpty || empty($data[$key])) {
+                unset($data[$key]);
+            }
+        }
+        return empty($data);
+    }
+
+    /**
      * Ends the current session and store session data.
      * @return PromiseInterface
      */
@@ -222,7 +246,7 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
             if (Reaction::isDebug()) {
                 Reaction::info('Session closed');
             }
-            return $this->writeSession();
+            return $this->isEmpty() ? $this->destroySession() : $this->writeSession();
         }
         $this->_isActive = false;
         return \Reaction\Promise\resolve(null);
@@ -646,7 +670,7 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
      *
      * ```php
      * <?php
-     * foreach (Yii::$app->session->getAllFlashes() as $key => $message) {
+     * foreach ($app->session->getAllFlashes() as $key => $message) {
      *     echo '<div class="alert alert-' . $key . '">' . $message . '</div>';
      * } ?>
      * ```
