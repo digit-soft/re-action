@@ -4,6 +4,7 @@ namespace Reaction\DI;
 
 use Closure;
 use React\Promise\PromiseInterface;
+use Reaction;
 use Reaction\Base\ComponentInitBlockingInterface;
 use Reaction\Helpers\ArrayHelper;
 use Reaction\Base\Component;
@@ -44,6 +45,7 @@ use Reaction\Helpers\ReflectionHelper;
  *
  * @property array $components The list of the component definitions or the loaded component instances (ID =>
  * definition or instance).
+ * @property bool  $componentsAutoloadEnabled
  */
 class ServiceLocator extends Component
 {
@@ -58,16 +60,7 @@ class ServiceLocator extends Component
     /**
      * @var bool
      */
-    protected $_checkComponentsAutoload = false;
-
-    /**
-     * @inheritdoc
-     */
-    public function init()
-    {
-        $this->_checkComponentsAutoload = $this instanceof ServiceLocatorAutoloadInterface;
-        parent::init();
-    }
+    protected $_checkComponentsAutoload;
 
     /**
      * Getter magic method.
@@ -152,7 +145,7 @@ class ServiceLocator extends Component
                 }
                 $definition = ArrayHelper::merge($definition, $config);
             }
-            return $this->_components[$id] = \Reaction::create($definition, $params);
+            return $this->_components[$id] = Reaction::create($definition, $params);
         } elseif ($throwException) {
             throw new InvalidConfigException("Unknown component ID: $id");
         }
@@ -230,8 +223,8 @@ class ServiceLocator extends Component
         } else {
             throw new InvalidConfigException("Unexpected configuration type for the \"$id\" component: " . gettype($definition));
         }
-        //Check components auto loading possibility
-        if ($this->_checkComponentsAutoload) {
+        //Check components autoloading possibility
+        if ($this->componentsAutoloadEnabled) {
             $this->checkComponentAutoload($id);
         }
     }
@@ -304,7 +297,7 @@ class ServiceLocator extends Component
             if (isset($this->_components[$componentName])) {
                 $component = $this->_components[$componentName];
             } else {
-                $className = \Reaction::$di->resolveClassName($definition);
+                $className = Reaction::$di->resolveClassName($definition);
                 if (null === $className || !ReflectionHelper::isImplements($className, 'Reaction\Base\ComponentAutoloadInterface')) {
                     continue;
                 }
@@ -333,11 +326,22 @@ class ServiceLocator extends Component
         if (!isset($this->_definitions[$componentName]) || isset($this->_components[$componentName])) {
             return null;
         }
-        $className = \Reaction::$di->resolveClassName($this->_definitions[$componentName]);
-        if (null !== $className && !ReflectionHelper::isImplements($className, 'Reaction\Base\ComponentAutoloadInterface')) {
+        $className = Reaction::$di->resolveClassName($this->_definitions[$componentName]);
+        if (null !== $className && ReflectionHelper::isImplements($className, 'Reaction\Base\ComponentAutoloadInterface')) {
             $component = $this->get($componentName);
             return $component;
         }
         return null;
+    }
+
+    /**
+     * Check that components autoloading is enabled
+     * @return bool
+     */
+    protected function getComponentsAutoloadEnabled() {
+        if (!isset($this->_checkComponentsAutoload)) {
+            $this->_checkComponentsAutoload = $this instanceof ServiceLocatorAutoloadInterface;
+        }
+        return $this->_checkComponentsAutoload;
     }
 }

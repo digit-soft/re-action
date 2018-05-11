@@ -53,6 +53,7 @@ use Reaction\Exceptions\InvalidConfigException;
  * read-only.
  * @property string $name The current session name.
  * @property bool|null $useCookies The value indicating whether cookies should be used to store session IDs.
+ * @property Reaction\Web\RequestHelper $request
  */
 class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayAccess, \Countable, RequestSessionInterface
 {
@@ -167,7 +168,7 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
         $self = $this;
         if (!$this->getId()) {
             $self = $this;
-            return $this->handler->createId($this->request)->then(
+            return $this->handler->createId($this->app)->then(
                 function ($id = null) use ($self) {
                     $self->_isActive = true;
                     $self->setId($id);
@@ -267,7 +268,7 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
         if ($this->_hasSessionId === null) {
             $name = $this->getName();
             $request = $this->request;
-            $cookie = $request->cookies->getValue($name);
+            $cookie = $request->getCookies()->getValue($name);
             if (!empty($cookie) && ini_get('session.use_cookies')) {
                 $this->_hasSessionId = true;
                 $this->_sessionId = $cookie;
@@ -334,7 +335,7 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
     public function regenerateID($deleteOldSession = false)
     {
         if ($this->getIsActive()) {
-            return $this->handler->regenerateId($this->id, $this->request, $deleteOldSession);
+            return $this->handler->regenerateId($this->id, $this->app, $deleteOldSession);
         }
         return \Reaction\Promise\reject(new Reaction\Exceptions\SessionException('Session is not active'));
     }
@@ -559,7 +560,7 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
 
     /**
      * Removes all session variables.
-     * @return ExtendedPromiseInterface with bool when write process ends
+     * @return PromiseInterface with bool when write process ends
      */
     public function removeAll()
     {
@@ -901,5 +902,13 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
         $config['value'] = $this->id;
         $config['name'] = $this->getName();
         return Reaction::create($config);
+    }
+
+    /**
+     * Get Request helper
+     * @return Reaction\Web\RequestHelper
+     */
+    protected function getRequest() {
+        return $this->app->reqHelper;
     }
 }
