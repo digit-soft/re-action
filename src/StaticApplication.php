@@ -52,7 +52,6 @@ class StaticApplication extends ServiceLocator implements StaticApplicationInter
     public function init()
     {
         $this->loop = \Reaction::create(\React\EventLoop\LoopInterface::class);
-        $this->middleware[] = new RequestReplacer();
     }
 
     /**
