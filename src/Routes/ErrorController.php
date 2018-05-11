@@ -2,7 +2,7 @@
 
 namespace Reaction\Routes;
 
-use Reaction\Web\AppRequestInterface;
+use Reaction\RequestApplicationInterface;
 
 /**
  * Class ErrorController
@@ -21,12 +21,12 @@ class ErrorController extends Controller
 
     /**
      * Error action default
-     * @param AppRequestInterface $request
-     * @param \Throwable          $exception
+     * @param RequestApplicationInterface $app
+     * @param \Throwable                  $exception
      * @return \Reaction\Web\ResponseBuilderInterface|string
      */
-    public function actionError(AppRequestInterface $request, \Throwable $exception) {
-        return $this->render($request, 'view', [
+    public function actionError(RequestApplicationInterface $app, \Throwable $exception) {
+        return $this->render($app, 'view', [
             'exception' => $exception,
             'exceptionName' => $this->getExceptionName($exception),
         ]);

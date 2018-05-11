@@ -14,10 +14,10 @@ use Reaction\Exceptions\HttpException;
 use Reaction\Exceptions\HttpExceptionInterface;
 use Reaction\Helpers\ArrayHelper;
 use Reaction\Helpers\StringHelper;
-use function Reaction\Promise\all;
 use Reaction\Promise\ExtendedPromiseInterface;
 use function Reaction\Promise\resolve;
-use Reaction\Web\AppRequestInterface;
+use function Reaction\Promise\all;
+use Reaction\RequestApplicationInterface;
 use Reaction\Web\Response;
 use Reaction\Web\ResponseBuilderInterface;
 
@@ -100,17 +100,17 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
 
     /**
      * Resolve controller action
-     * @param string              $action
-     * @param AppRequestInterface $request
-     * @param mixed               ...$params
+     * @param string                      $action
+     * @param RequestApplicationInterface $app
+     * @param mixed                       ...$params
      * @return mixed
      * @throws NotFoundException
      */
-    public function resolveAction(AppRequestInterface $request, string $action, ...$params) {
+    public function resolveAction(RequestApplicationInterface $app, string $action, ...$params) {
         $action = $this->normalizeActionName($action);
-        array_unshift($params, $request);
+        array_unshift($params, $app);
         $self = $this;
-        return $this->validateAction($action, $request)->then(
+        return $this->validateAction($action, $app)->then(
             function () use (&$request, &$self, $action, $params) {
                 $request->view->context = $self;
                 return \Reaction::$di->invoke([$self, $action], $params);
@@ -126,63 +126,63 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
 
     /**
      * Resolve error
-     * @param AppRequestInterface $request
-     * @param \Throwable          $exception
-     * @param bool                $asPlainText
+     * @param RequestApplicationInterface $app
+     * @param \Throwable                  $exception
+     * @param bool                        $asPlainText
      * @return ExtendedPromiseInterface|ResponseBuilderInterface
      */
-    public function resolveError(AppRequestInterface $request, \Throwable $exception, $asPlainText = false)
+    public function resolveError(RequestApplicationInterface $app, \Throwable $exception, $asPlainText = false)
     {
-        $request->view->context = $this;
+        $app->view->context = $this;
         if ($asPlainText) {
-            return $this->resolveErrorAsPlainText($request, $exception);
+            return $this->resolveErrorAsPlainText($app, $exception);
         }
-        $format = $request->response->format;
+        $format = $app->response->format;
         switch ($format) {
             case Response::FORMAT_RAW:
             case Response::FORMAT_HTML:
-                return $this->resolveErrorAsHtml($request, $exception);
+                return $this->resolveErrorAsHtml($app, $exception);
             default:
-                return $this->resolveErrorAsArray($request, $exception);
+                return $this->resolveErrorAsArray($app, $exception);
         }
     }
 
     /**
      * Render view
-     * @param AppRequestInterface $request
-     * @param string              $viewName
-     * @param array               $params
-     * @param bool                $asString
+     * @param RequestApplicationInterface $app
+     * @param string                      $viewName
+     * @param array                       $params
+     * @param bool                        $asString
      * @return \Reaction\Web\ResponseBuilderInterface|string
      */
-    public function render(AppRequestInterface $request, $viewName, $params = [], $asString = false) {
-        return $this->renderInLayout($request, $viewName, $params, $asString);
+    public function render(RequestApplicationInterface $app, $viewName, $params = [], $asString = false) {
+        return $this->renderInLayout($app, $viewName, $params, $asString);
     }
 
     /**
      * Render view partially
-     * @param AppRequestInterface $request
-     * @param string              $viewName
-     * @param array               $params
-     * @param bool                $asString
+     * @param RequestApplicationInterface $app
+     * @param string                      $viewName
+     * @param array                       $params
+     * @param bool                        $asString
      * @return \Reaction\Web\ResponseBuilderInterface|string
      */
-    public function renderPartial(AppRequestInterface $request, $viewName, $params = [], $asString = false)
+    public function renderPartial(RequestApplicationInterface $app, $viewName, $params = [], $asString = false)
     {
-        return $this->renderInternal($request, $viewName, $params, false, $asString);
+        return $this->renderInternal($app, $viewName, $params, false, $asString);
     }
 
     /**
      * Render for AJAX request
-     * @param AppRequestInterface $request
-     * @param string              $viewName
-     * @param array               $params
-     * @param bool                $asString
+     * @param RequestApplicationInterface $app
+     * @param string                      $viewName
+     * @param array                       $params
+     * @param bool                        $asString
      * @return \Reaction\Web\ResponseBuilderInterface|string
      */
-    public function renderAjax(AppRequestInterface $request, $viewName, $params = [], $asString = false)
+    public function renderAjax(RequestApplicationInterface $app, $viewName, $params = [], $asString = false)
     {
-        return $this->renderInternal($request, $viewName, $params, true, $asString);
+        return $this->renderInternal($app, $viewName, $params, true, $asString);
     }
 
     /**
@@ -212,46 +212,46 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
 
     /**
      * Render view in layout
-     * @param AppRequestInterface $request
-     * @param string              $viewName
-     * @param array               $params
-     * @param bool                $asString
+     * @param RequestApplicationInterface $app
+     * @param string                      $viewName
+     * @param array                       $params
+     * @param bool                        $asString
      * @return \Reaction\Web\ResponseBuilderInterface|string
      */
-    protected function renderInLayout(AppRequestInterface $request, $viewName, $params = [], $asString = false)
+    protected function renderInLayout(RequestApplicationInterface $app, $viewName, $params = [], $asString = false)
     {
-        $view = $request->view;
+        $view = $app->view;
         if (isset($this->layout)) {
             $layoutFile = $view->findViewFile($this->layout, $this);
         } else {
             $layoutFile = $view->findViewFile($view->layout, $this);
         }
-        $content = $this->renderInternal($request, $viewName, $params, false, true);
+        $content = $this->renderInternal($app, $viewName, $params, false, true);
         $rendered = $view->renderFile($layoutFile, ['content' => $content], $this);
         if ($asString) {
             return $rendered;
         }
-        $request->response->setBody($rendered);
-        return $request->response;
+        $app->response->setBody($rendered);
+        return $app->response;
     }
 
     /**
      * Render view internal function
-     * @param AppRequestInterface $request
-     * @param string              $viewName
-     * @param array               $params
-     * @param bool                $ajax
-     * @param bool                $asString
+     * @param RequestApplicationInterface $app
+     * @param string                      $viewName
+     * @param array                       $params
+     * @param bool                        $ajax
+     * @param bool                        $asString
      * @return \Reaction\Web\ResponseBuilderInterface|string
      */
-    protected function renderInternal(AppRequestInterface $request, $viewName, $params = [], $ajax = false, $asString = false) {
-        $view = $request->view;
+    protected function renderInternal(RequestApplicationInterface $app, $viewName, $params = [], $ajax = false, $asString = false) {
+        $view = $app->view;
         $rendered = $ajax ? $view->renderAjax($viewName, $params, $this) : $view->render($viewName, $params, $this);
         if ($asString) {
             return $rendered;
         }
-        $request->response->setBody($rendered);
-        return $request->response;
+        $app->response->setBody($rendered);
+        return $app->response;
     }
 
     /**
@@ -279,11 +279,11 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
 
     /**
      * Resolve error as rendered html
-     * @param AppRequestInterface $request
+     * @param RequestApplicationInterface $app
      * @param \Throwable          $exception
      * @return ResponseBuilderInterface|ExtendedPromiseInterface
      */
-    protected function resolveErrorAsHtml(AppRequestInterface $request, \Throwable $exception)
+    protected function resolveErrorAsHtml(RequestApplicationInterface $app, \Throwable $exception)
     {
         $actions = ['actionError'];
         if ($exception instanceof HttpException) {
@@ -298,39 +298,39 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
             }
         }
         if (!isset($action)) {
-            return $this->resolveErrorAsPlainText($request, $exception);
+            return $this->resolveErrorAsPlainText($app, $exception);
         }
-        return \Reaction::$di->invoke([$this, $action], [$request, $exception]);
+        return \Reaction::$di->invoke([$this, $action], [$app, $exception]);
     }
 
     /**
      * Resolve error as array formatted
-     * @param AppRequestInterface $request
-     * @param \Throwable          $exception
+     * @param RequestApplicationInterface $app
+     * @param \Throwable                  $exception
      * @return ResponseBuilderInterface
      */
-    protected function resolveErrorAsArray(AppRequestInterface $request, \Throwable $exception)
+    protected function resolveErrorAsArray(RequestApplicationInterface $app, \Throwable $exception)
     {
         $data = $this->getErrorData($exception);
         $responseData = ['error' => $data];
-        $request->response->setBody($responseData)->setStatusCodeByException($exception);
-        return $request->response;
+        $app->response->setBody($responseData)->setStatusCodeByException($exception);
+        return $app->response;
     }
 
     /**
      * Resolve error as pain text
-     * @param AppRequestInterface $request
-     * @param \Throwable          $exception
+     * @param RequestApplicationInterface $app
+     * @param \Throwable                  $exception
      * @return ResponseBuilderInterface
      */
-    protected function resolveErrorAsPlainText(AppRequestInterface $request, \Throwable $exception)
+    protected function resolveErrorAsPlainText(RequestApplicationInterface $app, \Throwable $exception)
     {
         $data = $this->getErrorData($exception);
         $responseData = ['error' => $data];
-        $request->response->setBody(print_r($responseData, true))
+        $app->response->setBody(print_r($responseData, true))
             ->setStatusCodeByException($exception)
             ->setFormat(Response::FORMAT_RAW);
-        return $request->response;
+        return $app->response;
     }
 
     /**
@@ -367,10 +367,10 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
     /**
      * Validate that user can perform that action
      * @param string $action
-     * @param AppRequestInterface $request
+     * @param RequestApplicationInterface $app
      * @return ExtendedPromiseInterface
      */
-    protected function validateAction($action, AppRequestInterface $request) {
+    protected function validateAction($action, RequestApplicationInterface $app) {
         $annotationsCtrl = \Reaction::$annotations->getClass($this);
         $annotationsAction = \Reaction::$annotations->getMethod($this, $action);
         $annotations = ArrayHelper::merge(array_values($annotationsCtrl), array_values($annotationsAction));
@@ -380,7 +380,7 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
                 if (!$annotation instanceof CtrlActionValidatorInterface) {
                     continue;
                 }
-                $promise = $annotation->validate($request);
+                $promise = $annotation->validate($app);
                 if (!$promise instanceof PromiseInterface) {
                     $promise = !empty($promise) ? \Reaction\Promise\resolve(true) : \Reaction\Promise\reject(false);
                     \Reaction::warning('not PR');
