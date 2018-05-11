@@ -99,6 +99,42 @@ interface ResponseBuilderInterface
      */
     public function getFormattedBody();
 
+
+    /**
+     * Redirects the browser to the specified URL.
+     *
+     * This method adds a "Location" header to the current response. Note that it does not send out
+     * the header until [[send()]] is called. In a controller action you may use this method as follows:
+     *
+     * @param string|array $url the URL to be redirected to. This can be in one of the following formats:
+     *
+     * - a string representing a URL (e.g. "http://example.com")
+     * - a string representing a URL alias (e.g. "@example.com")
+     * - an array in the format of `[$route, ...name-value pairs...]` (e.g. `['site/index', 'ref' => 1]`).
+     *   Note that the route is with respect to the whole application, instead of relative to a controller or module.
+     *   [[Url::to()]] will be used to convert the array into a URL.
+     *
+     * Any relative URL that starts with a single forward slash "/" will be converted
+     * into an absolute one by prepending it with the host info of the current request.
+     *
+     * @param int $statusCode the HTTP status code. Defaults to 302.
+     * @param bool $checkAjax whether to specially handle AJAX (and PJAX) requests. Defaults to true
+     * Takes effect only when request header `X-Ie-Redirect-Compatibility` is absent.
+     * @return ResponseBuilderInterface
+     */
+    public function redirect($url, $statusCode = 302, $checkAjax = true);
+
+    /**
+     * Refreshes the current page.
+     * The effect of this method call is the same as the user pressing the refresh button of his browser
+     * (without re-posting data).
+     *
+     * @param string $anchor the anchor that should be appended to the redirection URL.
+     * Defaults to empty. Make sure the anchor starts with '#' if you want to specify it.
+     * @return ResponseBuilderInterface
+     */
+    public function refresh($anchor = '');
+
     /**
      * Build response object
      * @return Response

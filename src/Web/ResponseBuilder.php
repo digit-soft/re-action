@@ -250,6 +250,105 @@ class ResponseBuilder extends RequestAppComponent implements ResponseBuilderInte
     }
 
     /**
+     * Redirects the browser to the specified URL.
+     *
+     * This method adds a "Location" header to the current response. Note that it does not send out
+     * the header until [[send()]] is called. In a controller action you may use this method as follows:
+     *
+     * ```php
+     * return $app->response->redirect($url);
+     * ```
+     *
+     * In AJAX mode, this normally will not work as expected unless there are some
+     * client-side JavaScript code handling the redirection. To help achieve this goal,
+     * this method will send out a "X-Redirect" header instead of "Location".
+     *
+     * If you use the "yii" JavaScript module, it will handle the AJAX redirection as
+     * described above. Otherwise, you should write the following JavaScript code to
+     * handle the redirection:
+     *
+     * ```javascript
+     * $document.ajaxComplete(function (event, xhr, settings) {
+     *     var url = xhr && xhr.getResponseHeader('X-Redirect');
+     *     if (url) {
+     *         window.location = url;
+     *     }
+     * });
+     * ```
+     *
+     * @param string|array $url the URL to be redirected to. This can be in one of the following formats:
+     *
+     * - a string representing a URL (e.g. "http://example.com")
+     * - a string representing a URL alias (e.g. "@example.com")
+     * - an array in the format of `[$route, ...name-value pairs...]` (e.g. `['site/index', 'ref' => 1]`).
+     *   Note that the route is with respect to the whole application, instead of relative to a controller or module.
+     *   [[Url::to()]] will be used to convert the array into a URL.
+     *
+     * Any relative URL that starts with a single forward slash "/" will be converted
+     * into an absolute one by prepending it with the host info of the current request.
+     *
+     * @param int $statusCode the HTTP status code. Defaults to 302.
+     * See <https://tools.ietf.org/html/rfc2616#section-10>
+     * for details about HTTP status code
+     * @param bool $checkAjax whether to specially handle AJAX (and PJAX) requests. Defaults to true,
+     * meaning if the current request is an AJAX or PJAX request, then calling this method will cause the browser
+     * to redirect to the given URL. If this is false, a `Location` header will be sent, which when received as
+     * an AJAX response, may NOT cause browser redirection.
+     * Takes effect only when request header `X-Ie-Redirect-Compatibility` is absent.
+     * @return ResponseBuilderInterface
+     */
+    public function redirect($url, $statusCode = 302, $checkAjax = true)
+    {
+        if (is_array($url) && isset($url[0])) {
+            // ensure the route is absolute
+            $url[0] = '/' . ltrim($url[0], '/');
+        }
+        $url = $this->app->helpers->url->to($url);
+        if (strncmp($url, '/', 1) === 0 && strncmp($url, '//', 2) !== 0) {
+            $url = $this->app->reqHelper->getHostInfo() . $url;
+        }
+
+        if ($checkAjax) {
+            if ($this->app->reqHelper->getIsAjax()) {
+                if ($this->app->reqHelper->getHeaders()->get('X-Ie-Redirect-Compatibility') !== null && $statusCode === 302) {
+                    // Ajax 302 redirect in IE does not work. Change status code to 200. See https://github.com/yiisoft/yii2/issues/9670
+                    $statusCode = 200;
+                }
+                $this->getHeaders()->set('X-Redirect', $url);
+            } else {
+                $this->getHeaders()->set('Location', $url);
+            }
+        } else {
+            $this->getHeaders()->set('Location', $url);
+        }
+
+        $this->setBody(null);
+        $this->setStatusCode($statusCode);
+
+        return $this;
+    }
+
+    /**
+     * Refreshes the current page.
+     * The effect of this method call is the same as the user pressing the refresh button of his browser
+     * (without re-posting data).
+     *
+     * In a controller action you may use this method like this:
+     *
+     * ```php
+     * return $app->response->refresh();
+     * ```
+     *
+     * @param string $anchor the anchor that should be appended to the redirection URL.
+     * Defaults to empty. Make sure the anchor starts with '#' if you want to specify it.
+     * @return ResponseBuilderInterface
+     */
+    public function refresh($anchor = '')
+    {
+        return $this->redirect($this->app->reqHelper->getUrl() . $anchor);
+    }
+
+    /**
      * Build response object
      * @return Response
      */
@@ -339,6 +438,7 @@ class ResponseBuilder extends RequestAppComponent implements ResponseBuilderInte
     }
 
     /**
+     * Get default formatters
      * @return array the formatters that are supported by default
      */
     protected function defaultFormatters()
