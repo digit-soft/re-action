@@ -5,7 +5,7 @@ namespace Reaction\Annotations;
 use Doctrine\Common\Annotations\Annotation\Attribute;
 use Doctrine\Common\Annotations\Annotation\Attributes;
 use Reaction\Promise\ExtendedPromiseInterface;
-use Reaction\Web\AppRequestInterface;
+use Reaction\RequestApplicationInterface;
 use function Reaction\Promise\reject;
 use function Reaction\Promise\resolve;
 
@@ -35,10 +35,10 @@ class CtrlAuth implements CtrlActionValidatorInterface
 
     /**
      * Validation callback
-     * @param AppRequestInterface $request
+     * @param RequestApplicationInterface $app
      * @return ExtendedPromiseInterface
      */
-    public function validate(AppRequestInterface $request)
+    public function validate(RequestApplicationInterface $app)
     {
         if (empty($this->permissions) && $this->authorized === null) {
             return resolve(true);

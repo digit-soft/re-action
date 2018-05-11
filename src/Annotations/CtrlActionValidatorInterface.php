@@ -3,7 +3,7 @@
 namespace Reaction\Annotations;
 
 use Reaction\Promise\ExtendedPromiseInterface;
-use Reaction\Web\AppRequestInterface;
+use Reaction\RequestApplicationInterface;
 
 /**
  * Interface CtrlActionValidatorInterface.
@@ -14,8 +14,8 @@ interface CtrlActionValidatorInterface
 {
     /**
      * Validation callback
-     * @param AppRequestInterface $request
+     * @param RequestApplicationInterface $app
      * @return ExtendedPromiseInterface
      */
-    public function validate(AppRequestInterface $request);
+    public function validate(RequestApplicationInterface $app);
 }
