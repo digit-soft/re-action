@@ -111,8 +111,8 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
         array_unshift($params, $app);
         $self = $this;
         return $this->validateAction($action, $app)->then(
-            function () use (&$request, &$self, $action, $params) {
-                $request->view->context = $self;
+            function () use (&$app, &$self, $action, $params) {
+                $app->view->context = $self;
                 return \Reaction::$di->invoke([$self, $action], $params);
             },
             function ($error) {

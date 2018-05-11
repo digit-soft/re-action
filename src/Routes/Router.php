@@ -184,8 +184,7 @@ class Router extends Component implements RouterInterface
      * @return array
      */
     public function getDispatcherData(RequestApplicationInterface $app) {
-        $path = '/' . (string)$app->reqHelper->pathInfo;
-        $path = rtrim($path, '/');
+        $path = (string)$app->reqHelper->getPathInfo();
         $method = $app->reqHelper->getMethod();
         return $this->dispatcher->dispatch($method, $path);
     }

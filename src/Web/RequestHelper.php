@@ -1442,6 +1442,7 @@ class RequestHelper extends RequestAppComponent
             throw new InvalidConfigException('Unable to determine the path info of the current request.');
         }
 
+        $pathInfo = rtrim($pathInfo, '/');
         if (strlen($pathInfo) === 0 || substr($pathInfo, 0, 1) !== '/') {
             $pathInfo = '/' . $pathInfo;
         }
