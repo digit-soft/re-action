@@ -48,8 +48,9 @@ use Reaction\Rbac\CheckAccessInterface;
  * @property bool $isGuest Whether the current user is a guest. This property is read-only.
  * @property string $returnUrl The URL that the user should be redirected to after login. Note that the type
  * of this property differs in getter and setter. See [[getReturnUrl()]] and [[setReturnUrl()]] for details.
+ * @property RequestHelper $request
  */
-class User extends RequestService implements UserInterface
+class User extends Reaction\Base\RequestAppServiceLocator implements UserInterface
 {
     const EVENT_BEFORE_LOGIN = 'beforeLogin';
     const EVENT_AFTER_LOGIN = 'afterLogin';
@@ -336,7 +337,7 @@ class User extends RequestService implements UserInterface
             $ip = $this->request->getUserIP();
             Reaction::info("User '$id' logged out from $ip.");
             if ($destroySession && $this->enableSession) {
-                $this->request->session->destroy();
+                $this->app->session->destroy();
             }
             //TODO: Promise
             $this->afterLogout($identity);
@@ -381,16 +382,16 @@ class User extends RequestService implements UserInterface
      */
     public function getReturnUrl($defaultUrl = null)
     {
-        $url = $this->request->session->get($this->returnUrlParam, $defaultUrl);
+        $url = $this->app->session->get($this->returnUrlParam, $defaultUrl);
         if (is_array($url)) {
             if (isset($url[0])) {
-                return Reaction::$app->urlManager->createUrl($url);
+                return $this->app->urlManager->createUrl($url);
             }
 
             $url = null;
         }
 
-        return $url === null ? Reaction::$app->urlManager->getHomeUrl() : $url;
+        return $url === null ? $this->app->urlManager->getHomeUrl() : $url;
     }
 
     /**
@@ -406,7 +407,7 @@ class User extends RequestService implements UserInterface
      */
     public function setReturnUrl($url)
     {
-        $this->request->session->set($this->returnUrlParam, $url);
+        $this->app->session->set($this->returnUrlParam, $url);
     }
 
     /**
@@ -425,7 +426,7 @@ class User extends RequestService implements UserInterface
      * @param bool $checkAcceptHeader whether to check if the request accepts HTML responses. Defaults to `true`. When this is true and
      * the request does not accept HTML responses the current URL will not be SET as the return URL. Also instead of
      * redirecting the user an ForbiddenHttpException is thrown. This parameter is available since version 2.0.8.
-     * @return Response the redirection response if [[loginUrl]] is set
+     * @return ResponseBuilderInterface the redirection response if [[loginUrl]] is set
      * @throws ForbiddenException the "Access Denied" HTTP exception if [[loginUrl]] is not set or a redirect is
      * not applicable.
      */
@@ -442,9 +443,8 @@ class User extends RequestService implements UserInterface
         }
         if ($this->loginUrl !== null && $canRedirect) {
             $loginUrl = (array) $this->loginUrl;
-            if ($loginUrl[0] !== $request->getRoute()->getRoutePath(true)) {
-                //TODO: Add redirect
-                //return $this->request->response->redirect($this->loginUrl);
+            if ($loginUrl[0] !== $this->app->getRoute()->getRoutePath(true)) {
+                return $this->app->response->redirect($this->loginUrl);
             }
         }
         throw new ForbiddenException(Reaction::t('yii', 'Login Required'));
@@ -516,7 +516,7 @@ class User extends RequestService implements UserInterface
     protected function renewIdentityCookie()
     {
         $name = $this->identityCookie['name'];
-        $value = $this->request->cookies->getValue($name);
+        $value = $this->request->getCookies()->getValue($name);
         if ($value !== null) {
             $data = json_decode($value, true);
             if (is_array($data) && isset($data[2])) {
@@ -525,7 +525,7 @@ class User extends RequestService implements UserInterface
                     'value' => $value,
                     'expire' => time() + (int) $data[2],
                 ]));
-                $this->request->response->getCookies()->add($cookie);
+                $this->app->response->getCookies()->add($cookie);
             }
         }
     }
@@ -536,7 +536,7 @@ class User extends RequestService implements UserInterface
      * It saves [[id]], [[IdentityInterface::getAuthKey()|auth key]], and the duration of cookie-based login
      * information in the cookie.
      * @param IdentityInterface $identity
-     * @param int $duration number of seconds that the user can remain in logged-in status.
+     * @param int               $duration number of seconds that the user can remain in logged-in status.
      * @see loginByCookie()
      */
     protected function sendIdentityCookie($identity, $duration)
@@ -550,7 +550,7 @@ class User extends RequestService implements UserInterface
             ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
             'expire' => time() + $duration,
         ]));
-        $this->request->response->getCookies()->add($cookie);
+        $this->app->response->getCookies()->add($cookie);
     }
 
     /**
@@ -559,7 +559,6 @@ class User extends RequestService implements UserInterface
      * This method attempts to authenticate a user using the information in the identity cookie.
      * @return array|null Returns an array of 'identity' and 'duration' if valid, otherwise null.
      * @see loginByCookie()
-     * @since 2.0.9
      */
     protected function getIdentityAndDurationFromCookie()
     {
@@ -591,11 +590,10 @@ class User extends RequestService implements UserInterface
     /**
      * Removes the identity cookie.
      * This method is used when [[enableAutoLogin]] is true.
-     * @since 2.0.9
      */
     protected function removeIdentityCookie()
     {
-        $this->request->response->getCookies()->remove(Reaction::create(array_merge($this->identityCookie, [
+        $this->app->response->getCookies()->remove(Reaction::create(array_merge($this->identityCookie, [
             'class' => 'Reaction\Web\Cookie',
         ])));
     }
@@ -627,7 +625,7 @@ class User extends RequestService implements UserInterface
             $this->removeIdentityCookie();
         }
 
-        $session = $this->request->session;
+        $session = $this->app->session;
         if (!Reaction::isTest()) {
             $session->regenerateID(true);
         }
@@ -660,7 +658,7 @@ class User extends RequestService implements UserInterface
      */
     protected function renewAuthStatus()
     {
-        $session = $this->request->session;
+        $session = $this->app->session;
         $id = $session->getHasSessionId() || $session->getIsActive() ? $session->get($this->idParam) : null;
 
         if ($id === null) {
@@ -706,7 +704,7 @@ class User extends RequestService implements UserInterface
      * When this parameter is true (default), if the access check of an operation was performed
      * before, its result will be directly returned when calling this method to check the same
      * operation. If this parameter is false, this method will always call
-     * [[\yii\rbac\CheckAccessInterface::checkAccess()]] to obtain the up-to-date access result. Note that this
+     * [[\Reaction\Rbac\CheckAccessInterface::checkAccess()]] to obtain the up-to-date access result. Note that this
      * caching is effective only within the same request and only works when `$params = []`.
      * @return bool whether the user can perform the operation as specified by the given permission.
      */
@@ -756,5 +754,13 @@ class User extends RequestService implements UserInterface
     protected function getAccessChecker()
     {
         return $this->accessChecker !== null ? $this->accessChecker : Reaction::$app->getAuthManager();
+    }
+
+    /**
+     * Get Request helper
+     * @return RequestHelper
+     */
+    protected function getRequest() {
+        return $this->app->reqHelper;
     }
 }
