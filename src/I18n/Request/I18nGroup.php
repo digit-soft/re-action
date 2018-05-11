@@ -2,13 +2,13 @@
 
 namespace Reaction\I18n\Request;
 
-use Reaction\Web\RequestService;
+use Reaction\Base\RequestAppServiceLocator;
 
 /**
  * Class I18nGroup
  * @package Reaction\I18n\Request
  * @property Formatter $formatter
  */
-class I18nGroup extends RequestService
+class I18nGroup extends RequestAppServiceLocator
 {
 }

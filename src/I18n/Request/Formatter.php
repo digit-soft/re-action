@@ -10,7 +10,7 @@ use DateTimeZone;
 use IntlDateFormatter;
 use NumberFormatter;
 use Reaction;
-use Reaction\Base\Component;
+use Reaction\Base\RequestAppComponent;
 use Reaction\Exceptions\InvalidArgumentException;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Helpers\FormatConverter;
@@ -35,7 +35,7 @@ use Reaction\Helpers\HtmlPurifier;
  * on 32bit systems will fall back to the PHP implementation because intl uses a 32bit UNIX timestamp internally.
  * On a 64bit system the intl formatter is used in all cases if installed.
  */
-class Formatter extends Reaction\Web\RequestComponent
+class Formatter extends RequestAppComponent
 {
     /**
      * @since 2.0.13
