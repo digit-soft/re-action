@@ -5,7 +5,7 @@ namespace Reaction\Helpers;
 
 use Reaction;
 use Reaction\Exceptions\InvalidArgumentException;
-use Reaction\Web\AppRequestInterface;
+use Reaction\RequestApplicationInterface;
 
 /**
  * Url provides a set of static methods for managing URLs.
@@ -71,20 +71,20 @@ class Url
      *
      * @param string|array $route use a string to represent a route (e.g. `index`, `site/index`),
      * or an array to represent a route with query parameters (e.g. `['site/index', 'param1' => 'value1']`).
-     * @param bool|string  $scheme the URI scheme to use in the generated URL:
+     * @param bool|string                 $scheme the URI scheme to use in the generated URL:
      *
      * - `false` (default): generating a relative URL.
      * - `true`: returning an absolute base URL whose scheme is the same as that in [[\yii\web\UrlManager::$hostInfo]].
      * - string: generating an absolute URL with the specified scheme (either `http`, `https` or empty string
      *   for protocol-relative URL).
      *
-     * @param AppRequestInterface $request
+     * @param RequestApplicationInterface $app
      * @return string the generated URL
      */
-    public static function toRoute($route, $scheme = false, AppRequestInterface $request)
+    public static function toRoute($route, $scheme = false, RequestApplicationInterface $app)
     {
         $route = (array) $route;
-        $route[0] = static::normalizeRoutePath($route[0], $request);
+        $route[0] = static::normalizeRoutePath($route[0], $app);
 
         if ($scheme !== false) {
             return static::getUrlManager()->createAbsoluteUrl($route, is_string($scheme) ? $scheme : null);
@@ -144,27 +144,27 @@ class Url
      * ```
      *
      *
-     * @param array|string $url the parameter to be used to generate a valid URL
-     * @param bool|string  $scheme the URI scheme to use in the generated URL:
+     * @param array|string                $url the parameter to be used to generate a valid URL
+     * @param bool|string                 $scheme the URI scheme to use in the generated URL:
      *
      * - `false` (default): generating a relative URL.
-     * - `true`: returning an absolute base URL whose scheme is the same as that in [[\yii\web\UrlManager::$hostInfo]].
+     * - `true`: returning an absolute base URL whose scheme is the same as that in [[\Reaction\Web\UrlManager::$hostInfo]].
      * - string: generating an absolute URL with the specified scheme (either `http`, `https` or empty string
      *   for protocol-relative URL).
      *
-     * @param AppRequestInterface $request
+     * @param RequestApplicationInterface $app
      * @return string the generated URL
      * @throws Reaction\Exceptions\InvalidConfigException
      */
-    public static function to($url = '', $scheme = false, AppRequestInterface $request = null)
+    public static function to($url = '', $scheme = false, RequestApplicationInterface $app = null)
     {
         if (is_array($url)) {
-            return isset($request) ? static::toRoute($url, $scheme, $request) : null;
+            return isset($app) ? static::toRoute($url, $scheme, $app) : null;
         }
 
         $url = Reaction::$app->getAlias($url);
-        if ($url === '' && isset($request)) {
-            $url = $request->getUrl();
+        if ($url === '' && isset($app)) {
+            $url = $app->reqHelper->getUrl();
         }
 
         if ($scheme === false) {
@@ -235,44 +235,44 @@ class Url
     /**
      * Remembers the specified URL so that it can be later fetched back by [[previous()]].
      *
-     * @param string|array $url the URL to remember. Please refer to [[to()]] for acceptable formats.
+     * @param string|array                $url the URL to remember. Please refer to [[to()]] for acceptable formats.
      * If this parameter is not specified, the currently requested URL will be used.
-     * @param string       $name the name associated with the URL to be remembered. This can be used
+     * @param string                      $name the name associated with the URL to be remembered. This can be used
      * later by [[previous()]]. If not set, [[\Reaction\Web\User::setReturnUrl()]] will be used with passed URL.
-     * @param AppRequestInterface $request
+     * @param RequestApplicationInterface $app
      * @throws Reaction\Exceptions\InvalidConfigException
      * @see previous()
      * @see \Reaction\Web\User::setReturnUrl()
      */
-    public static function remember($url = '', $name = null, $request)
+    public static function remember($url = '', $name = null, RequestApplicationInterface $app)
     {
         $url = static::to($url);
 
         if ($name === null) {
-            $request->user->setReturnUrl($url);
+            $app->user->setReturnUrl($url);
         } else {
-            $request->session->set($name, $url);
+            $app->session->set($name, $url);
         }
     }
 
     /**
      * Returns the URL previously [[remember()|remembered]].
      *
-     * @param string $name the named associated with the URL that was remembered previously.
+     * @param string                      $name the named associated with the URL that was remembered previously.
      * If not set, [[\Reaction\Web\User::getReturnUrl()]] will be used to obtain remembered URL.
-     * @param AppRequestInterface $request
+     * @param RequestApplicationInterface $app
      * @return string|null the URL previously remembered. Null is returned if no URL was remembered with the given name
      * and `$name` is not specified.
      * @see remember()
      * @see \Reaction\Web\User::getReturnUrl()
      */
-    public static function previous($name = null, $request)
+    public static function previous($name = null, RequestApplicationInterface $app)
     {
         if ($name === null) {
-            return $request->user->getReturnUrl();
+            return $app->user->getReturnUrl();
         }
 
-        return $request->session->get($name);
+        return $app->session->get($name);
     }
 
     /**
@@ -286,16 +286,16 @@ class Url
      * $this->registerLinkTag(['rel' => 'canonical', 'href' => Url::canonical()]);
      * ```
      *
-     * @param AppRequestInterface $request
+     * @param RequestApplicationInterface $app
      * @return string the canonical URL of the currently requested page
      */
-    public static function canonical($request)
+    public static function canonical(RequestApplicationInterface $app)
     {
-        $routePath = static::getCurrentPath($request, true);
+        $routePath = static::getCurrentPath($app, true);
         if ($routePath === null) {
             return null;
         }
-        $params = $request->getRoute()->getRouteParams();
+        $params = $app->getRoute()->getRouteParams();
         $params[0] = $routePath;
 
         return static::getUrlManager()->createAbsoluteUrl($params);
@@ -377,19 +377,19 @@ class Url
      * - string: generating an absolute URL with the specified scheme (either `http`, `https` or empty string
      *   for protocol-relative URL).
      *
-     * @param AppRequestInterface $request
+     * @param RequestApplicationInterface $app
      * @return string the generated URL
      */
-    public static function current(array $params = [], $scheme = false, AppRequestInterface $request)
+    public static function current(array $params = [], $scheme = false, RequestApplicationInterface $app)
     {
-        $routePath = static::getCurrentPath($request, true);
+        $routePath = static::getCurrentPath($app, true);
         if ($routePath === null) {
             return null;
         }
-        $currentParams = $request->_getQueryParams();
+        $currentParams = $app->reqHelper->getQueryParams();
         $currentParams[0] = $routePath;
         $route = array_replace_recursive($currentParams, $params);
-        return static::toRoute($route, $scheme, $request);
+        return static::toRoute($route, $scheme, $app);
     }
 
     /**
@@ -407,11 +407,11 @@ class Url
      * A route can also be specified as an alias. In this case, the alias
      * will be converted into the actual route first before conducting the above transformation steps.
      *
-     * @param string              $routePath the route. This can be either an absolute route or a relative route.
-     * @param AppRequestInterface $request
+     * @param string                      $routePath the route. This can be either an absolute route or a relative route.
+     * @param RequestApplicationInterface $app
      * @return string normalized route suitable for UrlManager
      */
-    protected static function normalizeRoutePath($routePath, AppRequestInterface $request)
+    protected static function normalizeRoutePath($routePath, RequestApplicationInterface $app)
     {
         $routePath = Reaction::$app->getAlias((string) $routePath);
         if (strncmp($routePath, '/', 1) === 0) {
@@ -419,7 +419,7 @@ class Url
             return $routePath;
         }
 
-        $route = $request->getRoute();
+        $route = $app->getRoute();
 
         // relative route
         if ($route === null || $route->controller === null) {
@@ -431,12 +431,12 @@ class Url
 
     /**
      * Get current path from request & current controller
-     * @param AppRequestInterface $request
+     * @param RequestApplicationInterface $app
      * @param bool                $onlyStaticPart
      * @return null|string
      */
-    protected static function getCurrentPath(AppRequestInterface $request, $onlyStaticPart = false) {
-        $route = $request->getRoute();
+    protected static function getCurrentPath(RequestApplicationInterface $app, $onlyStaticPart = false) {
+        $route = $app->getRoute();
         return $route ? $route->getRoutePath($onlyStaticPart) : null;
     }
 

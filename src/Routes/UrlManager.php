@@ -5,7 +5,7 @@ namespace Reaction\Routes;
 use Reaction\Base\Component;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Helpers\Url;
-use Reaction\Web\AppRequestInterface;
+use Reaction\RequestApplicationInterface;
 
 /**
  * Class UrlManager
@@ -62,10 +62,10 @@ class UrlManager extends Component implements UrlManagerInterface
      *
      * @param string|array             $params use a string to represent a route (e.g. `site/index`),
      * or an array to represent a route with query parameters (e.g. `['site/index', 'param1' => 'value1']`).
-     * @param AppRequestInterface|null $request
+     * @param RequestApplicationInterface|null $app
      * @return string the created URL
      */
-    public function createUrl($params, $request = null)
+    public function createUrl($params, $app = null)
     {
         $params = (array) $params;
         $anchor = isset($params['#']) ? '#' . $params['#'] : '';
@@ -75,7 +75,7 @@ class UrlManager extends Component implements UrlManagerInterface
         unset($params[0]);
         $route = $this->buildRoutePath($route, $params);
 
-        $baseUrl = $this->getBaseUrl($request);
+        $baseUrl = $this->getBaseUrl($app);
 
         if ($this->suffix !== null) {
             $route .= $this->suffix;
@@ -96,21 +96,21 @@ class UrlManager extends Component implements UrlManagerInterface
      * Note that unlike [[\Reaction\Helpers\Url::toRoute()]], this method always treats the given route
      * as an absolute route.
      *
-     * @param string|array $params use a string to represent a route (e.g. `site/index`),
+     * @param string|array             $params use a string to represent a route (e.g. `site/index`),
      * or an array to represent a route with query parameters (e.g. `['site/index', 'param1' => 'value1']`).
-     * @param string|null  $scheme the scheme to use for the URL (either `http`, `https` or empty string
+     * @param string|null              $scheme the scheme to use for the URL (either `http`, `https` or empty string
      * for protocol-relative URL).
      * If not specified the scheme of the current request will be used.
-     * @param AppRequestInterface|null $request
+     * @param RequestApplicationInterface|null $app
      * @return string the created URL
      * @see createUrl()
      */
-    public function createAbsoluteUrl($params, $scheme = null, $request = null)
+    public function createAbsoluteUrl($params, $scheme = null, $app = null)
     {
         $params = (array) $params;
         $url = $this->createUrl($params);
         if (strpos($url, '://') === false) {
-            $hostInfo = $this->getHostInfo($request);
+            $hostInfo = $this->getHostInfo($app);
             if (strncmp($url, '//', 2) === 0) {
                 $url = substr($hostInfo, 0, strpos($hostInfo, '://')) . ':' . $url;
             } else {
@@ -123,13 +123,13 @@ class UrlManager extends Component implements UrlManagerInterface
 
     /**
      * Getter for $baseUrl
-     * @param AppRequestInterface|null $request
+     * @param RequestApplicationInterface|null $app
      * @return string
      */
-    public function getBaseUrl($request = null)
+    public function getBaseUrl($app = null)
     {
-        if ($request !== null && $request instanceof AppRequestInterface) {
-            return $request->getBaseUrl();
+        if ($app !== null && $app instanceof RequestApplicationInterface) {
+            return $app->reqHelper->getBaseUrl();
         }
         if ($this->_baseUrl === null) {
             throw new InvalidConfigException('Please configure UrlManager::baseUrl correctly if you are running a console application.');
@@ -148,13 +148,13 @@ class UrlManager extends Component implements UrlManagerInterface
 
     /**
      * Getter for $hostInfo
-     * @param AppRequestInterface|null $request
+     * @param RequestApplicationInterface|null $app
      * @return string
      */
-    public function getHostInfo($request = null)
+    public function getHostInfo($app = null)
     {
-        if ($request !== null && $request instanceof AppRequestInterface) {
-            return $request->getHostInfo();
+        if ($app !== null && $app instanceof RequestApplicationInterface) {
+            return $app->reqHelper->getHostInfo();
         }
         if ($this->_hostInfo === null) {
             throw new InvalidConfigException('Please configure UrlManager::hostInfo correctly if you are running a console application.');

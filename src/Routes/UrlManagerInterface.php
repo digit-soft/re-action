@@ -2,7 +2,7 @@
 
 namespace Reaction\Routes;
 
-use Reaction\Web\AppRequestInterface;
+use Reaction\RequestApplicationInterface;
 
 /**
  * Interface UrlManagerInterface
@@ -48,13 +48,13 @@ interface UrlManagerInterface
      * Note that unlike [[\Reaction\Helpers\Url::toRoute()]], this method always treats the given route
      * as an absolute route.
      *
-     * @param string|array $params use a string to represent a route (e.g. `site/index`),
+     * @param string|array                     $params use a string to represent a route (e.g. `site/index`),
      * or an array to represent a route with query parameters (e.g. `['site/index', 'param1' => 'value1']`).
-     * @param AppRequestInterface|null $request
+     * @param RequestApplicationInterface|null $app
      * @return string the created URL
      * @see createAbsoluteUrl()
      */
-    public function createUrl($params, $request = null);
+    public function createUrl($params, $app = null);
 
     /**
      * Creates an absolute URL using the given route and query parameters.
@@ -64,23 +64,23 @@ interface UrlManagerInterface
      * Note that unlike [[\Reaction\Helpers\Url::toRoute()]], this method always treats the given route
      * as an absolute route.
      *
-     * @param string|array $params use a string to represent a route (e.g. `site/index`),
+     * @param string|array             $params use a string to represent a route (e.g. `site/index`),
      * or an array to represent a route with query parameters (e.g. `['site/index', 'param1' => 'value1']`).
-     * @param string|null  $scheme the scheme to use for the URL (either `http`, `https` or empty string
+     * @param string|null              $scheme the scheme to use for the URL (either `http`, `https` or empty string
      * for protocol-relative URL).
      * If not specified the scheme of the current request will be used.
-     * @param AppRequestInterface|null $request
+     * @param RequestApplicationInterface|null $app
      * @return string the created URL
      * @see createUrl()
      */
-    public function createAbsoluteUrl($params, $scheme = null, $request = null);
+    public function createAbsoluteUrl($params, $scheme = null, $app = null);
 
     /**
      * Getter for $baseUrl
-     * @param AppRequestInterface|null $request
+     * @param RequestApplicationInterface|null $app
      * @return string
      */
-    public function getBaseUrl($request = null);
+    public function getBaseUrl($app = null);
 
     /**
      * Setter for $baseUrl
@@ -90,10 +90,10 @@ interface UrlManagerInterface
 
     /**
      * Getter for $hostInfo
-     * @param AppRequestInterface|null $request
+     * @param RequestApplicationInterface|null $app
      * @return string
      */
-    public function getHostInfo($request = null);
+    public function getHostInfo($app = null);
 
     /**
      * Setter for $hostInfo
