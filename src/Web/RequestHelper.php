@@ -261,12 +261,12 @@ class RequestHelper extends RequestAppComponent
             /** @var string $methodHeader */
             $methodHeader = $this->getHeaders()->get('X-Http-Method-Override');
             $reactMethod = strtoupper($this->reactRequest->getMethod());
-            $reactBody = $this->reactRequest->getParsedBody();
+            $reactBody = (array)$this->reactRequest->getParsedBody();
             if ($reactMethod === 'POST' && isset($reactBody[$this->methodParam])) {
                 $this->_method = strtoupper($reactBody[$this->methodParam]);
             } elseif ($this->getHeaders()->has('X-Http-Method-Override')) {
                 $this->_method = $methodHeader;
-            } elseif ($reactMethod = $this->reactRequest->getMethod()) {
+            } elseif ($reactMethod) {
                 $this->_method = $reactMethod;
             } else {
                 $this->_method = 'GET';
@@ -275,7 +275,93 @@ class RequestHelper extends RequestAppComponent
         return $this->_method;
     }
 
+    /**
+     * Returns whether this is a GET request.
+     * @return bool whether this is a GET request.
+     */
+    public function getIsGet()
+    {
+        return $this->getMethod() === 'GET';
+    }
 
+    /**
+     * Returns whether this is an OPTIONS request.
+     * @return bool whether this is a OPTIONS request.
+     */
+    public function getIsOptions()
+    {
+        return $this->getMethod() === 'OPTIONS';
+    }
+
+    /**
+     * Returns whether this is a HEAD request.
+     * @return bool whether this is a HEAD request.
+     */
+    public function getIsHead()
+    {
+        return $this->getMethod() === 'HEAD';
+    }
+
+    /**
+     * Returns whether this is a POST request.
+     * @return bool whether this is a POST request.
+     */
+    public function getIsPost()
+    {
+        return $this->getMethod() === 'POST';
+    }
+
+    /**
+     * Returns whether this is a DELETE request.
+     * @return bool whether this is a DELETE request.
+     */
+    public function getIsDelete()
+    {
+        return $this->getMethod() === 'DELETE';
+    }
+
+    /**
+     * Returns whether this is a PUT request.
+     * @return bool whether this is a PUT request.
+     */
+    public function getIsPut()
+    {
+        return $this->getMethod() === 'PUT';
+    }
+
+    /**
+     * Returns whether this is a PATCH request.
+     * @return bool whether this is a PATCH request.
+     */
+    public function getIsPatch()
+    {
+        return $this->getMethod() === 'PATCH';
+    }
+
+    /**
+     * Returns whether this is an AJAX (XMLHttpRequest) request.
+     *
+     * Note that jQuery doesn't set the header in case of cross domain
+     * requests: https://stackoverflow.com/questions/8163703/cross-domain-ajax-doesnt-send-x-requested-with-header
+     *
+     * @return bool whether this is an AJAX (XMLHttpRequest) request.
+     */
+    public function getIsAjax()
+    {
+        return $this->getHeaders()->get('X-Requested-With') === 'XMLHttpRequest';
+    }
+
+    /**
+     * Returns whether this is an Adobe Flash or Flex request.
+     * @return bool whether this is an Adobe Flash or Adobe Flex request.
+     */
+    public function getIsFlash()
+    {
+        /** @var string $userAgent */
+        $userAgent = $this->getHeaders()->get('User-Agent', '');
+        return stripos($userAgent, 'Shockwave') !== false
+            || stripos($userAgent, 'Flash') !== false;
+    }
 
 
 
