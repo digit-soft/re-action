@@ -20,7 +20,8 @@ interface ExpiringCacheInterface extends ExtendedCacheInterface
      * @param string|array $key Cache key
      * @param mixed        $value Data
      * @param integer|null $lifetime Cache lifetime in seconds
+     * @param array        $tags Possible tags
      * @return ExtendedPromiseInterface  with bool then finished
      */
-    public function set($key, $value, $lifetime = null);
+    public function set($key, $value, $lifetime = null, $tags = []);
 }

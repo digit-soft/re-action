@@ -13,9 +13,10 @@ use function Reaction\Promise\resolve;
  */
 class ArrayCache extends ExtendedCache
 {
-
     /** @var array Data storage */
     protected $storage = [];
+    /** @var array Tags associated with data keys */
+    protected $tags = [];
 
     /**
      * Get data from cache
@@ -35,12 +36,14 @@ class ArrayCache extends ExtendedCache
      * Write data to cache
      * @param string|array $key
      * @param mixed        $value
+     * @param array        $tags  Possible data tags
      * @return ExtendedPromiseInterface  with bool then finished
      */
-    public function set($key, $value)
+    public function set($key, $value, $tags = [])
     {
         $key = $this->processKey($key);
         $this->storage[$key] = $value;
+        $this->addKeyTags($key, $tags);
         return resolve(true);
     }
 
@@ -53,8 +56,28 @@ class ArrayCache extends ExtendedCache
         $key = $this->processKey($key);
         if ($this->existInternal($key)) {
             unset($this->storage[$key]);
+            foreach ($this->tags as $tag => $keys) {
+                if (isset($keys[$key])) {
+                    unset($this->tags[$tag][$key]);
+                }
+            }
         }
         return resolve(true);
+    }
+
+    /**
+     * Remove cache data by tag
+     * @param string $tag
+     * @return ExtendedPromiseInterface  with bool 'true' then finished
+     */
+    public function removeByTag($tag)
+    {
+        if (!isset($this->tags[$tag])) {
+            return resolve(true);
+        }
+        $keys = $this->tags[$tag];
+        unset($this->tags[$tag]);
+        return !empty($keys) ? $this->removeMultiple($keys) : resolve(true);
     }
 
     /**
@@ -79,5 +102,20 @@ class ArrayCache extends ExtendedCache
      */
     protected function existInternal($key) {
         return ArrayHelper::keyExists($key, $this->storage);
+    }
+
+    /**
+     * Save key tags
+     * @param string   $key
+     * @param string[] $tags
+     */
+    protected function addKeyTags($key, $tags = [])
+    {
+        foreach ($tags as $tag) {
+            if (!isset($this->tags[$tag])) {
+                $this->tags[$tag] = [];
+            }
+            $this->tags[$tag][$key] = $key;
+        }
     }
 }

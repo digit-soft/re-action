@@ -23,11 +23,13 @@ abstract class ExtendedCache extends BaseObject implements ExtendedCacheInterfac
      * Write data to cache
      * @param string|array $key
      * @param mixed        $value
+     * @param array        $tags  Possible data tags
      * @return ExtendedPromiseInterface  with bool then finished
      */
-    abstract public function set($key, $value);
+    abstract public function set($key, $value, $tags = []);
 
     /**
+     * Remove data from cache
      * @param string|array $key
      * @return ExtendedPromiseInterface  with bool 'true' then finished
      */
@@ -54,6 +56,13 @@ abstract class ExtendedCache extends BaseObject implements ExtendedCacheInterfac
      * @return ExtendedPromiseInterface  with bool
      */
     abstract public function exists($key);
+
+    /**
+     * Remove cache data by tag
+     * @param string $tag
+     * @return mixed
+     */
+    abstract public function removeByTag($tag);
 
     /**
      * Process key. Ensure that key is string

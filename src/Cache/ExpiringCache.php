@@ -2,7 +2,6 @@
 
 namespace Reaction\Cache;
 
-use React\EventLoop\LoopInterface;
 use React\EventLoop\Timer\TimerInterface;
 use React\Promise\ExtendedPromiseInterface;
 use Reaction\Helpers\ArrayHelper;
@@ -21,6 +20,10 @@ abstract class ExpiringCache extends ExtendedCache implements ExpiringCacheInter
      * @var string User data timestamp key
      */
     public $dataKey = '_data';
+    /**
+     * @var string Tags key in record
+     */
+    public $tagsKey = '_tags';
     /**
      * @var int Timer interval seconds
      */
@@ -59,9 +62,10 @@ abstract class ExpiringCache extends ExtendedCache implements ExpiringCacheInter
      * @param string|array $key Cache key
      * @param mixed        $value Data
      * @param integer|null $lifetime Cache lifetime in seconds
+     * @param array        $tags Possible tags
      * @return ExtendedPromiseInterface  with bool then finished
      */
-    abstract public function set($key, $value, $lifetime = null);
+    abstract public function set($key, $value, $lifetime = null, $tags = []);
 
     /**
      * @param string|array $key

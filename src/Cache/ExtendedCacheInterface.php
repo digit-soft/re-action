@@ -3,7 +3,7 @@
 namespace Reaction\Cache;
 
 use React\Cache\CacheInterface;
-use React\Promise\ExtendedPromiseInterface;
+use Reaction\Promise\ExtendedPromiseInterface;
 
 /**
  * Interface ExtendedCacheInterface
@@ -20,11 +20,12 @@ interface ExtendedCacheInterface extends CacheInterface
 
     /**
      * Write data to cache
-     * @param string|array $key
-     * @param mixed $value
+     * @param string|array $key Cache key
+     * @param mixed        $value Data to store
+     * @param array        $tags  Possible data tags
      * @return ExtendedPromiseInterface  with bool then finished
      */
-    public function set($key, $value);
+    public function set($key, $value, $tags = []);
 
     /**
      * Remove data from cache
@@ -39,6 +40,13 @@ interface ExtendedCacheInterface extends CacheInterface
      * @return ExtendedPromiseInterface  with bool 'true' then finished
      */
     public function removeMultiple($keys);
+
+    /**
+     * Remove cache data by tag
+     * @param string $tag
+     * @return ExtendedPromiseInterface  with bool 'true' then finished
+     */
+    public function removeByTag($tag);
 
     /**
      * Checks that key exists in cache
