@@ -29,15 +29,19 @@ class ArrayExpiringCache extends ExpiringCache
 
     /**
      * Write data to cache
-     * @param string|array $key
-     * @param mixed        $value
+     * @param string|array $key Cache key
+     * @param mixed        $value Data
+     * @param integer|null $lifetime Cache lifetime in seconds
      * @return ExtendedPromiseInterface  with bool then finished
      */
-    public function set($key, $value)
+    public function set($key, $value, $lifetime = null)
     {
+        $lifetime = isset($lifetime) ? $lifetime : $this->lifetimeDefault;
+        $expire = time() + $lifetime;
         $key = $this->processKey($key);
         $record = $this->packRecord($value);
         $this->storage[$key] = $record;
+        $this->_timestamps[$key] = $expire;
         return resolve(true);
     }
 
@@ -50,6 +54,7 @@ class ArrayExpiringCache extends ExpiringCache
         $key = $this->processKey($key);
         if ($this->existInternal($key)) {
             unset($this->storage[$key]);
+            unset($this->_timestamps[$key]);
         }
         return resolve(true);
     }

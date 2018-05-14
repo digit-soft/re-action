@@ -26,6 +26,10 @@ abstract class ExpiringCache extends ExtendedCache implements ExpiringCacheInter
      */
     public $timerInterval = 3;
     /**
+     * @var int Default cache lifetime
+     */
+    public $lifetimeDefault = 3600;
+    /**
      * @var array Keys with timestamps
      */
     protected $_timestamps = [];
@@ -52,11 +56,12 @@ abstract class ExpiringCache extends ExtendedCache implements ExpiringCacheInter
 
     /**
      * Write data to cache
-     * @param string|array $key
-     * @param mixed        $value
+     * @param string|array $key Cache key
+     * @param mixed        $value Data
+     * @param integer|null $lifetime Cache lifetime in seconds
      * @return ExtendedPromiseInterface  with bool then finished
      */
-    abstract public function set($key, $value);
+    abstract public function set($key, $value, $lifetime = null);
 
     /**
      * @param string|array $key
