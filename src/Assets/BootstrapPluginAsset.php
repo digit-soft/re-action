@@ -1,13 +1,6 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: digit
- * Date: 11.05.18
- * Time: 16:55
- */
 
 namespace Reaction\Assets;
-
 
 use Reaction\Web\AssetBundle;
 
@@ -24,6 +17,7 @@ class BootstrapPluginAsset extends AssetBundle
     public $depends = [
         BootstrapAsset::class,
         JqueryAsset::class,
+        //PopperJsAsset::class,
     ];
 
     /**
@@ -32,8 +26,7 @@ class BootstrapPluginAsset extends AssetBundle
     public function init()
     {
         $isProd = \Reaction::isProd();
-        $jsFile = $isProd ? 'bootstrap.min.js' : 'bootstrap.js';
-        $this->js[] = 'js/' . $jsFile;
+        $this->js[] = 'js/' . ($isProd ? 'bootstrap.bundle.min.js' : 'bootstrap.bundle.js');
         parent::init();
     }
 }
