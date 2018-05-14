@@ -4,6 +4,7 @@
  * @var string             $content
  */
 \Reaction\Assets\ReactionAsset::register($this);
+\Reaction\Assets\BootstrapPluginAsset::register($this);
 ?>
 <?php $this->beginPage() ?><!doctype html>
 <html lang="en">
