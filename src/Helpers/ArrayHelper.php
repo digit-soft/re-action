@@ -13,6 +13,38 @@ use Reaction\Exceptions\InvalidArgumentException;
  */
 class ArrayHelper
 {
+    const IGN_REFLECTION = 1;
+    const IGN_PROMISES = 2;
+    const IGN_CLOSURE = 4;
+    const IGN_SET_GET = 8;
+    const IGN_ALL = 15;
+
+    const IGN_REFLECTION_MASK = [
+        [
+            'class' => 'ReflectionClass',
+        ],
+    ];
+
+    const IGN_PROMISES_MASK = [
+        [
+            'class' => 'React\Promise\Promise',
+            'function' => 'settle',
+        ],
+        [
+            'class' => 'Reaction\Promise\Promise',
+            'function' => 'settle',
+        ],
+    ];
+
+    const IGN_SET_GET_MASK = [
+        [
+            'function' => '__get',
+        ],
+        [
+            'function' => '__set',
+        ],
+    ];
+
     /**
      * Converts an object or an array of objects into an array.
      * @param object|array|string $object the object to be converted into an array
@@ -949,6 +981,64 @@ class ArrayHelper
         }
 
         return $result;
+    }
+
+    /**
+     * Process error trace array (for error printing)
+     * @param array $trace
+     * @param int   $flags Bit mask
+     */
+    public static function processTrace(&$trace, $flags = 0) {
+        $ignored = [];
+        if ($flags & static::IGN_REFLECTION) {
+            $ignored = ArrayHelper::merge($ignored, static::IGN_REFLECTION_MASK);
+        }
+        if ($flags & static::IGN_PROMISES) {
+            $ignored = ArrayHelper::merge($ignored, static::IGN_PROMISES_MASK);
+        }
+        if ($flags & static::IGN_SET_GET) {
+            $ignored = ArrayHelper::merge($ignored, static::IGN_SET_GET_MASK);
+        }
+        $ignoreClosure = $flags & static::IGN_CLOSURE;
+        foreach ($trace as $key => &$row) {
+            foreach ($ignored as $ignoredRow) {
+                if (count(array_diff_assoc($ignoredRow, $row)) === 0) {
+                    unset($trace[$key]);
+                    continue;
+                } elseif ($ignoreClosure && strpos($row['function'], '{closure}') !== false) {
+                    unset($trace[$key]);
+                    continue;
+                }
+            }
+            if (isset($trace[$key])) {
+                static::processTraceArgs($row);
+            }
+        }
+    }
+
+    /**
+     * Process trace row arguments (for error printing)
+     * @param array $traceRow
+     */
+    protected static function processTraceArgs(&$traceRow) {
+        $args = [];
+        $argTypes = [];
+        foreach ($traceRow['args'] as $_arg) {
+            $arg = $_arg;
+            $argType = gettype($_arg);
+            if (is_object($_arg)) {
+                $arg = get_class($_arg);
+            } elseif (is_array($_arg)) {
+                $arg = '';
+                $argType .= ' (' . count($_arg) . ')';
+            } elseif ($_arg === null) {
+                $arg = '';
+            }
+            $args[] = $arg;
+            $argTypes[] = $argType;
+        }
+        $traceRow['args'] = $args;
+        $traceRow['argTypes'] = $argTypes;
     }
 
     /**
