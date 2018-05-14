@@ -1,6 +1,6 @@
 <?php
 
-namespace Reaction\Db;
+namespace Reaction\Db\Expressions;
 
 /**
  * Interface ExpressionInterface should be used to mark classes, that should be built
