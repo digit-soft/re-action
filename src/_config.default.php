@@ -36,6 +36,14 @@ return [
             'security' => 'securityDefault',
             'sessionHandler' => 'sessionHandlerDefault',
             'fs' => 'fileSystemDefault',
+            'db' => [
+                'class' => 'Reaction\Db\Database',
+                'user' => 'reaction',
+                'password' => 'evmCXA2g6T5uGRMF',
+                'host' => 'db',
+                'port' => '5432',
+                'database' => 'reaction',
+            ],
         ],
     ],
     //Request application config
@@ -84,6 +92,9 @@ return [
             'user' => [
                 'class' => 'Reaction\Web\UserInterface', //TODO: User
             ],
+            'db' => function() {
+                return Reaction::$app->db->createConnection();
+            },
         ],
     ],
     //DI definitions
