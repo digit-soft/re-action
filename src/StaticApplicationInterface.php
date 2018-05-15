@@ -148,9 +148,14 @@ interface StaticApplicationInterface extends EventEmitterWildcardInterface
     /**
      * Get Application auth manager
      * @return \Reaction\Rbac\ManagerInterface|null
-     * @throws Exceptions\InvalidConfigException
      */
     public function getAuthManager();
+
+    /**
+     * Get default database
+     * @return DatabaseInterface
+     */
+    public function getDb();
 
     /**
      * Returns a value indicating whether the locator has the specified component definition or has instantiated the component.

@@ -6,6 +6,7 @@ use React\EventLoop\LoopInterface;
 use React\Http\Server as Http;
 use React\Socket\Server as Socket;
 use React\Socket\ServerInterface as SocketServerInterface;
+use Reaction\Db\DatabaseInterface;
 use Reaction\DI\ServiceLocator;
 use Reaction\Exceptions\InvalidArgumentException;
 
@@ -285,5 +286,16 @@ class StaticApplication extends ServiceLocator implements StaticApplicationInter
         /** @var \Reaction\Rbac\ManagerInterface|null $component */
         $component = $this->has('authManager') ? $this->get('authManager') : null;
         return $component;
+    }
+
+    /**
+     * Get default database
+     * @return DatabaseInterface
+     * @throws Exceptions\InvalidConfigException
+     */
+    public function getDb() {
+        /** @var DatabaseInterface $db */
+        $db = $this->get('db');
+        return $db;
     }
 }
