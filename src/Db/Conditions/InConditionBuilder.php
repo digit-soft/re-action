@@ -23,7 +23,7 @@ class InConditionBuilder implements ExpressionBuilderInterface
      * @param array $params the binding parameters.
      * @return string the raw SQL that will not be additionally escaped or quoted.
      */
-    public function build( $expression, array &$params = [])
+    public function build($expression, array &$params = [])
     {
         $operator = $expression->getOperator();
         $column = $expression->getColumn();
