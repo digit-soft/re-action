@@ -4,7 +4,6 @@ namespace Reaction;
 
 use Psr\Http\Message\ServerRequestInterface;
 use React\Promise\PromiseInterface;
-use Reaction\Db\ConnectionInterface;
 use Reaction\Events\EventEmitterWildcardInterface;
 use Reaction\Helpers\Request\HelpersGroup;
 use Reaction\Routes\RouteInterface;
@@ -32,7 +31,6 @@ use Reaction\Web\View;
  * @property View                     $view         //TODO: Attach view
  * @property AssetManager             $assetManager //TODO: Attach assetManager
  * @property HelpersGroup             $helpers
- * @property ConnectionInterface      $db
  */
 interface RequestApplicationInterface extends EventEmitterWildcardInterface
 {
