@@ -92,10 +92,6 @@ return [
             'user' => [
                 'class' => 'Reaction\Web\UserInterface', //TODO: User
             ],
-            'db' => [
-                'class' => 'Reaction\Db\RequestDatabase',
-                'db' => 'db',
-            ],
         ],
     ],
     //DI definitions
