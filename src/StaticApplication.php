@@ -76,17 +76,13 @@ class StaticApplication extends ServiceLocator implements StaticApplicationInter
         echo "Running server on $this->hostname:$this->port\n";
         //Exception handler
         $this->http->on('error', function (\Throwable $error) {
-            $message = get_class($error) . "\n" . $error->getMessage() . "\n" . $error->getTraceAsString();
-            $this->logger->alert($message);
-            if (!empty($error->getPrevious())) {
-                $this->logger->info("Previous\n" . $error->getPrevious()->getMessage()
-                    . "\n" . $error->getPrevious()->getFile()
-                    . " #" . $error->getPrevious()->getLine());
-            }
+            $this->logger->alert($error);
         });
         $this->initPromise = $this->loadComponents()->always(
             function() {
+                \Reaction::info('StaticApplication initialized');
                 $this->initialized = true;
+                return true;
             }
         );
         $this->loop->run();
