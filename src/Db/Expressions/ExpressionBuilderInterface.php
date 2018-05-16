@@ -5,6 +5,7 @@ namespace Reaction\Db\Expressions;
 /**
  * Interface ExpressionBuilderInterface is designed to build raw SQL from specific expression
  * objects that implement [[ExpressionInterface]].
+ * @property array $params
  */
 interface ExpressionBuilderInterface
 {
