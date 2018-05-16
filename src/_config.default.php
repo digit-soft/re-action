@@ -43,7 +43,6 @@ return [
                 'host' => 'db',
                 'port' => '5432',
                 'database' => 'reaction',
-                'cacheComponent' => 'arrayCacheDefault',
             ],
         ],
     ],
