@@ -84,6 +84,14 @@ interface SchemaInterface
     public function getTableSchema($name, $refresh = false);
 
     /**
+     * Obtains the metadata for the named table. (for sync use)
+     *
+     * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
+     * @return TableSchema|null
+     */
+    public function getTableSchemaSync($name);
+
+    /**
      * Returns the metadata for all tables in the database.
      * @param string $schema the schema of the tables. Defaults to empty string, meaning the current or default schema name.
      * @param bool $refresh whether to fetch the latest available table schemas. If this is `false`,

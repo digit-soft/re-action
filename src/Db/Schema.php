@@ -12,6 +12,7 @@ use function Reaction\Promise\resolve;
 /**
  * Class Schema
  * @package Reaction\Db
+ * @method  getViewNames(string $schema = "", bool $refresh = false)
  */
 class Schema extends BaseObject implements SchemaInterface
 {
@@ -39,6 +40,10 @@ class Schema extends BaseObject implements SchemaInterface
      * @var array list of ALL table names in the database
      */
     protected $_tableNames = [];
+    /**
+     * @var array list of all table schemas in the database for sync usage
+     */
+    protected $_tableSchemas = [];
     /**
      * @var string|string[] character used to quote schema, table, etc. names.
      * An array of 2 characters can be used in case starting and ending characters are different.
@@ -132,6 +137,17 @@ class Schema extends BaseObject implements SchemaInterface
     public function getTableSchema($name, $refresh = false)
     {
         return $this->getTableMetadata($name, 'schema', $refresh);
+    }
+
+    /**
+     * Obtains the metadata for the named table. (for sync use)
+     *
+     * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
+     * @return TableSchema|null
+     */
+    public function getTableSchemaSync($name) {
+        $rawName = $this->getRawTableName($name);
+        return isset($this->_tableSchemas[$rawName]) ? $this->_tableSchemas[$rawName] : null;
     }
 
     /**
@@ -392,6 +408,10 @@ class Schema extends BaseObject implements SchemaInterface
         )->then(
             function($metadata) use ($rawName, $type, &$refresh) {
                 if ($refresh) {
+                    //Update table schemas for sync usage
+                    if ($type === 'schema') {
+                        $this->_tableSchemas[$rawName] = $metadata;
+                    }
                     return $this->updateTableMetadataCache($rawName, $metadata, $type)->always(
                         function() use($metadata) {
                             return $metadata;
@@ -645,6 +665,27 @@ class Schema extends BaseObject implements SchemaInterface
     }
 
     /**
+     * Refresh table schemas in cache and $_tableSchemas
+     * @param string $schema
+     * @return ExtendedPromiseInterface
+     */
+    protected function refreshTableSchemas($schema = '') {
+        $schema = $schema !== '' ? $schema : $this->defaultSchema;
+        return $this->getTableNames($schema)->then(
+            function($names) {
+                $promises = [];
+                $this->_tableSchemas = [];
+                foreach ($names as $name) {
+                    $promises[] = $this->getTableSchema($name, true)->otherwise(
+                        function() { return false; }
+                    );
+                }
+                return !empty($promises) ? all($promises) : resolve(true);
+            }
+        );
+    }
+
+    /**
      * Init component
      * @return ExtendedPromiseInterface
      */
@@ -653,7 +694,8 @@ class Schema extends BaseObject implements SchemaInterface
         $promises = [];
         $promises[] = $this->getServerVersionPromised()->otherwise(function() { return false; });
         $promises[] = $this->getTableSchemas($this->defaultSchema, true);
-        $promises[] = $this->getTableMetadata($this->defaultSchema, 'schema');
+        $promises[] = $this->refreshTableSchemas();
+        //$promises[] = $this->getTableMetadata($this->defaultSchema, 'schema');
         return all($promises);
     }
 }
