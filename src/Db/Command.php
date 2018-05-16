@@ -4,7 +4,6 @@ namespace Reaction\Db;
 
 use Reaction\Base\Component;
 use Reaction\Db\Expressions\Expression;
-use Reaction\Exceptions\Exception;
 use Reaction\Promise\ExtendedPromiseInterface;
 
 /**
