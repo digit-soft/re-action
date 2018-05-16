@@ -1,25 +1,17 @@
 <?php
-/**
- * @link http://www.yiiframework.com/
- * @copyright Copyright (c) 2008 Yii Software LLC
- * @license http://www.yiiframework.com/license/
- */
 
-namespace yii\db\pgsql;
+namespace Reaction\Db\Pgsql;
 
-use yii\db\ArrayExpression;
-use yii\db\ExpressionBuilderInterface;
-use yii\db\ExpressionBuilderTrait;
-use yii\db\ExpressionInterface;
-use yii\db\JsonExpression;
-use yii\db\Query;
-use yii\helpers\Json;
+use Reaction\Db\Expressions\ArrayExpression;
+use Reaction\Db\Expressions\ExpressionBuilderInterface;
+use Reaction\Db\Expressions\ExpressionBuilderTrait;
+use Reaction\Db\Expressions\ExpressionInterface;
+use Reaction\Db\Expressions\JsonExpression;
+use Reaction\Db\Query;
+use Reaction\Helpers\Json;
 
 /**
  * Class JsonExpressionBuilder builds [[JsonExpression]] for PostgreSQL DBMS.
- *
- * @author Dmytro Naumenko <d.naumenko.a@gmail.com>
- * @since 2.0.14
  */
 class JsonExpressionBuilder implements ExpressionBuilderInterface
 {
