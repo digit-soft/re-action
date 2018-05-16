@@ -8,7 +8,7 @@ use Reaction\Helpers\StringHelper;
 /**
  * ColumnSchema class describes the metadata of a column in a database table.
  */
-class ColumnSchema extends BaseObject
+class ColumnSchema extends BaseObject implements ColumnSchemaInterface
 {
     /**
      * @var string name of this column (without quotes).
@@ -121,7 +121,7 @@ class ColumnSchema extends BaseObject
 
         if ($value === null
             || gettype($value) === $this->phpType
-            || $value instanceof ExpressionInterface
+            || $value instanceof \Reaction\Db\Expressions\ExpressionInterface
             || $value instanceof Query
         ) {
             return $value;
