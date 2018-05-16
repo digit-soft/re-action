@@ -86,7 +86,9 @@ class DataReader extends \Reaction\Base\BaseObject implements \Iterator, \Counta
         if (!$this->valid()) {
             return false;
         }
-        return $this->_command->fetchResultsRow($this->_row, CommandInterface::FETCH_ROW, $this->_fetchMode);
+        /** @var array|false $fetched */
+        $fetched = $this->_command->fetchResultsRow($this->_row, CommandInterface::FETCH_ROW, $this->_fetchMode);
+        return $fetched;
     }
 
     /**
@@ -129,7 +131,9 @@ class DataReader extends \Reaction\Base\BaseObject implements \Iterator, \Counta
      */
     public function readAll()
     {
-        return $this->_command->fetchResults($this->_results, CommandInterface::FETCH_ALL, $this->_fetchMode);
+        /** @var array $fetched */
+        $fetched = $this->_command->fetchResults($this->_results, CommandInterface::FETCH_ALL, $this->_fetchMode);
+        return $fetched;
     }
 
     /**
