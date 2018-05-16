@@ -7,6 +7,8 @@ use Reaction\Promise\ExtendedPromiseInterface;
 /**
  * Interface SchemaInterface
  * @package Reaction\Db
+ * @property DatabaseInterface $db
+ * @property string            $defaultSchema
  */
 interface SchemaInterface
 {

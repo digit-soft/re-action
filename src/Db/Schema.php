@@ -4,8 +4,8 @@ namespace Reaction\Db;
 
 use Reaction\Base\BaseObject;
 use Reaction\Exceptions\NotSupportedException;
-use function Reaction\Promise\all;
 use Reaction\Promise\ExtendedPromiseInterface;
+use function Reaction\Promise\all;
 use function Reaction\Promise\reject;
 use function Reaction\Promise\resolve;
 
