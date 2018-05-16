@@ -37,12 +37,13 @@ return [
             'sessionHandler' => 'sessionHandlerDefault',
             'fs' => 'fileSystemDefault',
             'db' => [
-                'class' => 'Reaction\Db\Database',
-                'user' => 'reaction',
+                'class' => 'Reaction\Db\Pgsql\Database',
+                'username' => 'reaction',
                 'password' => 'evmCXA2g6T5uGRMF',
                 'host' => 'db',
                 'port' => '5432',
                 'database' => 'reaction',
+                'cacheComponent' => 'arrayCacheDefault',
             ],
         ],
     ],
@@ -92,9 +93,10 @@ return [
             'user' => [
                 'class' => 'Reaction\Web\UserInterface', //TODO: User
             ],
-            'db' => function() {
-                return Reaction::$app->db->createConnection();
-            },
+            'db' => [
+                'class' => 'Reaction\Db\RequestDatabase',
+                'db' => 'db',
+            ],
         ],
     ],
     //DI definitions
@@ -156,7 +158,7 @@ return [
             ],
             //Default array cache
             'arrayCacheDefault' => [
-                'class' => 'Reaction\Cache\ArrayCache'
+                'class' => 'Reaction\Cache\ArrayExpiringCache'
             ],
             //Session handler
             'sessionHandlerDefault' => [
