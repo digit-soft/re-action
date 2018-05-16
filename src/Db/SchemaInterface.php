@@ -9,6 +9,7 @@ use Reaction\Promise\ExtendedPromiseInterface;
  * @package Reaction\Db
  * @property DatabaseInterface $db
  * @property string            $defaultSchema
+ * @method getViewNames(string $schema = "", bool $refresh = false)
  */
 interface SchemaInterface
 {
