@@ -12,11 +12,11 @@ class ExpressionBuilder implements ExpressionBuilderInterface
 
     /**
      * {@inheritdoc}
-     * @param Expression|ExpressionInterface $expression the expression to be built
+     * @param Expression $expression the expression to be built
      */
-    public function build(ExpressionInterface $expression, array &$params = [])
+    public function build($expression, array &$params = [])
     {
         $params = array_merge($params, $expression->params);
-        return $expression->__toString();
+        return method_exists($expression, '__toString') ? $expression->__toString() : '';
     }
 }
