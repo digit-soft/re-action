@@ -1,14 +1,11 @@
 <?php
-/**
- * @link http://www.yiiframework.com/
- * @copyright Copyright (c) 2008 Yii Software LLC
- * @license http://www.yiiframework.com/license/
- */
 
 namespace Reaction\Db\Orm;
 
 use Reaction\Exceptions\InvalidArgumentException;
 use Reaction\Exceptions\InvalidConfigException;
+use Reaction\Promise\ExtendedPromiseInterface;
+use function Reaction\Promise\resolve;
 
 /**
  * ActiveRelationTrait implements the common methods and properties for active record relational queries.
@@ -554,12 +551,12 @@ trait ActiveRelationTrait
 
     /**
      * @param array $primaryModels either array of AR instances or arrays
-     * @return array
+     * @return ExtendedPromiseInterface with array
      */
-    private function findJunctionRows($primaryModels)
+    protected function findJunctionRows($primaryModels)
     {
         if (empty($primaryModels)) {
-            return [];
+            return resolve([]);
         }
         $this->filterByModels($primaryModels);
         /* @var $primaryModel ActiveRecordInterface */
@@ -568,7 +565,9 @@ trait ActiveRelationTrait
             // when primaryModels are array of arrays (asArray case)
             $primaryModel = $this->modelClass;
         }
+        /** @var ActiveQueryInterface $that */
+        $that = $this->asArray();
 
-        return $this->asArray()->all($primaryModel::getDb());
+        return $that->all($primaryModel::getDb());
     }
 }
