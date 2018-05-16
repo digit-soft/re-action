@@ -4,6 +4,7 @@ namespace Reaction\Db\Pgsql;
 
 use Reaction\Db\Constraints\CheckConstraint;
 use Reaction\Db\Constraints\Constraint;
+use Reaction\Db\Constraints\ConstraintFinderInterface;
 use Reaction\Db\Constraints\ConstraintFinderTrait;
 use Reaction\Db\Constraints\ForeignKeyConstraint;
 use Reaction\Db\Constraints\IndexConstraint;
@@ -19,7 +20,7 @@ use function Reaction\Promise\resolve;
  * Class Schema
  * @package Reaction\Db\Pgsql
  */
-class Schema extends \Reaction\Db\Schema
+class Schema extends \Reaction\Db\Schema implements ConstraintFinderInterface
 {
     const TYPE_JSONB = 'jsonb';
 
