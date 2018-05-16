@@ -19,11 +19,11 @@ class InConditionBuilder implements ExpressionBuilderInterface
      * Method builds the raw SQL from the $expression that will not be additionally
      * escaped or quoted.
      *
-     * @param ExpressionInterface|InCondition $expression the expression to be built.
+     * @param InCondition $expression the expression to be built.
      * @param array $params the binding parameters.
      * @return string the raw SQL that will not be additionally escaped or quoted.
      */
-    public function build(ExpressionInterface $expression, array &$params = [])
+    public function build( $expression, array &$params = [])
     {
         $operator = $expression->getOperator();
         $column = $expression->getColumn();
@@ -70,12 +70,12 @@ class InConditionBuilder implements ExpressionBuilderInterface
     /**
      * Builds $values to be used in [[InCondition]]
      *
-     * @param ConditionInterface|InCondition $condition
+     * @param InCondition $condition
      * @param array $values
      * @param array $params the binding parameters
      * @return array of prepared for SQL placeholders
      */
-    protected function buildValues(ConditionInterface $condition, $values, &$params)
+    protected function buildValues($condition, $values, &$params)
     {
         $sqlValues = [];
         $column = $condition->getColumn();

@@ -20,9 +20,9 @@ class JsonExpressionBuilder implements ExpressionBuilderInterface
 
     /**
      * {@inheritdoc}
-     * @param JsonExpression|ExpressionInterface $expression the expression to be built
+     * @param JsonExpression $expression the expression to be built
      */
-    public function build(ExpressionInterface $expression, array &$params = [])
+    public function build($expression, array &$params = [])
     {
         $value = $expression->getValue();
 

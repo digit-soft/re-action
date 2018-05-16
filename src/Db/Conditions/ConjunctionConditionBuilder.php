@@ -18,11 +18,11 @@ class ConjunctionConditionBuilder implements ExpressionBuilderInterface
      * Method builds the raw SQL from the $expression that will not be additionally
      * escaped or quoted.
      *
-     * @param ExpressionInterface|ConjunctionCondition $condition the expression to be built.
+     * @param ConjunctionCondition $condition the expression to be built.
      * @param array $params the binding parameters.
      * @return string the raw SQL that will not be additionally escaped or quoted.
      */
-    public function build(ExpressionInterface $condition, array &$params = [])
+    public function build($condition, array &$params = [])
     {
         $parts = $this->buildExpressionsFrom($condition, $params);
 
@@ -40,11 +40,11 @@ class ConjunctionConditionBuilder implements ExpressionBuilderInterface
     /**
      * Builds expressions, that are stored in $condition
      *
-     * @param ExpressionInterface|ConjunctionCondition $condition the expression to be built.
+     * @param ConjunctionCondition $condition the expression to be built.
      * @param array $params the binding parameters.
      * @return string[]
      */
-    private function buildExpressionsFrom(ExpressionInterface $condition, &$params = [])
+    private function buildExpressionsFrom($condition, &$params = [])
     {
         $parts = [];
         foreach ($condition->getExpressions() as $condition) {
