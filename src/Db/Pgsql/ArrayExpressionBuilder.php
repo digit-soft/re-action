@@ -19,9 +19,9 @@ class ArrayExpressionBuilder implements ExpressionBuilderInterface
 
     /**
      * {@inheritdoc}
-     * @param ArrayExpression|ExpressionInterface $expression the expression to be built
+     * @param ArrayExpression $expression the expression to be built
      */
-    public function build(ExpressionInterface $expression, array &$params = [])
+    public function build($expression, array &$params = [])
     {
         $value = $expression->getValue();
         if ($value === null) {
@@ -40,11 +40,11 @@ class ArrayExpressionBuilder implements ExpressionBuilderInterface
 
     /**
      * Builds placeholders array out of $expression values
-     * @param ExpressionInterface|ArrayExpression $expression
+     * @param ArrayExpression $expression
      * @param array $params the binding parameters.
      * @return array
      */
-    protected function buildPlaceholders(ExpressionInterface $expression, &$params)
+    protected function buildPlaceholders($expression, &$params)
     {
         $value = $expression->getValue();
 
