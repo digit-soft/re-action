@@ -3,9 +3,11 @@
 namespace Reaction;
 
 use React\Filesystem\FilesystemInterface;
+use React\Promise\PromiseInterface;
 use Reaction\Base\Logger\LoggerInterface;
 use Reaction\Db\DatabaseInterface;
 use Reaction\Events\EventEmitterWildcardInterface;
+use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\Routes\UrlManager;
 use Reaction\Web\Sessions\SessionHandlerInterface;
 
@@ -31,6 +33,8 @@ use Reaction\Web\Sessions\SessionHandlerInterface;
  * @property FilesystemInterface              $fs
  * @property UrlManager                       $urlManager
  * @property DatabaseInterface                $db
+ * @property ExtendedPromiseInterface         $initPromise
+ * @property bool                             $initialized
  */
 interface StaticApplicationInterface extends EventEmitterWildcardInterface
 {

@@ -196,7 +196,12 @@ class Router extends Component implements RouterInterface
      */
     public function resolveRequest(ServerRequestInterface $request) {
         $app = $this->createRequestApplication($request);
-        return $app->loadComponents()->then(
+        $initPromise = Reaction::$app->initialized ? Reaction::$app->initPromise : Reaction\Promise\resolve(true);
+        return $initPromise->then(
+            function() use(&$app) {
+                return $app->loadComponents();
+            }
+        )->then(
             function () use (&$app) {
                 return $app->getRoute()->resolve();
             }

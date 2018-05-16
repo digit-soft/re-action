@@ -3,7 +3,6 @@
 namespace Reaction\DI;
 
 use Closure;
-use React\Promise\PromiseInterface;
 use Reaction;
 use Reaction\Base\ComponentInitBlockingInterface;
 use Reaction\Helpers\ArrayHelper;
@@ -287,7 +286,7 @@ class ServiceLocator extends Component
      * Load components after init (Function is called manually).
      * Returns a promise which will be resolved after all components are initialized
      * if components implementing ComponentInitBlockingInterface or immediately if not.
-     * @return PromiseInterface
+     * @return Reaction\Promise\ExtendedPromiseInterface
      * @throws InvalidConfigException
      * @throws \Reaction\Exceptions\NotInstantiableException
      */

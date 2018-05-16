@@ -4,17 +4,20 @@ namespace Reaction;
 
 use React\EventLoop\LoopInterface;
 use React\Http\Server as Http;
+use React\Promise\PromiseInterface;
 use React\Socket\Server as Socket;
 use React\Socket\ServerInterface as SocketServerInterface;
 use Reaction\Db\DatabaseInterface;
 use Reaction\DI\ServiceLocator;
+use Reaction\DI\ServiceLocatorAutoloadInterface;
 use Reaction\Exceptions\InvalidArgumentException;
+use Reaction\Promise\ExtendedPromiseInterface;
 
 /**
  * Class StaticApplication
  * @package Reaction
  */
-class StaticApplication extends ServiceLocator implements StaticApplicationInterface
+class StaticApplication extends ServiceLocator implements StaticApplicationInterface, ServiceLocatorAutoloadInterface
 {
     /** @var string */
     public $envType = self::APP_ENV_DEV;
@@ -40,6 +43,10 @@ class StaticApplication extends ServiceLocator implements StaticApplicationInter
     public $http;
     /** @var Socket */
     public $socket;
+    /** @var ExtendedPromiseInterface */
+    public $initPromise;
+    /** @var bool */
+    public $initialized = false;
 
     /** @var array Added middleware */
     protected $middleware = [];
@@ -77,6 +84,11 @@ class StaticApplication extends ServiceLocator implements StaticApplicationInter
                     . " #" . $error->getPrevious()->getLine());
             }
         });
+        $this->initPromise = $this->loadComponents()->always(
+            function() {
+                $this->initialized = true;
+            }
+        );
         $this->loop->run();
     }
 
