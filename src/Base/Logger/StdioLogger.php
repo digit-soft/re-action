@@ -261,13 +261,19 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
             $endId = ceil($timeStart * 100000) . mt_rand(11111, 99999);
             $this->profilerData[$endId] = [
                 'message' => $message,
-                'start' => $timeStart
+                'start' => $timeStart,
+                'shift' => $traceShift,
             ];
             return $endId;
         } else {
             $data = ArrayHelper::remove($this->profilerData, $endId, null);
             if (!isset($data)) {
                 return null;
+            }
+            $traceShift = isset($traceShift) ? $traceShift : (int)$data['shift'];
+            $message = isset($message) ? $message : (string)$data['message'];
+            if ($message === "") {
+                $message = '{EMPTY MESSAGE}';
             }
             $timeSpent = (microtime(true) - $data['start']) * 1000;
             $message .= "\nTime: {_timeSpent} ms. Memory usage: {_memoryUsage} MB";
@@ -278,6 +284,20 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
             ], $traceShift);
         }
         return null;
+    }
+
+    /**
+     * Profiler shortcut method for end
+     * @param string $message
+     * @param string $endId
+     * @param int    $traceShift
+     */
+    public function profileEnd($endId, $message = null, $traceShift = null)
+    {
+        if (!isset($endId)) {
+            return;
+        }
+        $this->profile($message, $endId, $traceShift);
     }
 
     /**

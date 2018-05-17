@@ -114,6 +114,14 @@ interface LoggerInterface extends \Psr\Log\LoggerInterface
     public function profile($message = null, $endId = null, $traceShift = 0);
 
     /**
+     * Profiler shortcut method for end
+     * @param string $message
+     * @param string $endId
+     * @param int    $traceShift
+     */
+    public function profileEnd($endId, $message = null, $traceShift = null);
+
+    /**
      * Logs with an arbitrary level.
      *
      * @param mixed $level
