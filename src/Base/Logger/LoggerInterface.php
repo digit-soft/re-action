@@ -105,6 +105,15 @@ interface LoggerInterface extends \Psr\Log\LoggerInterface
     public function debug($message, array $context = array(), $traceShift = 0);
 
     /**
+     * Profiler
+     * @param string $message
+     * @param string $endId
+     * @param int    $traceShift
+     * @return null|string
+     */
+    public function profile($message = null, $endId = null, $traceShift = 0);
+
+    /**
      * Logs with an arbitrary level.
      *
      * @param mixed $level
