@@ -2,6 +2,7 @@
 
 namespace Reaction\Db\Constraints;
 
+use Reaction\Db\SchemaInterface;
 use Reaction\Promise\ExtendedPromiseInterface;
 
 /**
@@ -27,7 +28,7 @@ trait ConstraintFinderTrait
      * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
      * @param string $type metadata type.
      * @param bool $refresh whether to reload the table metadata even if it is found in the cache.
-     * @return ExtendedPromiseInterface with mixed metadata.
+     * @return mixed metadata.
      */
     abstract protected function getTableMetadata($name, $type, $refresh);
 
@@ -88,11 +89,11 @@ trait ConstraintFinderTrait
      * Obtains the primary key for the named table.
      * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
      * @param bool $refresh whether to reload the information even if it is found in the cache.
-     * @return ExtendedPromiseInterface with Constraint|null table primary key, `null` if the table has no primary key.
+     * @return Constraint|null table primary key, `null` if the table has no primary key.
      */
     public function getTablePrimaryKey($name, $refresh = false)
     {
-        return $this->getTableMetadata($name, 'primaryKey', $refresh);
+        return $this->getTableMetadata($name, SchemaInterface::META_PK, $refresh);
     }
 
     /**
@@ -112,11 +113,11 @@ trait ConstraintFinderTrait
      * Obtains the foreign keys information for the named table.
      * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
      * @param bool $refresh whether to reload the information even if it is found in the cache.
-     * @return ExtendedPromiseInterface with ForeignKeyConstraint[] table foreign keys.
+     * @return ForeignKeyConstraint[] table foreign keys.
      */
     public function getTableForeignKeys($name, $refresh = false)
     {
-        return $this->getTableMetadata($name, 'foreignKeys', $refresh);
+        return $this->getTableMetadata($name, SchemaInterface::META_FK, $refresh);
     }
 
     /**
@@ -136,11 +137,11 @@ trait ConstraintFinderTrait
      * Obtains the indexes information for the named table.
      * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
      * @param bool $refresh whether to reload the information even if it is found in the cache.
-     * @return ExtendedPromiseInterface with IndexConstraint[] table indexes.
+     * @return IndexConstraint[] table indexes.
      */
     public function getTableIndexes($name, $refresh = false)
     {
-        return $this->getTableMetadata($name, 'indexes', $refresh);
+        return $this->getTableMetadata($name, SchemaInterface::META_INDEXES, $refresh);
     }
 
     /**
@@ -160,11 +161,11 @@ trait ConstraintFinderTrait
      * Obtains the unique constraints information for the named table.
      * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
      * @param bool $refresh whether to reload the information even if it is found in the cache.
-     * @return ExtendedPromiseInterface with Constraint[] table unique constraints.
+     * @return Constraint[] table unique constraints.
      */
     public function getTableUniques($name, $refresh = false)
     {
-        return $this->getTableMetadata($name, 'uniques', $refresh);
+        return $this->getTableMetadata($name, SchemaInterface::META_UNIQUES, $refresh);
     }
 
     /**
@@ -184,11 +185,11 @@ trait ConstraintFinderTrait
      * Obtains the check constraints information for the named table.
      * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
      * @param bool $refresh whether to reload the information even if it is found in the cache.
-     * @return ExtendedPromiseInterface with CheckConstraint[] table check constraints.
+     * @return CheckConstraint[] table check constraints.
      */
     public function getTableChecks($name, $refresh = false)
     {
-        return $this->getTableMetadata($name, 'checks', $refresh);
+        return $this->getTableMetadata($name, SchemaInterface::META_CHECKS, $refresh);
     }
 
     /**
@@ -208,11 +209,11 @@ trait ConstraintFinderTrait
      * Obtains the default value constraints information for the named table.
      * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
      * @param bool $refresh whether to reload the information even if it is found in the cache.
-     * @return ExtendedPromiseInterface with DefaultValueConstraint[] table default value constraints.
+     * @return DefaultValueConstraint[] table default value constraints.
      */
     public function getTableDefaultValues($name, $refresh = false)
     {
-        return $this->getTableMetadata($name, 'defaultValues', $refresh);
+        return $this->getTableMetadata($name, SchemaInterface::META_DEFAULTS, $refresh);
     }
 
     /**

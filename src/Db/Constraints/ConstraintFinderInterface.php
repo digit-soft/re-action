@@ -13,7 +13,7 @@ interface ConstraintFinderInterface
      * Obtains the primary key for the named table.
      * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
      * @param bool $refresh whether to reload the information even if it is found in the cache.
-     * @return ExtendedPromiseInterface with Constraint|null table primary key, `null` if the table has no primary key.
+     * @return Constraint|null table primary key, `null` if the table has no primary key.
      */
     public function getTablePrimaryKey($name, $refresh = false);
 
@@ -31,7 +31,7 @@ interface ConstraintFinderInterface
      * Obtains the foreign keys information for the named table.
      * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
      * @param bool $refresh whether to reload the information even if it is found in the cache.
-     * @return ExtendedPromiseInterface with ForeignKeyConstraint[] table foreign keys.
+     * @return ForeignKeyConstraint[] table foreign keys.
      */
     public function getTableForeignKeys($name, $refresh = false);
 
@@ -49,7 +49,7 @@ interface ConstraintFinderInterface
      * Obtains the indexes information for the named table.
      * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
      * @param bool $refresh whether to reload the information even if it is found in the cache.
-     * @return ExtendedPromiseInterface with IndexConstraint[] table indexes.
+     * @return IndexConstraint[] table indexes.
      */
     public function getTableIndexes($name, $refresh = false);
 
@@ -67,7 +67,7 @@ interface ConstraintFinderInterface
      * Obtains the unique constraints information for the named table.
      * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
      * @param bool $refresh whether to reload the information even if it is found in the cache.
-     * @return ExtendedPromiseInterface with Constraint[] table unique constraints.
+     * @return Constraint[] table unique constraints.
      */
     public function getTableUniques($name, $refresh = false);
 
@@ -85,7 +85,7 @@ interface ConstraintFinderInterface
      * Obtains the check constraints information for the named table.
      * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
      * @param bool $refresh whether to reload the information even if it is found in the cache.
-     * @return ExtendedPromiseInterface with CheckConstraint[] table check constraints.
+     * @return CheckConstraint[] table check constraints.
      */
     public function getTableChecks($name, $refresh = false);
 
@@ -103,7 +103,7 @@ interface ConstraintFinderInterface
      * Obtains the default value constraints information for the named table.
      * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
      * @param bool $refresh whether to reload the information even if it is found in the cache.
-     * @return ExtendedPromiseInterface with DefaultValueConstraint[] table default value constraints.
+     * @return DefaultValueConstraint[] table default value constraints.
      */
     public function getTableDefaultValues($name, $refresh = false);
 
