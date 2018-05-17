@@ -391,6 +391,20 @@ class Schema extends BaseObject implements SchemaInterface
     }
 
     /**
+     * Refresh table schema
+     * @param string $tableName
+     * @param bool   $nameIsRaw
+     * @return ExtendedPromiseInterface
+     */
+    public function refreshTableSchema($tableName, $nameIsRaw = false) {
+        $rawName = $nameIsRaw ? $tableName : $this->getRawTableName($tableName);
+        if (isset($this->_tableSchemas[$rawName])) {
+            unset($this->_tableSchemas[$rawName]);
+        }
+        return $this->getTableSchema($rawName, true)->always(function() { return true; });
+    }
+
+    /**
      * @param string $name
      * @param string $type
      * @param bool   $refresh
@@ -676,9 +690,7 @@ class Schema extends BaseObject implements SchemaInterface
                 $promises = [];
                 $this->_tableSchemas = [];
                 foreach ($names as $name) {
-                    $promises[] = $this->getTableSchema($name, true)->otherwise(
-                        function() { return false; }
-                    );
+                    $promises[] = $this->refreshTableSchema($name, true);
                 }
                 return !empty($promises) ? all($promises) : resolve(true);
             }

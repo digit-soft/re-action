@@ -198,6 +198,14 @@ interface SchemaInterface
     public function getRawTableName($name);
 
     /**
+     * Refresh table schema
+     * @param string $tableName
+     * @param bool   $nameIsRaw
+     * @return ExtendedPromiseInterface
+     */
+    public function refreshTableSchema($tableName, $nameIsRaw = false);
+
+    /**
      * Init component
      * @return ExtendedPromiseInterface
      */
