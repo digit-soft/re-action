@@ -206,6 +206,14 @@ interface SchemaInterface
     public function refreshTableSchema($tableName, $nameIsRaw = false);
 
     /**
+     * Executes the INSERT command, returning primary key values.
+     * @param string $table the table that new rows will be inserted into.
+     * @param array $columns the column data (name => value) to be inserted into the table.
+     * @return ExtendedPromiseInterface with array|false primary key values or false if the command fails
+     */
+    public function insert($table, $columns);
+
+    /**
      * Init component
      * @return ExtendedPromiseInterface
      */

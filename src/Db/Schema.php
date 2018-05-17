@@ -405,6 +405,47 @@ class Schema extends BaseObject implements SchemaInterface
     }
 
     /**
+     * Executes the INSERT command, returning primary key values.
+     * @param string $table the table that new rows will be inserted into.
+     * @param array $columns the column data (name => value) to be inserted into the table.
+     * @return ExtendedPromiseInterface with array|false primary key values or false if the command fails
+     */
+    public function insert($table, $columns)
+    {
+        return $this->db->createCommand()->insert($table, $columns)->then(
+            function($command) {
+                /** @var CommandInterface $command */
+                return $command->execute();
+            }
+        )->then(
+            function() use ($table, $columns) {
+                $tableSchema = $this->getTableSchemaSync($table);
+                $result = [];
+                foreach ($tableSchema->primaryKey as $name) {
+                    if ($tableSchema->columns[$name]->autoIncrement) {
+                        $result[$name] = $this->getLastInsertID($tableSchema->sequenceName);
+                        break;
+                    }
+
+                    $result[$name] = isset($columns[$name]) ? $columns[$name] : $tableSchema->columns[$name]->defaultValue;
+                }
+
+                return $result;
+            }
+        );
+    }
+
+    /**
+     * Get last inserted ID
+     * NOT SUPPORTED!
+     * @param string $sequenceName
+     * @return null
+     */
+    public function getLastInsertID($sequenceName = '') {
+        return null;
+    }
+
+    /**
      * @param string $name
      * @param string $type
      * @param bool   $refresh
