@@ -4,7 +4,6 @@ namespace Reaction;
 
 use React\EventLoop\LoopInterface;
 use React\Http\Server as Http;
-use React\Promise\PromiseInterface;
 use React\Socket\Server as Socket;
 use React\Socket\ServerInterface as SocketServerInterface;
 use Reaction\Db\DatabaseInterface;
