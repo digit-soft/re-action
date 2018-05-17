@@ -9,6 +9,7 @@ use Reaction\Db\Constraints\Constraint;
 use Reaction\Db\Constraints\ConstraintFinderInterface;
 use Reaction\Db\Constraints\IndexConstraint;
 use Reaction\Db\Expressions\ExpressionBuilderInterface;
+use Reaction\Db\Orm\ActiveQueryInterface;
 use Reaction\Exceptions\Exception;
 use Reaction\Exceptions\InvalidArgumentException;
 use Reaction\Exceptions\NotSupportedException;
@@ -246,6 +247,62 @@ class QueryBuilder extends BaseObject implements QueryBuilderInterface
         }
 
         return [$sql, $params];
+    }
+
+    /**
+     * Generates a SELECT SQL statement from a [[Query]] object.
+     *
+     * @param Query|ActiveQueryInterface $query the [[Query]] object from which the SQL statement will be generated.
+     * @param array $params the parameters to be bound to the generated SQL statement. These parameters will
+     * be included in the result with the additional parameters generated during the query building process.
+     * @return ExtendedPromiseInterface with array the generated SQL statement (the first array element) and the corresponding
+     * parameters to be bound to the SQL statement (the second array element). The parameters returned
+     * include those provided in `$params`.
+     */
+    public function buildAsync($query, $params = [])
+    {
+        $queryPr = $query instanceof ActiveQueryInterface ? $query->prepareAsync($this) : resolve($query->prepare($this));
+
+        return $queryPr->then(
+            function($query) use (&$params) {
+                /** @var Query $query */
+                $params = empty($params) ? $query->params : array_merge($params, $query->params);
+
+                $clauses = [
+                    $this->buildSelect($query->select, $params, $query->distinct, $query->selectOption),
+                    $this->buildFrom($query->from, $params),
+                    $this->buildJoin($query->join, $params),
+                    $this->buildWhere($query->where, $params),
+                    $this->buildGroupBy($query->groupBy),
+                    $this->buildHaving($query->having, $params),
+                ];
+
+                $sql = implode($this->separator, array_filter($clauses));
+                $sql = $this->buildOrderByAndLimit($sql, $query->orderBy, $query->limit, $query->offset);
+
+                if (!empty($query->orderBy)) {
+                    foreach ($query->orderBy as $expression) {
+                        if ($expression instanceof ExpressionInterface) {
+                            $this->buildExpression($expression, $params);
+                        }
+                    }
+                }
+                if (!empty($query->groupBy)) {
+                    foreach ($query->groupBy as $expression) {
+                        if ($expression instanceof ExpressionInterface) {
+                            $this->buildExpression($expression, $params);
+                        }
+                    }
+                }
+
+                $union = $this->buildUnion($query->union, $params);
+                if ($union !== '') {
+                    $sql = "($sql){$this->separator}$union";
+                }
+
+                return [$sql, $params];
+            }
+        );
     }
 
     /**
