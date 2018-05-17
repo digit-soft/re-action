@@ -2,16 +2,13 @@
 
 namespace Reaction\Db\Pgsql;
 
-use Reaction\Db\ColumnSchemaInterface;
 use Reaction\Db\Constraints\Constraint;
 use Reaction\Db\Expressions\Expression;
 use Reaction\Db\Expressions\ExpressionInterface;
 use Reaction\Db\Query;
-use Reaction\Db\TableSchema;
 use Reaction\Exceptions\InvalidArgumentException;
 use Reaction\Helpers\StringHelper;
 use Reaction\Promise\ExtendedPromiseInterface;
-use Reaction\Promise\Promise;
 use function Reaction\Promise\reject;
 use function Reaction\Promise\resolve;
 
@@ -159,34 +156,28 @@ class QueryBuilder extends \Reaction\Db\QueryBuilder
      * @param string $tableName the name of the table whose primary key sequence will be reset
      * @param mixed $value the value for the primary key of the next new row inserted. If this is not set,
      * the next new row's primary key will have a value 1.
-     * @return ExtendedPromiseInterface with string the SQL statement for resetting sequence
+     * @return string the SQL statement for resetting sequence
      */
     public function resetSequence($tableName, $value = null)
     {
-        return $this->db->getSchema()->getTableSchema($tableName)->then(
-            function($tableSchema) use($tableName, $value) {
-                /** @var TableSchema $tableSchema */
-                if ($tableSchema === null || $tableSchema->sequenceName == null) {
-                    if ($tableSchema === null) {
-                        throw new InvalidArgumentException("Table not found: $tableName");
-                    } else {
-                        throw new InvalidArgumentException("There is not sequence associated with table '$tableName'.");
-                    }
-                } else {
-                    // c.f. http://www.postgresql.org/docs/8.1/static/functions-sequence.html
-                    $sequence = $this->db->quoteTableName($tableSchema->sequenceName);
-                    $tableName = $this->db->quoteTableName($tableName);
-                    if ($value === null) {
-                        $key = $this->db->quoteColumnName(reset($tableSchema->primaryKey));
-                        $value = "(SELECT COALESCE(MAX({$key}),0) FROM {$tableName})+1";
-                    } else {
-                        $value = (int) $value;
-                    }
-
-                    return "SELECT SETVAL('$sequence',$value,false)";
-                }
+        $tableSchema = $this->db->getSchema()->getTableSchema($tableName);
+        if ($tableSchema !== null && $tableSchema->sequenceName !== null) {
+            // c.f. http://www.postgresql.org/docs/8.1/static/functions-sequence.html
+            $sequence = $this->db->quoteTableName($tableSchema->sequenceName);
+            $tableName = $this->db->quoteTableName($tableName);
+            if ($value === null) {
+                $key = $this->db->quoteColumnName(reset($tableSchema->primaryKey));
+                $value = "(SELECT COALESCE(MAX({$key}),0) FROM {$tableName})+1";
+            } else {
+                $value = (int) $value;
             }
-        );
+
+            return "SELECT SETVAL('$sequence',$value,false)";
+        } elseif ($tableSchema === null) {
+            throw new InvalidArgumentException("Table not found: $tableName");
+        }
+
+        throw new InvalidArgumentException("There is not sequence associated with table '$tableName'.");
     }
 
     /**
@@ -286,57 +277,51 @@ class QueryBuilder extends \Reaction\Db\QueryBuilder
     public function batchInsert($table, $columns, $rows, &$params = [])
     {
         if (empty($rows)) {
-            return reject('');
+            return '';
         }
 
         $schema = $this->db->getSchema();
-        return $schema->getTableSchema($table)->then(
-            function($tableSchema) {
-                return $tableSchema !== null ? $tableSchema->columns : [];
-            },
-            function() {
-                return [];
-            }
-        )->then(
-            function($columnSchemas) use (&$schema, $table, $columns, $rows, &$params) {
-                /** @var ColumnSchemaInterface[] $columnSchemas */
-                $values = [];
-                foreach ($rows as $row) {
-                    $vs = [];
-                    foreach ($row as $i => $value) {
-                        if (isset($columns[$i], $columnSchemas[$columns[$i]])) {
-                            $value = $columnSchemas[$columns[$i]]->dbTypecast($value);
-                        }
-                        if (is_string($value)) {
-                            $value = $schema->quoteValue($value);
-                        } elseif (is_float($value)) {
-                            // ensure type cast always has . as decimal separator in all locales
-                            $value = StringHelper::floatToString($value);
-                        } elseif ($value === true) {
-                            $value = 'TRUE';
-                        } elseif ($value === false) {
-                            $value = 'FALSE';
-                        } elseif ($value === null) {
-                            $value = 'NULL';
-                        } elseif ($value instanceof ExpressionInterface) {
-                            $value = $this->buildExpression($value, $params);
-                        }
-                        $vs[] = $value;
-                    }
-                    $values[] = '(' . implode(', ', $vs) . ')';
-                }
-                if (empty($values)) {
-                    return '';
-                }
+        if (($tableSchema = $schema->getTableSchema($table)) !== null) {
+            $columnSchemas = $tableSchema->columns;
+        } else {
+            $columnSchemas = [];
+        }
 
-                foreach ($columns as $i => $name) {
-                    $columns[$i] = $schema->quoteColumnName($name);
+        $values = [];
+        foreach ($rows as $row) {
+            $vs = [];
+            foreach ($row as $i => $value) {
+                if (isset($columns[$i], $columnSchemas[$columns[$i]])) {
+                    $value = $columnSchemas[$columns[$i]]->dbTypecast($value);
                 }
-
-                return 'INSERT INTO ' . $schema->quoteTableName($table)
-                    . ' (' . implode(', ', $columns) . ') VALUES ' . implode(', ', $values);
+                if (is_string($value)) {
+                    $value = $schema->quoteValue($value);
+                } elseif (is_float($value)) {
+                    // ensure type cast always has . as decimal separator in all locales
+                    $value = StringHelper::floatToString($value);
+                } elseif ($value === true) {
+                    $value = 'TRUE';
+                } elseif ($value === false) {
+                    $value = 'FALSE';
+                } elseif ($value === null) {
+                    $value = 'NULL';
+                } elseif ($value instanceof ExpressionInterface) {
+                    $value = $this->buildExpression($value, $params);
+                }
+                $vs[] = $value;
             }
-        );
+            $values[] = '(' . implode(', ', $vs) . ')';
+        }
+        if (empty($values)) {
+            return '';
+        }
+
+        foreach ($columns as $i => $name) {
+            $columns[$i] = $schema->quoteColumnName($name);
+        }
+
+        return 'INSERT INTO ' . $schema->quoteTableName($table)
+            . ' (' . implode(', ', $columns) . ') VALUES ' . implode(', ', $values);
     }
 
     /**
@@ -345,39 +330,28 @@ class QueryBuilder extends \Reaction\Db\QueryBuilder
      * @param array|Query $insertColumns
      * @param array|bool $updateColumns
      * @param array $params
-     * @return ExtendedPromiseInterface with string
+     * @return string
      */
     protected function newUpsert($table, $insertColumns, $updateColumns, &$params)
     {
-        $insertSql = '';
-        return $this->insert($table, $insertColumns, $params)->then(
-            function($sql) use (&$insertSql, $table, $insertColumns, $updateColumns) {
-                $insertSql = $sql;
-                return $this->prepareUpsertColumns($table, $insertColumns, $updateColumns);
+        $insertSql = $this->insert($table, $insertColumns, $params);
+        list($uniqueNames, , $updateNames) = $this->prepareUpsertColumns($table, $insertColumns, $updateColumns);
+        if (empty($uniqueNames)) {
+            return $insertSql;
+        }
+
+        if ($updateColumns === false) {
+            return "$insertSql ON CONFLICT DO NOTHING";
+        }
+
+        if ($updateColumns === true) {
+            $updateColumns = [];
+            foreach ($updateNames as $name) {
+                $updateColumns[$name] = new Expression('EXCLUDED.' . $this->db->quoteColumnName($name));
             }
-        )->then(
-            function($preparedUpsData) use (&$insertSql, $updateColumns, $table, &$params) {
-                list($uniqueNames, , $updateNames) = $preparedUpsData;
-                if (empty($uniqueNames)) {
-                    return $insertSql;
-                }
-                if ($updateColumns === false) {
-                    return "$insertSql ON CONFLICT DO NOTHING";
-                }
-                if ($updateColumns === true) {
-                    $updateColumns = [];
-                    foreach ($updateNames as $name) {
-                        $updateColumns[$name] = new Expression('EXCLUDED.' . $this->db->quoteColumnName($name));
-                    }
-                }
-                return $this->prepareUpdateSets($table, $updateColumns, $params)->then(
-                    function($preparedUpdData) use (&$insertSql, &$uniqueNames, &$params) {
-                        list($updates, $params) = $preparedUpdData;
-                        return $insertSql . ' ON CONFLICT (' . implode(', ', $uniqueNames) . ') DO UPDATE SET ' . implode(', ', $updates);
-                    }
-                );
-            }
-        );
+        }
+        list($updates, $params) = $this->prepareUpdateSets($table, $updateColumns, $params);
+        return $insertSql . ' ON CONFLICT (' . implode(', ', $uniqueNames) . ') DO UPDATE SET ' . implode(', ', $updates);
     }
 
     /**
@@ -386,126 +360,86 @@ class QueryBuilder extends \Reaction\Db\QueryBuilder
      * @param array|Query $insertColumns
      * @param array|bool $updateColumns
      * @param array $params
-     * @return ExtendedPromiseInterface with string
+     * @return string
      */
     protected function oldUpsert($table, $insertColumns, $updateColumns, &$params)
     {
         /** @var Constraint[] $constraints */
-        $constraints = [];
+        list($uniqueNames, $insertNames, $updateNames) = $this->prepareUpsertColumns($table, $insertColumns, $updateColumns, $constraints);
+        if (empty($uniqueNames)) {
+            return $this->insert($table, $insertColumns, $params);
+        }
+
+        /** @var Schema $schema */
         $schema = $this->db->getSchema();
-        return $this->prepareUpsertColumns($table, $insertColumns, $updateColumns, $constraints)->then(
-            function($preparedUpsData) use (&$schema, $table, $insertColumns, $updateColumns, &$params, &$constraints) {
-                list($uniqueNames, $insertNames, $updateNames) = $preparedUpsData;
-                if (empty($uniqueNames)) {
-                    return $this->insert($table, $insertColumns, $params);
-                } else {
-                    return $this->oldUpsertWithUniques($table, $insertColumns, $updateColumns, $preparedUpsData, $constraints, $params);
+        if (!$insertColumns instanceof Query) {
+            $tableSchema = $schema->getTableSchema($table);
+            $columnSchemas = $tableSchema !== null ? $tableSchema->columns : [];
+            foreach ($insertColumns as $name => $value) {
+                // NULLs and numeric values must be type hinted in order to be used in SET assigments
+                // NVM, let's cast them all
+                if (isset($columnSchemas[$name])) {
+                    $phName = self::PARAM_PREFIX . count($params);
+                    $params[$phName] = $value;
+                    $insertColumns[$name] = new Expression("CAST($phName AS {$columnSchemas[$name]->dbType})");
                 }
             }
-        );
+        }
+        list(, $placeholders, $values, $params) = $this->prepareInsertValues($table, $insertColumns, $params);
+        $updateCondition = ['or'];
+        $insertCondition = ['or'];
+        $quotedTableName = $schema->quoteTableName($table);
+        foreach ($constraints as $constraint) {
+            $constraintUpdateCondition = ['and'];
+            $constraintInsertCondition = ['and'];
+            foreach ($constraint->columnNames as $name) {
+                $quotedName = $schema->quoteColumnName($name);
+                $constraintUpdateCondition[] = "$quotedTableName.$quotedName=\"EXCLUDED\".$quotedName";
+                $constraintInsertCondition[] = "\"upsert\".$quotedName=\"EXCLUDED\".$quotedName";
+            }
+            $updateCondition[] = $constraintUpdateCondition;
+            $insertCondition[] = $constraintInsertCondition;
+        }
+        $withSql = 'WITH "EXCLUDED" (' . implode(', ', $insertNames)
+            . ') AS (' . (!empty($placeholders) ? 'VALUES (' . implode(', ', $placeholders) . ')' : ltrim($values, ' ')) . ')';
+        if ($updateColumns === false) {
+            $selectSubQuery = (new Query())
+                ->select(new Expression('1'))
+                ->from($table)
+                ->where($updateCondition);
+            $insertSelectSubQuery = (new Query())
+                ->select($insertNames)
+                ->from('EXCLUDED')
+                ->where(['not exists', $selectSubQuery]);
+            $insertSql = $this->insert($table, $insertSelectSubQuery, $params);
+            return "$withSql $insertSql";
+        }
+
+        if ($updateColumns === true) {
+            $updateColumns = [];
+            foreach ($updateNames as $name) {
+                $quotedName = $this->db->quoteColumnName($name);
+                if (strrpos($quotedName, '.') === false) {
+                    $quotedName = '"EXCLUDED".' . $quotedName;
+                }
+                $updateColumns[$name] = new Expression($quotedName);
+            }
+        }
+        list($updates, $params) = $this->prepareUpdateSets($table, $updateColumns, $params);
+        $updateSql = 'UPDATE ' . $this->db->quoteTableName($table) . ' SET ' . implode(', ', $updates)
+            . ' FROM "EXCLUDED" ' . $this->buildWhere($updateCondition, $params)
+            . ' RETURNING ' . $this->db->quoteTableName($table) .'.*';
+        $selectUpsertSubQuery = (new Query())
+            ->select(new Expression('1'))
+            ->from('upsert')
+            ->where($insertCondition);
+        $insertSelectSubQuery = (new Query())
+            ->select($insertNames)
+            ->from('EXCLUDED')
+            ->where(['not exists', $selectUpsertSubQuery]);
+        $insertSql = $this->insert($table, $insertSelectSubQuery, $params);
+        return "$withSql, \"upsert\" AS ($updateSql) $insertSql";
     }
-
-    /**
-     * [[upsert()]] implementation for PostgreSQL older than 9.5. (with unique columns)
-     * @param string       $table
-     * @param array        $insertColumns
-     * @param array|bool   $updateColumns
-     * @param array        $preparedUpsData
-     * @param Constraint[] $constraints
-     * @param array        $params
-     * @return ExtendedPromiseInterface
-     */
-    protected function oldUpsertWithUniques($table, $insertColumns, $updateColumns, $preparedUpsData, $constraints, &$params) {
-        $schema = $this->db->getSchema();
-        list($uniqueNames, $insertNames, $updateNames) = $preparedUpsData;
-        $tablePromise = $insertColumns instanceof Query ? resolve(null) : $schema->getTableSchema($table);
-        return $tablePromise->then(
-            function($tableSchema) use ($table, &$insertColumns, &$params) {
-                if (!$tableSchema instanceof TableSchema) {
-                    $columnSchemas = $tableSchema !== null ? $tableSchema->columns : [];
-                    foreach ($insertColumns as $name => $value) {
-                        // NULLs and numeric values must be type hinted in order to be used in SET assigments
-                        // NVM, let's cast them all
-                        if (isset($columnSchemas[$name])) {
-                            $phName = self::PARAM_PREFIX . count($params);
-                            $params[$phName] = $value;
-                            $insertColumns[$name] = new Expression("CAST($phName AS {$columnSchemas[$name]->dbType})");
-                        }
-                    }
-                }
-                return $this->prepareInsertValues($table, $insertColumns, $params);
-            }
-        )->then(
-            function($preparedInsData) use (&$params, &$schema, &$constraints, $updateColumns, &$updateNames, &$insertNames, $table) {
-                list(, $placeholders, $values, $params) = $preparedInsData;
-                $updateCondition = ['or'];
-                $insertCondition = ['or'];
-                $quotedTableName = $schema->quoteTableName($table);
-                foreach ($constraints as $constraint) {
-                    $constraintUpdateCondition = ['and'];
-                    $constraintInsertCondition = ['and'];
-                    foreach ($constraint->columnNames as $name) {
-                        $quotedName = $schema->quoteColumnName($name);
-                        $constraintUpdateCondition[] = "$quotedTableName.$quotedName=\"EXCLUDED\".$quotedName";
-                        $constraintInsertCondition[] = "\"upsert\".$quotedName=\"EXCLUDED\".$quotedName";
-                    }
-                    $updateCondition[] = $constraintUpdateCondition;
-                    $insertCondition[] = $constraintInsertCondition;
-                }
-                $withSql = 'WITH "EXCLUDED" (' . implode(', ', $insertNames)
-                    . ') AS (' . (!empty($placeholders) ? 'VALUES (' . implode(', ', $placeholders) . ')' : ltrim($values, ' ')) . ')';
-                if ($updateColumns === false) {
-                    $selectSubQuery = (new Query())
-                        ->select(new Expression('1'))
-                        ->from($table)
-                        ->where($updateCondition);
-                    $insertSelectSubQuery = (new Query())
-                        ->select($insertNames)
-                        ->from('EXCLUDED')
-                        ->where(['not exists', $selectSubQuery]);
-                    return $this->insert($table, $insertSelectSubQuery, $params)->then(
-                        function($insertSql) use ($withSql) {
-                            return "$withSql $insertSql";
-                        }
-                    );
-                }
-
-                if ($updateColumns === true) {
-                    $updateColumns = [];
-                    foreach ($updateNames as $name) {
-                        $quotedName = $this->db->quoteColumnName($name);
-                        if (strrpos($quotedName, '.') === false) {
-                            $quotedName = '"EXCLUDED".' . $quotedName;
-                        }
-                        $updateColumns[$name] = new Expression($quotedName);
-                    }
-                }
-
-                return $this->prepareUpdateSets($table, $updateColumns, $params)->then(
-                    function($preparedUpdData) use ($table, $updateCondition, $insertCondition, $insertNames, $withSql, &$params) {
-                        list($updates, $params) = $preparedUpdData;
-                        $updateSql = 'UPDATE ' . $this->db->quoteTableName($table) . ' SET ' . implode(', ', $updates)
-                            . ' FROM "EXCLUDED" ' . $this->buildWhere($updateCondition, $params)
-                            . ' RETURNING ' . $this->db->quoteTableName($table) .'.*';
-                        $selectUpsertSubQuery = (new Query())
-                            ->select(new Expression('1'))
-                            ->from('upsert')
-                            ->where($insertCondition);
-                        $insertSelectSubQuery = (new Query())
-                            ->select($insertNames)
-                            ->from('EXCLUDED')
-                            ->where(['not exists', $selectUpsertSubQuery]);
-                        return $this->insert($table, $insertSelectSubQuery, $params)->then(
-                            function($insertSql) use ($withSql, $updateSql) {
-                                return "$withSql, \"upsert\" AS ($updateSql) $insertSql";
-                            }
-                        );
-                    }
-                );
-            }
-        );
-    }
-
 
     /**
      * Normalizes data to be saved into the table, performing extra preparations and type converting, if necessary.
