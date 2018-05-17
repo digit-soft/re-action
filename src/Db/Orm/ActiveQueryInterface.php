@@ -122,11 +122,20 @@ interface ActiveQueryInterface extends QueryInterface
     public function prepare($builder);
 
     /**
+     * Prepares for building SQL.
+     * This method is called by [[QueryBuilder]] when it starts to build SQL from a query object.
+     * You may override this method to do some final preparation work when converting a query into a SQL statement.
+     * @param QueryBuilder $builder
+     * @return ExtendedPromiseInterface with $this a prepared query instance which will be used by [[QueryBuilder]] to build the SQL
+     */
+    public function prepareAsync($builder);
+
+    /**
      * Converts the raw query results into the format as specified by this query.
      * This method is internally used to convert the data fetched from database
      * into the format as required by this query.
      * @param array $rows the raw query result from database
-     * @return array the converted query result
+     * @return ExtendedPromiseInterface with array the converted query result
      */
     public function populate($rows);
 
@@ -134,7 +143,7 @@ interface ActiveQueryInterface extends QueryInterface
      * Creates a DB command that can be used to execute this query.
      * @param DatabaseInterface|null $db the DB connection used to create the DB command.
      * If `null`, the DB connection returned by [[modelClass]] will be used.
-     * @return Command the created DB command instance.
+     * @return ExtendedPromiseInterface with Command the created DB command instance.
      */
     public function createCommand($db = null);
 

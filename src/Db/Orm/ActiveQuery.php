@@ -5,8 +5,13 @@ namespace Reaction\Db\Orm;
 use Reaction\Db\Command;
 use Reaction\Db\DatabaseInterface;
 use Reaction\Db\Query;
+use Reaction\Db\QueryBuilderInterface;
+use Reaction\Db\QueryInterface;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Promise\ExtendedPromiseInterface;
+use Reaction\Promise\Promise;
+use function Reaction\Promise\reject;
+use function Reaction\Promise\resolve;
 
 /**
  * ActiveQuery represents a DB query associated with an Active Record class.
@@ -131,7 +136,7 @@ class ActiveQuery extends Query implements ActiveQueryInterface
     /**
      * {@inheritdoc}
      */
-    public function prepare($builder)
+    public function prepareAsync($builder)
     {
         // NOTE: because the same ActiveQuery may be used to build different SQL statements
         // (e.g. by ActiveDataProvider, one for count query, the other for row data query,
@@ -153,41 +158,81 @@ class ActiveQuery extends Query implements ActiveQueryInterface
 
         if ($this->primaryModel === null) {
             // eager loading
-            $query = Query::create($this);
+            $queryPr = new Promise(function($r, $c) {
+                 $r(Query::create($this));
+            });
         } else {
             // lazy loading of a relation
-            $where = $this->where;
+            $queryPr = $this->prepareAsyncVia();
+        }
 
-            if ($this->via instanceof self) {
-                // via junction table
-                $viaModels = $this->via->findJunctionRows([$this->primaryModel]);
-                $this->filterByModels($viaModels);
-            } elseif (is_array($this->via)) {
-                // via relation
-                /* @var $viaQuery ActiveQuery */
-                list($viaName, $viaQuery) = $this->via;
-                if ($viaQuery->multiple) {
-                    $viaModels = $viaQuery->all();
-                    $this->primaryModel->populateRelation($viaName, $viaModels);
-                } else {
-                    $model = $viaQuery->one();
-                    $this->primaryModel->populateRelation($viaName, $model);
-                    $viaModels = $model === null ? [] : [$model];
-                }
-                $this->filterByModels($viaModels);
-            } else {
-                $this->filterByModels([$this->primaryModel]);
+        return $queryPr->then(function($query) {
+            /** @var QueryInterface $query */
+            if (!empty($this->on)) {
+                $query->andWhere($this->on);
             }
+            return $query;
+        });
+    }
 
-            $query = Query::create($this);
-            $this->where = $where;
+    /**
+     * Prepare query with relations
+     * @return ExtendedPromiseInterface
+     */
+    protected function prepareAsyncVia() {
+        // lazy loading of a relation
+        $where = $this->where;
+
+        $promise = resolve(true);
+
+        if ($this->via instanceof self) {
+            // via junction table
+            $promise->then(
+                function() {
+                    return $this->via->findJunctionRows([$this->primaryModel]);
+                }
+            )->then(
+                function($viaModels) {
+                    $this->filterByModels($viaModels);
+                    return true;
+                }
+            );
+        } elseif (is_array($this->via)) {
+            // via relation
+            /* @var $viaQuery ActiveQuery */
+            list($viaName, $viaQuery) = $this->via;
+            $viaModelsPr = $viaQuery->multiple ? $viaQuery->all() : $viaQuery->one();
+            $viaModelsPr->otherwise(function() use (&$viaQuery) {
+                return $viaQuery->multiple ? [] : null;
+            });
+            $promise->then(
+                function() use ($viaModelsPr) {
+                    return $viaModelsPr;
+                }
+            )->then(
+                function($viaModels) use ($viaName, &$viaQuery) {
+                    $this->primaryModel->populateRelation($viaName, $viaModels);
+                    if (!$viaQuery->multiple) {
+                        $viaModels = $viaModels === null ? [] : [$viaModels];
+                    }
+                    return $viaModels;
+                }
+            )->then(
+                function($viaModels) {
+                    $this->filterByModels($viaModels);
+                    return true;
+                }
+            );
+        } else {
+            $this->filterByModels([$this->primaryModel]);
         }
-
-        if (!empty($this->on)) {
-            $query->andWhere($this->on);
-        }
-
-        return $query;
+        return $promise->then(
+            function() use (&$where) {
+                $query = Query::create($this);
+                $this->where = $where;
+                return $query;
+            }
+        );
     }
 
     /**
@@ -196,28 +241,26 @@ class ActiveQuery extends Query implements ActiveQueryInterface
     public function populate($rows)
     {
         if (empty($rows)) {
-            return [];
+            return resolve([]);
         }
 
         $models = $this->createModels($rows);
         if (!empty($this->join) && $this->indexBy === null) {
             $models = $this->removeDuplicatedModels($models);
         }
-        if (!empty($this->with)) {
-            $this->findWith($this->with, $models);
-        }
-
-        if ($this->inverseOf !== null) {
-            $this->addInverseRelations($models);
-        }
-
-        if (!$this->asArray) {
-            foreach ($models as $model) {
-                $model->afterFind();
+        $promise = !empty($this->with) ? $this->findWith($this->with, $models) : resolve(true);
+        return $promise->then(function() use (&$models) {
+            if ($this->inverseOf !== null) {
+                $this->addInverseRelations($models);
             }
-        }
 
-        return parent::populate($models);
+            if (!$this->asArray) {
+                foreach ($models as $model) {
+                    $model->afterFind();
+                }
+            }
+            return parent::populate($models);
+        });
     }
 
     /**
@@ -225,7 +268,7 @@ class ActiveQuery extends Query implements ActiveQueryInterface
      * This method is mainly called when a join query is performed, which may cause duplicated rows being returned.
      * @param array $models the models to be checked
      * @throws InvalidConfigException if model primary key is empty
-     * @return array the distinctive models
+     * @return array|ActiveRecordInterface[] the distinctive models
      */
     private function removeDuplicatedModels($models)
     {
@@ -278,26 +321,31 @@ class ActiveQuery extends Query implements ActiveQueryInterface
      * Executes query and returns a single row of result.
      * @param DatabaseInterface|null $db the DB connection used to create the DB command.
      * If `null`, the DB connection returned by [[modelClass]] will be used.
-     * @return ActiveRecordInterface|array|null a single row of query result. Depending on the setting of [[asArray]],
+     * @return ExtendedPromiseInterface with ActiveRecordInterface|array|null a single row of query result. Depending on the setting of [[asArray]],
      * the query result may be either an array or an ActiveRecord object. `null` will be returned
      * if the query results in nothing.
      */
     public function one($db = null)
     {
-        $row = parent::one($db);
-        if ($row !== false) {
-            $models = $this->populate([$row]);
-            return reset($models) ?: null;
-        }
-
-        return null;
+        return parent::one($db)->then(
+            function($row) {
+                if ($row !== false) {
+                    return $this->populate([$row]);
+                }
+                return reject(null);
+            }
+        )->then(
+            function($models) {
+                return reset($models) ?: reject(null);
+            }
+        );
     }
 
     /**
      * Creates a DB command that can be used to execute this query.
      * @param DatabaseInterface|null $db the DB connection used to create the DB command.
      * If `null`, the DB connection returned by [[modelClass]] will be used.
-     * @return Command the created DB command instance.
+     * @return ExtendedPromiseInterface with Command the created DB command instance.
      */
     public function createCommand($db = null)
     {
@@ -308,16 +356,20 @@ class ActiveQuery extends Query implements ActiveQueryInterface
         }
 
         if ($this->sql === null) {
-            list($sql, $params) = $db->getQueryBuilder()->build($this);
+            $sqlParamsPr = $db->getQueryBuilder()->buildAsync($this);
         } else {
-            $sql = $this->sql;
-            $params = $this->params;
+            $sqlParamsPr = resolve([$this->sql, $this->params]);
         }
 
-        $command = $db->createCommand($sql, $params);
-        $this->setCommandCache($command);
+        return $sqlParamsPr->then(
+            function($data) use (&$db) {
+                list($sql, $params) = $data;
+                $command = $db->createCommand($sql, $params);
+                $this->setCommandCache($command);
 
-        return $command;
+                return $command;
+            }
+        );
     }
 
     /**
@@ -432,7 +484,7 @@ class ActiveQuery extends Query implements ActiveQueryInterface
         return $this;
     }
 
-    private function buildJoinWith()
+    protected function buildJoinWith()
     {
         $join = $this->join;
         $this->join = [];
@@ -517,6 +569,7 @@ class ActiveQuery extends Query implements ActiveQueryInterface
                 $name = substr($name, 0, $pos);
                 $fullName = $prefix === '' ? $name : "$prefix.$name";
                 if (!isset($relations[$fullName])) {
+                    /** @var ActiveQuery $relation */
                     $relations[$fullName] = $relation = $primaryModel->getRelation($name);
                     $this->joinWithRelation($parent, $relation, $this->getJoinType($joinType, $fullName));
                 } else {
@@ -820,7 +873,7 @@ class ActiveQuery extends Query implements ActiveQueryInterface
      */
     protected function getPrimaryTableName()
     {
-        /* @var $modelClass ActiveRecord */
+        /* @var $modelClass ActiveRecordInterface */
         $modelClass = $this->modelClass;
         return $modelClass::tableName();
     }

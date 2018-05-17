@@ -1,6 +1,8 @@
 <?php
 
 namespace Reaction\Db\Orm;
+use function Reaction\Promise\all;
+use function Reaction\Promise\resolve;
 
 /**
  * ActiveQueryTrait implements the common methods and properties for active record query classes.
@@ -98,7 +100,6 @@ trait ActiveQueryTrait
      * Converts found rows into model instances.
      * @param array $rows
      * @return array|ActiveRecordInterface[]
-     * @since 2.0.11
      */
     protected function createModels($rows)
     {
@@ -120,9 +121,10 @@ trait ActiveQueryTrait
 
     /**
      * Finds records corresponding to one or multiple relations and populates them into the primary models.
-     * @param array $with a list of relations that this query should be performed with. Please
+     * @param array                         $with a list of relations that this query should be performed with. Please
      * refer to [[with()]] for details about specifying this parameter.
      * @param array|ActiveRecordInterface[] $models the primary models (can be either AR instances or arrays)
+     * @return \Reaction\Promise\ExtendedPromiseInterface
      */
     public function findWith($with, &$models)
     {
@@ -134,13 +136,15 @@ trait ActiveQueryTrait
         }
         $relations = $this->normalizeRelations($primaryModel, $with);
         /* @var $relation ActiveQuery */
+        $promises = [];
         foreach ($relations as $name => $relation) {
             if ($relation->asArray === null) {
                 // inherit asArray from primary query
                 $relation->asArray($this->asArray);
             }
-            $relation->populateRelation($name, $models);
+            $promises[] = $relation->populateRelation($name, $models);
         }
+        return !empty($promises) ? all($promises) : resolve(true);
     }
 
     /**
