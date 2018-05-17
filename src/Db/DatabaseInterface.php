@@ -20,6 +20,8 @@ use Reaction\Promise\ExtendedPromiseInterface;
  * @property bool    $schemaCacheEnable
  * @property array   $schemaCacheExclude
  * @property int     $queryCacheDuration
+ * @property bool    $enableLogging
+ * @property bool    $enableProfiling
  */
 interface DatabaseInterface extends ComponentAutoloadInterface, ComponentInitBlockingInterface
 {

@@ -51,6 +51,14 @@ class Database extends Component implements DatabaseInterface
      * @var string Cache component name
      */
     public $cacheComponent = 'arrayCacheDefault';
+    /**
+     * @var bool Enable query logging
+     */
+    public $enableLogging = false;
+    /**
+     * @var bool Enable query profiling
+     */
+    public $enableProfiling = false;
 
     protected $_queryBuilder;
     protected $_schema;
