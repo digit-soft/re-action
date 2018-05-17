@@ -3,6 +3,11 @@
 namespace Reaction\Db;
 
 use Reaction\Base\BaseObject;
+use Reaction\Db\Constraints\CheckConstraint;
+use Reaction\Db\Constraints\Constraint;
+use Reaction\Db\Constraints\DefaultValueConstraint;
+use Reaction\Db\Constraints\ForeignKeyConstraint;
+use Reaction\Db\Constraints\IndexConstraint;
 use Reaction\Exceptions\NotSupportedException;
 use Reaction\Promise\ExtendedPromiseInterface;
 use function Reaction\Promise\all;
@@ -30,6 +35,18 @@ class Schema extends BaseObject implements SchemaInterface
      * @var string the default schema name used for the current session.
      */
     public $defaultSchema;
+    /**
+     * @var array Table metadata type those are implemented by driver
+     */
+    public $tableMetaImplemented = [
+        self::META_SCHEMA,
+        self::META_PK,
+        self::META_FK,
+        self::META_INDEXES,
+        self::META_UNIQUES,
+        self::META_CHECKS,
+        self::META_DEFAULTS,
+    ];
 
 
     /**
@@ -44,6 +61,10 @@ class Schema extends BaseObject implements SchemaInterface
      * @var array list of all table schemas in the database for sync usage
      */
     protected $_tableSchemas = [];
+    /**
+     * @var array list of all table metadata in the database for sync usage
+     */
+    protected $_tableMetadata = [];
     /**
      * @var string|string[] character used to quote schema, table, etc. names.
      * An array of 2 characters can be used in case starting and ending characters are different.
@@ -132,22 +153,15 @@ class Schema extends BaseObject implements SchemaInterface
      * Obtains the metadata for the named table.
      * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
      * @param bool $refresh whether to reload the table schema even if it is found in the cache.
-     * @return ExtendedPromiseInterface with TableSchema|null table metadata. `null` if the named table does not exist.
+     * @return TableSchema|null table metadata. `null` if the named table does not exist.
      */
     public function getTableSchema($name, $refresh = false)
     {
         return $this->getTableMetadata($name, 'schema', $refresh);
     }
 
-    /**
-     * Obtains the metadata for the named table. (for sync use)
-     *
-     * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
-     * @return TableSchema|null
-     */
-    public function getTableSchemaSync($name) {
-        $rawName = $this->getRawTableName($name);
-        return isset($this->_tableSchemas[$rawName]) ? $this->_tableSchemas[$rawName] : null;
+    public function getTableSchemaAsync($name, $refresh = false) {
+        return $this->getTableMetadata($name, 'schema', $refresh);
     }
 
     /**
@@ -398,10 +412,10 @@ class Schema extends BaseObject implements SchemaInterface
      */
     public function refreshTableSchema($tableName, $nameIsRaw = false) {
         $rawName = $nameIsRaw ? $tableName : $this->getRawTableName($tableName);
-        if (isset($this->_tableSchemas[$rawName])) {
-            unset($this->_tableSchemas[$rawName]);
+        if (isset($this->_tableMetadata[$rawName][static::META_SCHEMA])) {
+            unset($this->_tableMetadata[$rawName][static::META_SCHEMA]);
         }
-        return $this->getTableSchema($rawName, true)->always(function() { return true; });
+        return $this->getTableSchemaAsync($rawName, true)->always(function() { return true; });
     }
 
     /**
@@ -419,7 +433,7 @@ class Schema extends BaseObject implements SchemaInterface
             }
         )->then(
             function() use ($table, $columns) {
-                $tableSchema = $this->getTableSchemaSync($table);
+                $tableSchema = $this->getTableSchema($table);
                 $result = [];
                 foreach ($tableSchema->primaryKey as $name) {
                     if ($tableSchema->columns[$name]->autoIncrement) {
@@ -445,51 +459,42 @@ class Schema extends BaseObject implements SchemaInterface
         return null;
     }
 
+
+
+    /**
+     * Get table metadata
+     * @param string $name
+     * @param string $type
+     * @param bool   $refresh
+     * @return TableSchema|Constraint|Constraint[]|IndexConstraint[]|ForeignKeyConstraint[]|DefaultValueConstraint[]|CheckConstraint[]|null
+     */
+    protected function getTableMetadata($name, $type = self::META_SCHEMA, $refresh = false)
+    {
+        $rawName = $this->getRawTableName($name);
+        if ($refresh) {
+            $this->getTableMetadataRaw($rawName, $type, true);
+        }
+        if (isset($this->_tableMetadata[$rawName][$type])) {
+            return $this->_tableMetadata[$rawName][$type];
+        }
+        return null;
+    }
+
     /**
      * @param string $name
      * @param string $type
      * @param bool   $refresh
      * @return ExtendedPromiseInterface
+     * @deprecated Old async function
      */
-    protected function getTableMetadata($name, $type, $refresh = false)
+    protected function getTableMetadataAsync($name, $type, $refresh = false)
     {
         $rawName = $this->getRawTableName($name);
-        $cachePromise = !$refresh ? $this->getTableMetadataCache($rawName) : reject(null);
-        return $cachePromise->then(null,
-            function() use ($rawName, $type, &$refresh) {
-                $refresh = true;
-                return $this->getTableMetadataRaw($rawName, $type, $refresh);
-            }
-        )->then(
-            function($metadata) use ($rawName, $type, &$refresh) {
-                if ($refresh) {
-                    //Update table schemas for sync usage
-                    if ($type === 'schema') {
-                        $this->_tableSchemas[$rawName] = $metadata;
-                    }
-                    return $this->updateTableMetadataCache($rawName, $metadata, $type)->always(
-                        function() use($metadata) {
-                            return $metadata;
-                        }
-                    );
-                }
-                return $metadata;
-            }
-        );
-    }
-
-    /**
-     * Get table metadata cached
-     * @param string $name
-     * @return ExtendedPromiseInterface
-     */
-    protected function getTableMetadataCache($name)
-    {
-        if (!$this->db->schemaCacheEnable || ($cache = $this->db->getCache()) === null) {
-            return reject(null);
+        $metadata = $this->getTableMetadata($name, $type);
+        if ($metadata === null || $refresh) {
+            return $this->getTableMetadataRaw($rawName, $type, true);
         }
-        $cacheKey = $this->getCacheKey($name);
-        return $this->db->getCache()->get($cacheKey);
+        return resolve($metadata);
     }
 
     /**
@@ -503,56 +508,14 @@ class Schema extends BaseObject implements SchemaInterface
     {
         /** @var ExtendedPromiseInterface $promise */
         $promise = $this->{'loadTable' . ucfirst($type)}($name);
+        if ($refresh) {
+            $promise->then(function($data) use ($name, $type) {
+                $this->_tableMetadata[$name] = isset($this->_tableMetadata[$name]) ? $this->_tableMetadata[$name] : [];
+                $this->_tableMetadata[$name][$type] = $data;
+                return $data;
+            });
+        }
         return $promise;
-    }
-
-    /**
-     * Save table metadata to cache
-     * @param string $name
-     * @param array  $metadata
-     * @return ExtendedPromiseInterface
-     */
-    protected function setTableMetadataCache($name, $metadata)
-    {
-        if (!$this->db->schemaCacheEnable || !($cache = $this->db->getCache())) {
-            return reject(null);
-        }
-        $duration = $this->db->schemaCacheDuration;
-        $cacheKey = $this->getCacheKey($name);
-        $cacheTag = $this->getCacheTag();
-        return $cache->set($cacheKey, $metadata, $duration, [$cacheTag]);
-    }
-
-    /**
-     * Update table metadata cache
-     * @param string      $name
-     * @param array       $metadata
-     * @param string|null $type
-     * @return ExtendedPromiseInterface
-     */
-    protected function updateTableMetadataCache($name, $metadata, $type = null) {
-        if (!$this->db->schemaCacheEnable || !($cache = $this->db->getCache())) {
-            return reject(null);
-        }
-        $duration = $this->db->schemaCacheDuration;
-        $cacheKey = $this->getCacheKey($name);
-        $cacheTag = $this->getCacheTag();
-        return $cache->get($cacheKey)->then(
-            null,
-            function() {
-                return [];
-            }
-        )->then(
-            function($cachedData) use ($metadata, $type, $cacheKey, $cacheTag, $duration) {
-                if (isset($type)) {
-                    $newData = $cachedData;
-                    $newData[$type] = $metadata;
-                } else {
-                    $newData = $metadata;
-                }
-                return $this->db->getCache()->set($cacheKey, $newData, $duration, [$cacheTag]);
-            }
-        );
     }
 
     /**
@@ -599,12 +562,12 @@ class Schema extends BaseObject implements SchemaInterface
      * @param string $name table name.
      * @param string $type metadata type.
      * @param mixed $data metadata.
-     * @return ExtendedPromiseInterface to know when finished
      */
     protected function setTableMetadata($name, $type, $data)
     {
         $rawName = $this->getRawTableName($name);
-        return $this->updateTableMetadataCache($rawName, $data, $type);
+        $this->_tableMetadata[$rawName] = isset($this->_tableMetadata[$rawName]) ? $this->_tableMetadata[$rawName] : [];
+        $this->_tableMetadata[$rawName][$type] = $data;
     }
 
     /**
@@ -724,14 +687,17 @@ class Schema extends BaseObject implements SchemaInterface
      * @param string $schema
      * @return ExtendedPromiseInterface
      */
-    protected function refreshTableSchemas($schema = '') {
+    protected function refreshTablesMetadata($schema = '') {
         $schema = $schema !== '' ? $schema : $this->defaultSchema;
+        $metaTypes = $this->tableMetaImplemented;
         return $this->getTableNames($schema)->then(
-            function($names) {
+            function($names) use ($metaTypes) {
                 $promises = [];
                 $this->_tableSchemas = [];
                 foreach ($names as $name) {
-                    $promises[] = $this->refreshTableSchema($name, true);
+                    foreach ($metaTypes as $metaType) {
+                        $promises[] = $this->getTableMetadataRaw($name, $metaType, true)->otherwise(function() { return true; });
+                    }
                 }
                 return !empty($promises) ? all($promises) : resolve(true);
             }
@@ -746,8 +712,8 @@ class Schema extends BaseObject implements SchemaInterface
     {
         $promises = [];
         $promises[] = $this->getServerVersionPromised()->otherwise(function() { return false; });
-        $promises[] = $this->getTableSchemas($this->defaultSchema, true);
-        $promises[] = $this->refreshTableSchemas();
+        //$promises[] = $this->getTableSchemas($this->defaultSchema, true);
+        $promises[] = $this->refreshTablesMetadata();
         //$promises[] = $this->getTableMetadata($this->defaultSchema, 'schema');
         return all($promises);
     }
