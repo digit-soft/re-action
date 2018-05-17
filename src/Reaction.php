@@ -196,6 +196,25 @@ class Reaction
     }
 
     /**
+     * Shortcut to Reaction::$app->logger->profile()
+     * @param string|null $message
+     * @param string|null $endId
+     * @return string|null
+     */
+    public static function profile($message = null, $endId = null) {
+        return static::$app->logger->profile($message, $endId, 1);
+    }
+
+    /**
+     * Shortcut to Reaction::$app->logger->profileEnd()
+     * @param string|null $endId
+     * @param string|null $message
+     */
+    public static function profileEnd($endId = null, $message = null) {
+        static::$app->logger->profileEnd($endId, $message, 1);
+    }
+
+    /**
      * Get instance of config reader
      * @return \Reaction\Base\ConfigReader
      */
