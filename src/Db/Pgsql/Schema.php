@@ -33,6 +33,17 @@ class Schema extends \Reaction\Db\Schema implements ConstraintFinderInterface
      * @var string the default schema used for the current session.
      */
     public $defaultSchema = 'public';
+    /**
+     * @var array Table metadata type those are implemented by driver
+     */
+    public $tableMetaImplemented = [
+        self::META_SCHEMA,
+        self::META_PK,
+        self::META_FK,
+        self::META_INDEXES,
+        self::META_UNIQUES,
+        self::META_CHECKS,
+    ];
 
     /**
      * @var array mapping from physical column types (keys) to abstract
@@ -141,7 +152,7 @@ class Schema extends \Reaction\Db\Schema implements ConstraintFinderInterface
         $params = [];
         return $this->db->getQueryBuilder()->insert($table, $columns, $params)->then(
             function($sql) use ($table, &$params) {
-                $tableSchema = $this->getTableSchemaSync($table);
+                $tableSchema = $this->getTableSchema($table);
                 $returnColumns = $tableSchema;
                 if (!empty($returnColumns)) {
                     $returning = [];
@@ -582,7 +593,7 @@ SQL;
      */
     protected function loadTablePrimaryKey($tableName)
     {
-        return $this->loadTableConstraints($tableName, 'primaryKey');
+        return $this->loadTableConstraints($tableName, static::META_PK);
     }
 
     /**
@@ -592,7 +603,7 @@ SQL;
      */
     protected function loadTableForeignKeys($tableName)
     {
-        return $this->loadTableConstraints($tableName, 'foreignKeys');
+        return $this->loadTableConstraints($tableName, static::META_FK);
     }
 
     /**
@@ -650,7 +661,7 @@ SQL;
      */
     protected function loadTableUniques($tableName)
     {
-        return $this->loadTableConstraints($tableName, 'uniques');
+        return $this->loadTableConstraints($tableName, static::META_UNIQUES);
     }
 
     /**
@@ -660,7 +671,7 @@ SQL;
      */
     protected function loadTableChecks($tableName)
     {
-        return $this->loadTableConstraints($tableName, 'checks');
+        return $this->loadTableConstraints($tableName, static::META_CHECKS);
     }
 
     /**
