@@ -155,4 +155,35 @@ interface CommandInterface
      * @internal
      */
     public function fetchResultsRow($row = [], $fetchMethod = self::FETCH_ALL, $fetchMode = self::FETCH_MODE_ASSOC, $colIndex = 0);
+
+    /**
+     * Executes the SQL statement.
+     * This method should only be used for executing non-query SQL statement, such as `INSERT`, `DELETE`, `UPDATE` SQLs.
+     * No result set will be returned.
+     * @return ExtendedPromiseInterface
+     */
+    public function execute();
+
+    /**
+     * Creates an INSERT command.
+     *
+     * For example,
+     *
+     * ```php
+     * $connection->createCommand()->insert('user', [
+     *     'name' => 'Sam',
+     *     'age' => 30,
+     * ])->execute();
+     * ```
+     *
+     * The method will properly escape the column names, and bind the values to be inserted.
+     *
+     * Note that the created command is not executed until [[execute()]] is called.
+     *
+     * @param string $table the table that new rows will be inserted into.
+     * @param array|\Reaction\Db\Query $columns the column data (name => value) to be inserted into the table or instance
+     * of [[Reaction\Db\Query|Query]] to perform INSERT INTO ... SELECT SQL statement.
+     * @return ExtendedPromiseInterface with $this the command object itself
+     */
+    public function insert($table, $columns);
 }

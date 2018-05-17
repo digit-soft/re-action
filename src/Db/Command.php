@@ -5,6 +5,8 @@ namespace Reaction\Db;
 use Reaction\Base\Component;
 use Reaction\Db\Expressions\Expression;
 use Reaction\Promise\ExtendedPromiseInterface;
+use function Reaction\Promise\reject;
+use function Reaction\Promise\resolve;
 
 /**
  * Class Command
@@ -38,6 +40,8 @@ class Command extends Component implements CommandInterface
      * @var string the SQL statement that this command represents
      */
     protected $_sql;
+    /** @var string Table name marked for schema refresh */
+    protected $_refreshTableName;
 
 
     /**
@@ -113,7 +117,6 @@ class Command extends Component implements CommandInterface
      *
      * @param string $sql the SQL statement to be set.
      * @return $this this command instance
-     * @since 2.0.13
      * @see reset()
      * @see cancel()
      */
@@ -251,6 +254,84 @@ class Command extends Component implements CommandInterface
         return null;
     }
 
+
+
+
+    /**
+     * Creates an INSERT command.
+     *
+     * For example,
+     *
+     * ```php
+     * $connection->createCommand()->insert('user', [
+     *     'name' => 'Sam',
+     *     'age' => 30,
+     * ])->execute();
+     * ```
+     *
+     * The method will properly escape the column names, and bind the values to be inserted.
+     *
+     * Note that the created command is not executed until [[execute()]] is called.
+     *
+     * @param string $table the table that new rows will be inserted into.
+     * @param array|\Reaction\Db\Query $columns the column data (name => value) to be inserted into the table or instance
+     * of [[Reaction\Db\Query|Query]] to perform INSERT INTO ... SELECT SQL statement.
+     * @return ExtendedPromiseInterface with $this the command object itself
+     */
+    public function insert($table, $columns)
+    {
+        $params = [];
+        return $this->db->getQueryBuilder()->insert($table, $columns, $params)->then(
+            function($sql) use (&$params) {
+                return $this->setSql($sql)->bindValues($params);
+            }
+        );
+    }
+
+    /**
+     * Executes the SQL statement.
+     * This method should only be used for executing non-query SQL statement, such as `INSERT`, `DELETE`, `UPDATE` SQLs.
+     * No result set will be returned.
+     * @return ExtendedPromiseInterface
+     */
+    public function execute()
+    {
+        $sql = $this->getSql();
+        $rawSql = $this->getRawSql();
+
+        if ($sql == '') {
+            return reject(false);
+        }
+
+        return $this->internalExecute($rawSql)->then(
+            function() {
+                return $this->refreshTableSchema();
+            }
+        );
+    }
+
+    /**
+     * Marks a specified table schema to be refreshed after command execution.
+     * @param string $name name of the table, which schema should be refreshed.
+     * @return $this this command instance
+     */
+    protected function requireTableSchemaRefresh($name)
+    {
+        $this->_refreshTableName = $name;
+        return $this;
+    }
+
+    /**
+     * Refreshes table schema, which was marked by [[requireTableSchemaRefresh()]].
+     * @return ExtendedPromiseInterface to know when finished
+     */
+    protected function refreshTableSchema()
+    {
+        if ($this->_refreshTableName !== null) {
+            return $this->db->getSchema()->refreshTableSchema($this->_refreshTableName);
+        }
+        return resolve(true);
+    }
 
 
 
