@@ -37,6 +37,13 @@ interface SchemaInterface
     const TYPE_MONEY = 'money';
     const TYPE_JSON = 'json';
 
+    const META_SCHEMA = 'schema';
+    const META_PK = 'primaryKey';
+    const META_FK = 'foreignKeys';
+    const META_INDEXES = 'indexes';
+    const META_UNIQUES = 'uniques';
+    const META_CHECKS = 'checks';
+    const META_DEFAULTS = 'defaultValues';
 
     /**
      * Refreshes the schema.
@@ -79,17 +86,17 @@ interface SchemaInterface
      * Obtains the metadata for the named table.
      * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
      * @param bool $refresh whether to reload the table schema even if it is found in the cache.
-     * @return ExtendedPromiseInterface with TableSchema|null table metadata. `null` if the named table does not exist.
+     * @return TableSchema|null table metadata. `null` if the named table does not exist.
      */
     public function getTableSchema($name, $refresh = false);
 
     /**
-     * Obtains the metadata for the named table. (for sync use)
-     *
+     * Obtains the metadata for the named table.
      * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
-     * @return TableSchema|null
+     * @param bool $refresh whether to reload the table schema even if it is found in the cache.
+     * @return ExtendedPromiseInterface with TableSchema|null table metadata. `null` if the named table does not exist.
      */
-    public function getTableSchemaSync($name);
+    public function getTableSchemaAsync($name, $refresh = false);
 
     /**
      * Returns the metadata for all tables in the database.
