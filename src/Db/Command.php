@@ -2,6 +2,7 @@
 
 namespace Reaction\Db;
 
+use function PHPSTORM_META\elementType;
 use Reaction\Base\Component;
 use Reaction\Db\Expressions\Expression;
 use Reaction\Promise\ExtendedPromiseInterface;
@@ -276,17 +277,593 @@ class Command extends Component implements CommandInterface
      * @param string $table the table that new rows will be inserted into.
      * @param array|\Reaction\Db\Query $columns the column data (name => value) to be inserted into the table or instance
      * of [[Reaction\Db\Query|Query]] to perform INSERT INTO ... SELECT SQL statement.
-     * @return ExtendedPromiseInterface with $this the command object itself
+     * @return $this the command object itself
      */
     public function insert($table, $columns)
     {
         $params = [];
-        return $this->db->getQueryBuilder()->insert($table, $columns, $params)->then(
-            function($sql) use (&$params) {
-                return $this->setSql($sql)->bindValues($params);
-            }
-        );
+        $sql = $this->db->getQueryBuilder()->insert($table, $columns, $params);
+
+        return $this->setSql($sql)->bindValues($params);
     }
+
+    /**
+     * Creates a batch INSERT command.
+     *
+     * For example,
+     *
+     * ```php
+     * $connection->createCommand()->batchInsert('user', ['name', 'age'], [
+     *     ['Tom', 30],
+     *     ['Jane', 20],
+     *     ['Linda', 25],
+     * ])->execute();
+     * ```
+     *
+     * The method will properly escape the column names, and quote the values to be inserted.
+     *
+     * Note that the values in each row must match the corresponding column names.
+     *
+     * Also note that the created command is not executed until [[execute()]] is called.
+     *
+     * @param string $table the table that new rows will be inserted into.
+     * @param array $columns the column names
+     * @param array|\Generator $rows the rows to be batch inserted into the table
+     * @return $this the command object itself
+     */
+    public function batchInsert($table, $columns, $rows)
+    {
+        $table = $this->db->quoteSql($table);
+        $columns = array_map(function ($column) {
+            return $this->db->quoteSql($column);
+        }, $columns);
+
+        $params = [];
+        $sql = $this->db->getQueryBuilder()->batchInsert($table, $columns, $rows, $params);
+
+        $this->setRawSql($sql);
+        $this->bindValues($params);
+
+        return $this;
+    }
+
+    /**
+     * Creates a command to insert rows into a database table if
+     * they do not already exist (matching unique constraints),
+     * or update them if they do.
+     *
+     * For example,
+     *
+     * ```php
+     * $sql = $queryBuilder->upsert('pages', [
+     *     'name' => 'Front page',
+     *     'url' => 'http://example.com/', // url is unique
+     *     'visits' => 0,
+     * ], [
+     *     'visits' => new \Reaction\Db\Expressions\Expression('visits + 1'),
+     * ], $params);
+     * ```
+     *
+     * The method will properly escape the table and column names.
+     *
+     * @param string $table the table that new rows will be inserted into/updated in.
+     * @param array|Query $insertColumns the column data (name => value) to be inserted into the table or instance
+     * of [[Query]] to perform `INSERT INTO ... SELECT` SQL statement.
+     * @param array|bool $updateColumns the column data (name => value) to be updated if they already exist.
+     * If `true` is passed, the column data will be updated to match the insert column data.
+     * If `false` is passed, no update will be performed if the column data already exists.
+     * @param array $params the parameters to be bound to the command.
+     * @return $this the command object itself.
+     */
+    public function upsert($table, $insertColumns, $updateColumns = true, $params = [])
+    {
+        $sql = $this->db->getQueryBuilder()->upsert($table, $insertColumns, $updateColumns, $params);
+
+        return $this->setSql($sql)->bindValues($params);
+    }
+
+    /**
+     * Creates an UPDATE command.
+     *
+     * For example,
+     *
+     * ```php
+     * $connection->createCommand()->update('user', ['status' => 1], 'age > 30')->execute();
+     * ```
+     *
+     * or with using parameter binding for the condition:
+     *
+     * ```php
+     * $minAge = 30;
+     * $connection->createCommand()->update('user', ['status' => 1], 'age > :minAge', [':minAge' => $minAge])->execute();
+     * ```
+     *
+     * The method will properly escape the column names and bind the values to be updated.
+     *
+     * Note that the created command is not executed until [[execute()]] is called.
+     *
+     * @param string $table the table to be updated.
+     * @param array $columns the column data (name => value) to be updated.
+     * @param string|array $condition the condition that will be put in the WHERE part. Please
+     * refer to [[Query::where()]] on how to specify condition.
+     * @param array $params the parameters to be bound to the command
+     * @return $this the command object itself
+     */
+    public function update($table, $columns, $condition = '', $params = [])
+    {
+        $sql = $this->db->getQueryBuilder()->update($table, $columns, $condition, $params);
+
+        return $this->setSql($sql)->bindValues($params);
+    }
+
+    /**
+     * Creates a DELETE command.
+     *
+     * For example,
+     *
+     * ```php
+     * $connection->createCommand()->delete('user', 'status = 0')->execute();
+     * ```
+     *
+     * or with using parameter binding for the condition:
+     *
+     * ```php
+     * $status = 0;
+     * $connection->createCommand()->delete('user', 'status = :status', [':status' => $status])->execute();
+     * ```
+     *
+     * The method will properly escape the table and column names.
+     *
+     * Note that the created command is not executed until [[execute()]] is called.
+     *
+     * @param string $table the table where the data will be deleted from.
+     * @param string|array $condition the condition that will be put in the WHERE part. Please
+     * refer to [[Query::where()]] on how to specify condition.
+     * @param array $params the parameters to be bound to the command
+     * @return $this the command object itself
+     */
+    public function delete($table, $condition = '', $params = [])
+    {
+        $sql = $this->db->getQueryBuilder()->delete($table, $condition, $params);
+
+        return $this->setSql($sql)->bindValues($params);
+    }
+
+
+
+    /**
+     * Creates a SQL command for creating a new DB table.
+     *
+     * The columns in the new table should be specified as name-definition pairs (e.g. 'name' => 'string'),
+     * where name stands for a column name which will be properly quoted by the method, and definition
+     * stands for the column type which can contain an abstract DB type.
+     * The method [[QueryBuilder::getColumnType()]] will be called
+     * to convert the abstract column types to physical ones. For example, `string` will be converted
+     * as `varchar(255)`, and `string not null` becomes `varchar(255) not null`.
+     *
+     * If a column is specified with definition only (e.g. 'PRIMARY KEY (name, type)'), it will be directly
+     * inserted into the generated SQL.
+     *
+     * @param string $table the name of the table to be created. The name will be properly quoted by the method.
+     * @param array $columns the columns (name => definition) in the new table.
+     * @param string $options additional SQL fragment that will be appended to the generated SQL.
+     * @return $this the command object itself
+     */
+    public function createTable($table, $columns, $options = null)
+    {
+        $sql = $this->db->getQueryBuilder()->createTable($table, $columns, $options);
+
+        return $this->setSql($sql)->requireTableSchemaRefresh($table);
+    }
+
+    /**
+     * Creates a SQL command for renaming a DB table.
+     * @param string $table the table to be renamed. The name will be properly quoted by the method.
+     * @param string $newName the new table name. The name will be properly quoted by the method.
+     * @return $this the command object itself
+     */
+    public function renameTable($table, $newName)
+    {
+        $sql = $this->db->getQueryBuilder()->renameTable($table, $newName);
+
+        return $this->setSql($sql)->requireTableSchemaRefresh($table);
+    }
+
+    /**
+     * Creates a SQL command for dropping a DB table.
+     * @param string $table the table to be dropped. The name will be properly quoted by the method.
+     * @return $this the command object itself
+     */
+    public function dropTable($table)
+    {
+        $sql = $this->db->getQueryBuilder()->dropTable($table);
+
+        return $this->setSql($sql)->requireTableSchemaRefresh($table);
+    }
+
+    /**
+     * Creates a SQL command for truncating a DB table.
+     * @param string $table the table to be truncated. The name will be properly quoted by the method.
+     * @return $this the command object itself
+     */
+    public function truncateTable($table)
+    {
+        $sql = $this->db->getQueryBuilder()->truncateTable($table);
+
+        return $this->setSql($sql);
+    }
+
+
+
+    /**
+     * Creates a SQL command for adding a new DB column.
+     * @param string $table the table that the new column will be added to. The table name will be properly quoted by the method.
+     * @param string $column the name of the new column. The name will be properly quoted by the method.
+     * @param string $type the column type. [[\yii\db\QueryBuilder::getColumnType()]] will be called
+     * to convert the give column type to the physical one. For example, `string` will be converted
+     * as `varchar(255)`, and `string not null` becomes `varchar(255) not null`.
+     * @return $this the command object itself
+     */
+    public function addColumn($table, $column, $type)
+    {
+        $sql = $this->db->getQueryBuilder()->addColumn($table, $column, $type);
+
+        return $this->setSql($sql)->requireTableSchemaRefresh($table);
+    }
+
+    /**
+     * Creates a SQL command for dropping a DB column.
+     * @param string $table the table whose column is to be dropped. The name will be properly quoted by the method.
+     * @param string $column the name of the column to be dropped. The name will be properly quoted by the method.
+     * @return $this the command object itself
+     */
+    public function dropColumn($table, $column)
+    {
+        $sql = $this->db->getQueryBuilder()->dropColumn($table, $column);
+
+        return $this->setSql($sql)->requireTableSchemaRefresh($table);
+    }
+
+    /**
+     * Creates a SQL command for renaming a column.
+     * @param string $table the table whose column is to be renamed. The name will be properly quoted by the method.
+     * @param string $oldName the old name of the column. The name will be properly quoted by the method.
+     * @param string $newName the new name of the column. The name will be properly quoted by the method.
+     * @return $this the command object itself
+     */
+    public function renameColumn($table, $oldName, $newName)
+    {
+        $sql = $this->db->getQueryBuilder()->renameColumn($table, $oldName, $newName);
+
+        return $this->setSql($sql)->requireTableSchemaRefresh($table);
+    }
+
+    /**
+     * Creates a SQL command for changing the definition of a column.
+     * @param string $table the table whose column is to be changed. The table name will be properly quoted by the method.
+     * @param string $column the name of the column to be changed. The name will be properly quoted by the method.
+     * @param string $type the column type. [[\yii\db\QueryBuilder::getColumnType()]] will be called
+     * to convert the give column type to the physical one. For example, `string` will be converted
+     * as `varchar(255)`, and `string not null` becomes `varchar(255) not null`.
+     * @return $this the command object itself
+     */
+    public function alterColumn($table, $column, $type)
+    {
+        $sql = $this->db->getQueryBuilder()->alterColumn($table, $column, $type);
+
+        return $this->setSql($sql)->requireTableSchemaRefresh($table);
+    }
+
+
+    /**
+     * Creates a SQL command for adding a primary key constraint to an existing table.
+     * The method will properly quote the table and column names.
+     * @param string $name the name of the primary key constraint.
+     * @param string $table the table that the primary key constraint will be added to.
+     * @param string|array $columns comma separated string or array of columns that the primary key will consist of.
+     * @return $this the command object itself.
+     */
+    public function addPrimaryKey($name, $table, $columns)
+    {
+        $sql = $this->db->getQueryBuilder()->addPrimaryKey($name, $table, $columns);
+
+        return $this->setSql($sql)->requireTableSchemaRefresh($table);
+    }
+
+    /**
+     * Creates a SQL command for removing a primary key constraint to an existing table.
+     * @param string $name the name of the primary key constraint to be removed.
+     * @param string $table the table that the primary key constraint will be removed from.
+     * @return $this the command object itself
+     */
+    public function dropPrimaryKey($name, $table)
+    {
+        $sql = $this->db->getQueryBuilder()->dropPrimaryKey($name, $table);
+
+        return $this->setSql($sql)->requireTableSchemaRefresh($table);
+    }
+
+    /**
+     * Creates a SQL command for adding a foreign key constraint to an existing table.
+     * The method will properly quote the table and column names.
+     * @param string $name the name of the foreign key constraint.
+     * @param string $table the table that the foreign key constraint will be added to.
+     * @param string|array $columns the name of the column to that the constraint will be added on. If there are multiple columns, separate them with commas.
+     * @param string $refTable the table that the foreign key references to.
+     * @param string|array $refColumns the name of the column that the foreign key references to. If there are multiple columns, separate them with commas.
+     * @param string $delete the ON DELETE option. Most DBMS support these options: RESTRICT, CASCADE, NO ACTION, SET DEFAULT, SET NULL
+     * @param string $update the ON UPDATE option. Most DBMS support these options: RESTRICT, CASCADE, NO ACTION, SET DEFAULT, SET NULL
+     * @return $this the command object itself
+     */
+    public function addForeignKey($name, $table, $columns, $refTable, $refColumns, $delete = null, $update = null)
+    {
+        $sql = $this->db->getQueryBuilder()->addForeignKey($name, $table, $columns, $refTable, $refColumns, $delete, $update);
+
+        return $this->setSql($sql)->requireTableSchemaRefresh($table);
+    }
+
+    /**
+     * Creates a SQL command for dropping a foreign key constraint.
+     * @param string $name the name of the foreign key constraint to be dropped. The name will be properly quoted by the method.
+     * @param string $table the table whose foreign is to be dropped. The name will be properly quoted by the method.
+     * @return $this the command object itself
+     */
+    public function dropForeignKey($name, $table)
+    {
+        $sql = $this->db->getQueryBuilder()->dropForeignKey($name, $table);
+
+        return $this->setSql($sql)->requireTableSchemaRefresh($table);
+    }
+
+    /**
+     * Creates a SQL command for creating a new index.
+     * @param string $name the name of the index. The name will be properly quoted by the method.
+     * @param string $table the table that the new index will be created for. The table name will be properly quoted by the method.
+     * @param string|array $columns the column(s) that should be included in the index. If there are multiple columns, please separate them
+     * by commas. The column names will be properly quoted by the method.
+     * @param bool $unique whether to add UNIQUE constraint on the created index.
+     * @return $this the command object itself
+     */
+    public function createIndex($name, $table, $columns, $unique = false)
+    {
+        $sql = $this->db->getQueryBuilder()->createIndex($name, $table, $columns, $unique);
+
+        return $this->setSql($sql)->requireTableSchemaRefresh($table);
+    }
+
+    /**
+     * Creates a SQL command for dropping an index.
+     * @param string $name the name of the index to be dropped. The name will be properly quoted by the method.
+     * @param string $table the table whose index is to be dropped. The name will be properly quoted by the method.
+     * @return $this the command object itself
+     */
+    public function dropIndex($name, $table)
+    {
+        $sql = $this->db->getQueryBuilder()->dropIndex($name, $table);
+
+        return $this->setSql($sql)->requireTableSchemaRefresh($table);
+    }
+
+    /**
+     * Creates a SQL command for adding an unique constraint to an existing table.
+     * @param string $name the name of the unique constraint.
+     * The name will be properly quoted by the method.
+     * @param string $table the table that the unique constraint will be added to.
+     * The name will be properly quoted by the method.
+     * @param string|array $columns the name of the column to that the constraint will be added on.
+     * If there are multiple columns, separate them with commas.
+     * The name will be properly quoted by the method.
+     * @return $this the command object itself.
+     */
+    public function addUnique($name, $table, $columns)
+    {
+        $sql = $this->db->getQueryBuilder()->addUnique($name, $table, $columns);
+
+        return $this->setSql($sql)->requireTableSchemaRefresh($table);
+    }
+
+    /**
+     * Creates a SQL command for dropping an unique constraint.
+     * @param string $name the name of the unique constraint to be dropped.
+     * The name will be properly quoted by the method.
+     * @param string $table the table whose unique constraint is to be dropped.
+     * The name will be properly quoted by the method.
+     * @return $this the command object itself.
+     */
+    public function dropUnique($name, $table)
+    {
+        $sql = $this->db->getQueryBuilder()->dropUnique($name, $table);
+
+        return $this->setSql($sql)->requireTableSchemaRefresh($table);
+    }
+
+    /**
+     * Creates a SQL command for adding a check constraint to an existing table.
+     * @param string $name the name of the check constraint.
+     * The name will be properly quoted by the method.
+     * @param string $table the table that the check constraint will be added to.
+     * The name will be properly quoted by the method.
+     * @param string $expression the SQL of the `CHECK` constraint.
+     * @return $this the command object itself.
+     */
+    public function addCheck($name, $table, $expression)
+    {
+        $sql = $this->db->getQueryBuilder()->addCheck($name, $table, $expression);
+
+        return $this->setSql($sql)->requireTableSchemaRefresh($table);
+    }
+
+    /**
+     * Creates a SQL command for dropping a check constraint.
+     * @param string $name the name of the check constraint to be dropped.
+     * The name will be properly quoted by the method.
+     * @param string $table the table whose check constraint is to be dropped.
+     * The name will be properly quoted by the method.
+     * @return $this the command object itself.
+     */
+    public function dropCheck($name, $table)
+    {
+        $sql = $this->db->getQueryBuilder()->dropCheck($name, $table);
+
+        return $this->setSql($sql)->requireTableSchemaRefresh($table);
+    }
+
+    /**
+     * Creates a SQL command for adding a default value constraint to an existing table.
+     * @param string $name the name of the default value constraint.
+     * The name will be properly quoted by the method.
+     * @param string $table the table that the default value constraint will be added to.
+     * The name will be properly quoted by the method.
+     * @param string $column the name of the column to that the constraint will be added on.
+     * The name will be properly quoted by the method.
+     * @param mixed $value default value.
+     * @return $this the command object itself.
+     */
+    public function addDefaultValue($name, $table, $column, $value)
+    {
+        $sql = $this->db->getQueryBuilder()->addDefaultValue($name, $table, $column, $value);
+
+        return $this->setSql($sql)->requireTableSchemaRefresh($table);
+    }
+
+    /**
+     * Creates a SQL command for dropping a default value constraint.
+     * @param string $name the name of the default value constraint to be dropped.
+     * The name will be properly quoted by the method.
+     * @param string $table the table whose default value constraint is to be dropped.
+     * The name will be properly quoted by the method.
+     * @return $this the command object itself.
+     */
+    public function dropDefaultValue($name, $table)
+    {
+        $sql = $this->db->getQueryBuilder()->dropDefaultValue($name, $table);
+
+        return $this->setSql($sql)->requireTableSchemaRefresh($table);
+    }
+
+
+    /**
+     * Creates a SQL command for resetting the sequence value of a table's primary key.
+     * The sequence will be reset such that the primary key of the next new row inserted
+     * will have the specified value or 1.
+     * @param string $table the name of the table whose primary key sequence will be reset
+     * @param mixed $value the value for the primary key of the next new row inserted. If this is not set,
+     * the next new row's primary key will have a value 1.
+     * @return $this the command object itself
+     */
+    public function resetSequence($table, $value = null)
+    {
+        $sql = $this->db->getQueryBuilder()->resetSequence($table, $value);
+
+        return $this->setSql($sql);
+    }
+
+    /**
+     * Builds a SQL command for enabling or disabling integrity check.
+     * @param bool $check whether to turn on or off the integrity check.
+     * @param string $schema the schema name of the tables. Defaults to empty string, meaning the current
+     * or default schema.
+     * @param string $table the table name.
+     * @return $this the command object itself
+     */
+    public function checkIntegrity($check = true, $schema = '', $table = '')
+    {
+        $sql = $this->db->getQueryBuilder()->checkIntegrity($check, $schema, $table);
+
+        return $this->setSql($sql);
+    }
+
+
+
+    /**
+     * Builds a SQL command for adding comment to column.
+     *
+     * @param string $table the table whose column is to be commented. The table name will be properly quoted by the method.
+     * @param string $column the name of the column to be commented. The column name will be properly quoted by the method.
+     * @param string $comment the text of the comment to be added. The comment will be properly quoted by the method.
+     * @return $this the command object itself
+     */
+    public function addCommentOnColumn($table, $column, $comment)
+    {
+        $sql = $this->db->getQueryBuilder()->addCommentOnColumn($table, $column, $comment);
+
+        return $this->setSql($sql)->requireTableSchemaRefresh($table);
+    }
+
+    /**
+     * Builds a SQL command for adding comment to table.
+     *
+     * @param string $table the table whose column is to be commented. The table name will be properly quoted by the method.
+     * @param string $comment the text of the comment to be added. The comment will be properly quoted by the method.
+     * @return $this the command object itself
+     */
+    public function addCommentOnTable($table, $comment)
+    {
+        $sql = $this->db->getQueryBuilder()->addCommentOnTable($table, $comment);
+
+        return $this->setSql($sql);
+    }
+
+    /**
+     * Builds a SQL command for dropping comment from column.
+     *
+     * @param string $table the table whose column is to be commented. The table name will be properly quoted by the method.
+     * @param string $column the name of the column to be commented. The column name will be properly quoted by the method.
+     * @return $this the command object itself
+     */
+    public function dropCommentFromColumn($table, $column)
+    {
+        $sql = $this->db->getQueryBuilder()->dropCommentFromColumn($table, $column);
+
+        return $this->setSql($sql)->requireTableSchemaRefresh($table);
+    }
+
+    /**
+     * Builds a SQL command for dropping comment from table.
+     *
+     * @param string $table the table whose column is to be commented. The table name will be properly quoted by the method.
+     * @return $this the command object itself
+     */
+    public function dropCommentFromTable($table)
+    {
+        $sql = $this->db->getQueryBuilder()->dropCommentFromTable($table);
+
+        return $this->setSql($sql);
+    }
+
+
+
+    /**
+     * Creates a SQL View.
+     *
+     * @param string $viewName the name of the view to be created.
+     * @param string|Query $subquery the select statement which defines the view.
+     * This can be either a string or a [[Query]] object.
+     * @return $this the command object itself.
+     * @since 2.0.14
+     */
+    public function createView($viewName, $subquery)
+    {
+        $sql = $this->db->getQueryBuilder()->createView($viewName, $subquery);
+
+        return $this->setSql($sql)->requireTableSchemaRefresh($viewName);
+    }
+
+    /**
+     * Drops a SQL View.
+     *
+     * @param string $viewName the name of the view to be dropped.
+     * @return $this the command object itself.
+     * @since 2.0.14
+     */
+    public function dropView($viewName)
+    {
+        $sql = $this->db->getQueryBuilder()->dropView($viewName);
+
+        return $this->setSql($sql)->requireTableSchemaRefresh($viewName);
+    }
+
+
 
     /**
      * Executes the SQL statement.
@@ -310,6 +887,29 @@ class Command extends Component implements CommandInterface
         );
     }
 
+
+
+    /**
+     * Logs the current database query if query logging is enabled and returns
+     * the profiling token if profiling is enabled.
+     * @param string $category the log category.
+     * @return array array of two elements, the first is boolean of whether profiling is enabled or not.
+     * The second is the rawSql if it has been created.
+     */
+    protected function logQuery($category)
+    {
+        if ($this->db->enableLogging) {
+            $rawSql = $this->getRawSql();
+            $message = sprintf("SQL: \"%s\"\nCategory: %s", $rawSql, $category);
+            \Reaction::info($message);
+        }
+        if (!$this->db->enableProfiling) {
+            return [false, isset($rawSql) ? $rawSql : null];
+        }
+
+        return [true, isset($rawSql) ? $rawSql : $this->getRawSql()];
+    }
+
     /**
      * Marks a specified table schema to be refreshed after command execution.
      * @param string $name name of the table, which schema should be refreshed.
@@ -328,7 +928,7 @@ class Command extends Component implements CommandInterface
     protected function refreshTableSchema()
     {
         if ($this->_refreshTableName !== null) {
-            return $this->db->getSchema()->refreshTableSchema($this->_refreshTableName);
+            return $this->db->getSchema()->refreshTableMetadata($this->_refreshTableName);
         }
         return resolve(true);
     }
@@ -409,11 +1009,22 @@ class Command extends Component implements CommandInterface
     protected function queryInternal($fetchMethod, $fetchMode = null)
     {
         $fetchMode = isset($fetchMode) ? $fetchMode : $this->fetchMode;
+        list($profile, $rawSql) = $this->logQuery(__METHOD__);
 
         $self = $this;
+        $profileId = $profile ? \Reaction::$app->logger->profile('Query: ' . $rawSql) : null;
         return $this->internalExecute($this->sql, $this->params)->then(
             function($results) use ($self, $fetchMethod, $fetchMode) {
                 return $self->fetchResults($results, $fetchMethod, $fetchMode);
+            }
+        )->then(
+            function($data) use ($profileId) {
+                \Reaction::$app->logger->profileEnd($profileId);
+                return $data;
+            },
+            function($error = null) use ($profileId) {
+                \Reaction::$app->logger->profileEnd($profileId);
+                return reject($error);
             }
         );
     }
