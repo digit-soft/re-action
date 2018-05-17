@@ -58,10 +58,6 @@ class Schema extends BaseObject implements SchemaInterface
      */
     protected $_tableNames = [];
     /**
-     * @var array list of all table schemas in the database for sync usage
-     */
-    protected $_tableSchemas = [];
-    /**
      * @var array list of all table metadata in the database for sync usage
      */
     protected $_tableMetadata = [];
@@ -411,11 +407,25 @@ class Schema extends BaseObject implements SchemaInterface
      * @return ExtendedPromiseInterface
      */
     public function refreshTableSchema($tableName, $nameIsRaw = false) {
+        return $this->refreshTableMetadata($tableName, $nameIsRaw);
+    }
+
+    /**
+     * Refresh table schema, indexes, primary key and other metadata
+     * @param string $tableName
+     * @param bool   $nameIsRaw
+     * @return ExtendedPromiseInterface
+     */
+    public function refreshTableMetadata($tableName, $nameIsRaw = false) {
         $rawName = $nameIsRaw ? $tableName : $this->getRawTableName($tableName);
-        if (isset($this->_tableMetadata[$rawName][static::META_SCHEMA])) {
-            unset($this->_tableMetadata[$rawName][static::META_SCHEMA]);
+        $metaTypes = $this->tableMetaImplemented;
+        if (isset($this->_tableMetadata[$rawName])) {
+            unset($this->_tableMetadata[$rawName]);
         }
-        return $this->getTableSchemaAsync($rawName, true)->always(function() { return true; });
+        foreach ($metaTypes as $metaType) {
+            $promises[] = $this->getTableMetadataRaw($rawName, $metaType, true)->otherwise(function() { return true; });
+        }
+        return !empty($promises) ? all($promises) : resolve(true);
     }
 
     /**
@@ -693,11 +703,9 @@ class Schema extends BaseObject implements SchemaInterface
         return $this->getTableNames($schema)->then(
             function($names) use ($metaTypes) {
                 $promises = [];
-                $this->_tableSchemas = [];
+                $this->_tableMetadata = [];
                 foreach ($names as $name) {
-                    foreach ($metaTypes as $metaType) {
-                        $promises[] = $this->getTableMetadataRaw($name, $metaType, true)->otherwise(function() { return true; });
-                    }
+                    $promises[] = $this->refreshTableMetadata($name, true);
                 }
                 return !empty($promises) ? all($promises) : resolve(true);
             }

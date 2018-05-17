@@ -213,6 +213,14 @@ interface SchemaInterface
     public function refreshTableSchema($tableName, $nameIsRaw = false);
 
     /**
+     * Refresh table schema, indexes, primary key and other metadata
+     * @param string $tableName
+     * @param bool   $nameIsRaw
+     * @return ExtendedPromiseInterface
+     */
+    public function refreshTableMetadata($tableName, $nameIsRaw = false);
+
+    /**
      * Executes the INSERT command, returning primary key values.
      * @param string $table the table that new rows will be inserted into.
      * @param array $columns the column data (name => value) to be inserted into the table.
