@@ -3,6 +3,7 @@
 namespace Reaction\Db\Orm;
 
 use Reaction\Base\StaticInstanceInterface;
+use Reaction\Db\DatabaseInterface;
 
 /**
  * ActiveRecordInterface.
@@ -455,7 +456,7 @@ interface ActiveRecordInterface extends StaticInstanceInterface
 
     /**
      * Returns the connection used by this AR class.
-     * @return mixed the database connection used by this AR class.
+     * @return DatabaseInterface the database connection used by this AR class.
      */
     public static function getDb();
 }
