@@ -111,8 +111,9 @@ return [
             //React event loop
             'React\EventLoop\LoopInterface' => function() { return \React\EventLoop\Factory::create(); },
             'React\Filesystem\FilesystemInterface' => function(\Reaction\DI\Container $di) {
+                /** @var React\EventLoop\LoopInterface $loop */
                 $loop = $di->get('React\EventLoop\LoopInterface');
-                return \React\Filesystem\Filesystem::create($loop);
+                return \React\Filesystem\Filesystem::createFromAdapter(new \React\Filesystem\ChildProcess\Adapter($loop, []));
             },
             //React socket server
             'React\Socket\ServerInterface' => [
