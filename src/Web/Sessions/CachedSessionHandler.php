@@ -226,7 +226,7 @@ class CachedSessionHandler extends SessionHandlerAbstract
                 function ($data) use ($r, $c) {
                     $r($data);
                 },
-                function ($error = null) use ($c, $key) {
+                function ($error = null) use (&$c, $key) {
                     $message = sprintf('Failed to get session data from cache for "%s"', $key);
                     $c(new SessionException($message));
                 }
@@ -249,7 +249,7 @@ class CachedSessionHandler extends SessionHandlerAbstract
                 function () use ($r) {
                     $r(true);
                 },
-                function ($error = null) use ($c, $key) {
+                function ($error = null) use (&$c, $key) {
                     $message = sprintf('Failed to write session data to cache for "%s"', $key);
                     $c(new SessionException($message));
                 }
