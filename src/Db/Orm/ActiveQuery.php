@@ -2,10 +2,10 @@
 
 namespace Reaction\Db\Orm;
 
-use Reaction\Db\Command;
+use Reaction\Db\CommandInterface;
 use Reaction\Db\DatabaseInterface;
+use Reaction\Db\Expressions\ExpressionInterface;
 use Reaction\Db\Query;
-use Reaction\Db\QueryBuilderInterface;
 use Reaction\Db\QueryInterface;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Promise\ExtendedPromiseInterface;
@@ -130,7 +130,18 @@ class ActiveQuery extends Query implements ActiveQueryInterface
      */
     public function all($db = null)
     {
-        return parent::all($db);
+        if ($this->emulateExecution) {
+            return resolve([]);
+        }
+        return $this->createCommand($db)->then(
+            function(CommandInterface $command) {
+                return $command->queryAll();
+            }
+        )->then(
+            function($results) {
+                return $this->populate($results);
+            }
+        );
     }
 
     /**
@@ -327,7 +338,15 @@ class ActiveQuery extends Query implements ActiveQueryInterface
      */
     public function one($db = null)
     {
-        return parent::one($db)->then(
+        if ($this->emulateExecution) {
+            return reject(false);
+        }
+
+        return $this->createCommand($db)->then(
+            function(CommandInterface $command) {
+                return $command->queryOne();
+            }
+        )->then(
             function($row) {
                 if ($row !== false) {
                     return $this->populate([$row]);
@@ -337,6 +356,27 @@ class ActiveQuery extends Query implements ActiveQueryInterface
         )->then(
             function($models) {
                 return reset($models) ?: reject(null);
+            }
+        );
+    }
+
+    /**
+     * Returns the query result as a scalar value.
+     * The value returned will be the first column in the first row of the query results.
+     * @param DatabaseInterface $db the database connection used to generate the SQL statement.
+     * If this parameter is not given, the `db` application component will be used.
+     * @return ExtendedPromiseInterface with string|null the value of the first column in the first row of the query result.
+     * False is returned if the query result is empty.
+     */
+    public function scalar($db = null)
+    {
+        if ($this->emulateExecution) {
+            return reject(null);
+        }
+
+        return $this->createCommand($db)->then(
+            function(CommandInterface $command) {
+                return $command->queryScalar();
             }
         );
     }
@@ -377,6 +417,9 @@ class ActiveQuery extends Query implements ActiveQueryInterface
      */
     protected function queryScalar($selectExpression, $db)
     {
+        if ($this->emulateExecution) {
+            return resolve(null);
+        }
         /* @var $modelClass ActiveRecordInterface */
         $modelClass = $this->modelClass;
         if ($db === null) {
@@ -384,12 +427,56 @@ class ActiveQuery extends Query implements ActiveQueryInterface
         }
 
         if ($this->sql === null) {
-            return parent::queryScalar($selectExpression, $db);
+            return $this->queryScalarAsync($selectExpression, $db);
         }
 
         $command = (new Query())->select([$selectExpression])
             ->from(['c' => "({$this->sql})"])
             ->params($this->params)
+            ->createCommand($db);
+        $this->setCommandCache($command);
+
+        return $command->queryScalar();
+    }
+
+    /**
+     * Queries a scalar value by setting [[select]] first.
+     * Restores the value of select to make this query reusable.
+     * @param string|ExpressionInterface $selectExpression
+     * @param DatabaseInterface|null $db
+     * @return ExtendedPromiseInterface with bool|string
+     */
+    protected function queryScalarAsync($selectExpression, $db)
+    {
+        if (
+            !$this->distinct
+            && empty($this->groupBy)
+            && empty($this->having)
+            && empty($this->union)
+        ) {
+            $select = $this->select;
+            $order = $this->orderBy;
+            $limit = $this->limit;
+            $offset = $this->offset;
+
+            $this->select = [$selectExpression];
+            $this->orderBy = null;
+            $this->limit = null;
+            $this->offset = null;
+            return $this->createCommand($db)->then(
+                function(CommandInterface $command) use (&$select, &$order, &$limit, &$offset) {
+                    $this->select = $select;
+                    $this->orderBy = $order;
+                    $this->limit = $limit;
+                    $this->offset = $offset;
+                    return $command->queryScalar();
+                }
+            );
+        }
+
+        $command = (new Query())
+            ->select([$selectExpression])
+            ->from(['c' => $this])
             ->createCommand($db);
         $this->setCommandCache($command);
 
@@ -834,7 +921,6 @@ class ActiveQuery extends Query implements ActiveQueryInterface
      *
      * @param string $alias the table alias.
      * @return $this the query object itself
-     * @since 2.0.7
      */
     public function alias($alias)
     {
@@ -857,7 +943,6 @@ class ActiveQuery extends Query implements ActiveQueryInterface
 
     /**
      * {@inheritdoc}
-     * @since 2.0.12
      */
     public function getTablesUsedInFrom()
     {
