@@ -329,7 +329,10 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
         if($this->withLineNum) {
             $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
             $lineNum = $this->getCalleeData($trace, $traceShift + 1);
-            $message .= $this->colorizeText('^^^ ' . $lineNum, static::FG_BLACK) . self::NEW_LINE;
+            $unixTime = microtime(true);
+            $micro = substr(sprintf("%06d",($unixTime - floor($unixTime)) * 1000000), 0, 3);
+            $time = date('H:i:s') . '.' . $micro;
+            $message .= $this->colorizeText('^^^ ' . $time . ' - ' . $lineNum, static::FG_BLACK) . self::NEW_LINE;
         }
         $message = $this->format($message, $context);
         $this->stdio->write($message);
