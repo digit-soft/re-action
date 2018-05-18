@@ -4,6 +4,7 @@ namespace Reaction\Db\Orm;
 
 use Reaction\Base\StaticInstanceInterface;
 use Reaction\Db\DatabaseInterface;
+use Reaction\Promise\ExtendedPromiseInterface;
 
 /**
  * ActiveRecordInterface.
@@ -204,7 +205,7 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * ```
      *
      * @param mixed $condition primary key value or a set of column values
-     * @return static ActiveRecord instance matching the condition, or `null` if nothing matches.
+     * @return ExtendedPromiseInterface with static ActiveRecord instance matching the condition, or `null` if nothing matches.
      */
     public static function findOne($condition);
 
@@ -271,7 +272,7 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * ```
      *
      * @param mixed $condition primary key value or a set of column values
-     * @return array an array of ActiveRecord instance, or an empty array if nothing matches.
+     * @return ExtendedPromiseInterface with array an array of ActiveRecord instance, or an empty array if nothing matches.
      */
     public static function findAll($condition);
 
@@ -289,7 +290,7 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * @param array $condition the condition that matches the records that should get updated.
      * Please refer to [[QueryInterface::where()]] on how to specify this parameter.
      * An empty condition will match all records.
-     * @return int the number of rows updated
+     * @return ExtendedPromiseInterface with int the number of rows updated
      */
     public static function updateAll($attributes, $condition = null);
 
@@ -306,7 +307,7 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * @param array $condition the condition that matches the records that should get deleted.
      * Please refer to [[QueryInterface::where()]] on how to specify this parameter.
      * An empty condition will match all records.
-     * @return int the number of rows deleted
+     * @return ExtendedPromiseInterface with int the number of rows deleted
      */
     public static function deleteAll($condition = null);
 
@@ -330,7 +331,7 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * will not be saved to the database and this method will return `false`.
      * @param array $attributeNames list of attribute names that need to be saved. Defaults to `null`,
      * meaning all attributes that are loaded from DB will be saved.
-     * @return bool whether the saving succeeded (i.e. no validation errors occurred).
+     * @return ExtendedPromiseInterface with bool whether the saving succeeded (i.e. no validation errors occurred).
      */
     public function save($runValidation = true, $attributeNames = null);
 
@@ -351,7 +352,7 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * will not be saved to the database and this method will return `false`.
      * @param array $attributes list of attributes that need to be saved. Defaults to `null`,
      * meaning all attributes that are loaded from DB will be saved.
-     * @return bool whether the attributes are valid and the record is inserted successfully.
+     * @return ExtendedPromiseInterface with bool whether the attributes are valid and the record is inserted successfully.
      */
     public function insert($runValidation = true, $attributes = null);
 
@@ -372,7 +373,7 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * will not be saved to the database and this method will return `false`.
      * @param array $attributeNames list of attributes that need to be saved. Defaults to `null`,
      * meaning all attributes that are loaded from DB will be saved.
-     * @return int|bool the number of rows affected, or `false` if validation fails
+     * @return ExtendedPromiseInterface with int|bool the number of rows affected, or `false` if validation fails
      * or updating process is stopped for other reasons.
      * Note that it is possible that the number of rows affected is 0, even though the
      * update execution is successful.
@@ -382,7 +383,7 @@ interface ActiveRecordInterface extends StaticInstanceInterface
     /**
      * Deletes the record from the database.
      *
-     * @return int|bool the number of rows deleted, or `false` if the deletion is unsuccessful for some reason.
+     * @return ExtendedPromiseInterface int|bool the number of rows deleted, or `false` if the deletion is unsuccessful for some reason.
      * Note that it is possible that the number of rows deleted is 0, even though the deletion execution is successful.
      */
     public function delete();
