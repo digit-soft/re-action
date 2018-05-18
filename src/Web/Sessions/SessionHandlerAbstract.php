@@ -4,9 +4,11 @@ namespace Reaction\Web\Sessions;
 
 use React\EventLoop\LoopInterface;
 use React\EventLoop\Timer\TimerInterface;
+use React\Filesystem\Node\File;
 use React\Filesystem\Node\FileInterface;
 use React\Promise\ExtendedPromiseInterface;
 use React\Promise\PromiseInterface;
+use function React\Promise\reject;
 use React\Stream\WritableStreamInterface;
 use Reaction\Base\Component;
 use Reaction\Exceptions\SessionException;
@@ -29,7 +31,7 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
      * After that time GC will remove data from storage and archive it for '$sessionLifetime' seconds
      * @see $sessionLifetime
      */
-    public $gcLifetime = 60;
+    public $gcLifetime = 2;
     /**
      * @var integer Session lifetime in seconds (default 7 days).
      * Time for archive session life from where it can be restored
@@ -227,12 +229,30 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
     public function restoreSessionData($sessionId, $deleteFromArchive = false)
     {
         $self = $this;
-        /** @var FileInterface $file */
+        /** @var File $file */
         $file = null;
         return $this->getArchiveFilePath($sessionId, true)->then(
             function($filePath) use (&$file) {
                 $file = \Reaction::$app->fs->file($filePath);
-                return $file->getContents();
+                return $file->exists()->then(
+                    function() use (&$file) {
+                        return $file->open('r');
+                    }
+                );
+            }
+        )->then(
+            function($stream) use (&$file) {
+                /** @var \React\Filesystem\Stream\ReadableStream $stream */
+                return \React\Promise\Stream\buffer($stream)->then(
+                    function($data) use (&$file) {
+                        $file->close();
+                        return $data;
+                    },
+                    function($error) use (&$file) {
+                        $file->close();
+                        return reject($error);
+                    }
+                );
             }
         )->then(
             function($dataStr) use ($self, &$file, $deleteFromArchive) {
