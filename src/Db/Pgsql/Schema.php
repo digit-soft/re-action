@@ -130,6 +130,11 @@ class Schema extends \Reaction\Db\Schema implements ConstraintFinderInterface
     ];
 
     /**
+     * {@inheritdoc}
+     */
+    protected $tableQuoteCharacter = '"';
+
+    /**
      * Returns a server version as a string comparable by [[\version_compare()]].
      * @return string server version as a string.
      */
