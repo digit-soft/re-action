@@ -262,6 +262,24 @@ class FileHelperAsc
     }
 
     /**
+     * Convert octal permissions to string
+     * @param int $modeOctal Octal mode (0755). Do not omit zero, must be octal, not decimal!
+     * @return string String permissions representation (rwxr-xr-x)
+     */
+    public static function permissionsAsString($modeOctal) {
+        return FileHelper::permissionsAsString($modeOctal);
+    }
+
+    /**
+     * Convert string representation of permissions to octal
+     * @param string $modeStr String permissions (rwxr-xr-x)
+     * @return int Octal permissions representation
+     */
+    public static function permissionsAsOctal($modeStr) {
+        return FileHelper::permissionsAsOctal($modeStr);
+    }
+
+    /**
      * Process unlock waiting deferred(s) (and promises)
      * @param string $filePath
      */
