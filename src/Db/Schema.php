@@ -89,15 +89,7 @@ class Schema extends BaseObject implements SchemaInterface
      */
     public function refresh()
     {
-        $this->_tableNames = [];
-        if (!$this->db->schemaCacheEnable || ($cache = $this->db->getCache()) === null) {
-            return resolve(true);
-        }
-        return $cache->removeByTag($this->getCacheTag())->always(
-            function() {
-                return true;
-            }
-        );
+        return $this->refreshTablesMetadata();
     }
 
     /**
@@ -700,7 +692,7 @@ class Schema extends BaseObject implements SchemaInterface
     protected function refreshTablesMetadata($schema = '') {
         $schema = $schema !== '' ? $schema : $this->defaultSchema;
         $metaTypes = $this->tableMetaImplemented;
-        return $this->getTableNames($schema)->then(
+        return $this->getTableNames($schema, true)->then(
             function($names) use ($metaTypes) {
                 $promises = [];
                 $this->_tableMetadata = [];
@@ -720,9 +712,7 @@ class Schema extends BaseObject implements SchemaInterface
     {
         $promises = [];
         $promises[] = $this->getServerVersionPromised()->otherwise(function() { return false; });
-        //$promises[] = $this->getTableSchemas($this->defaultSchema, true);
         $promises[] = $this->refreshTablesMetadata();
-        //$promises[] = $this->getTableMetadata($this->defaultSchema, 'schema');
         return all($promises);
     }
 }
