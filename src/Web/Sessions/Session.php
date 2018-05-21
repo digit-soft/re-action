@@ -156,7 +156,7 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
         return $this->openInternal()->then(
             function() use ($self) {
                 if (Reaction::isDebug()) {
-                    Reaction::info('Session started');
+                    //Reaction::info('Session started');
                 }
                 $self->updateFlashCounters();
             }
@@ -244,7 +244,7 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
     {
         if ($this->getIsActive()) {
             if (Reaction::isDebug()) {
-                Reaction::info('Session closed');
+                //Reaction::info('Session closed');
             }
             return $this->isEmpty() ? $this->destroySession() : $this->writeSession();
         }

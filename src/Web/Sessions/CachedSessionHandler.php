@@ -6,6 +6,7 @@ use React\Filesystem\Node\FileInterface;
 use React\Promise\ExtendedPromiseInterface;
 use React\Promise\PromiseInterface;
 use Reaction\Cache\ExtendedCacheInterface;
+use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Exceptions\SessionException;
 use Reaction\Helpers\ArrayHelper;
 use Reaction\Promise\Promise;
@@ -33,8 +34,11 @@ class CachedSessionHandler extends SessionHandlerAbstract
      */
     public function init()
     {
-        if (!is_object($this->cache)) {
+        if (is_string($this->cache) || is_array($this->cache)) {
             $this->cache = \Reaction::create($this->cache);
+        } elseif (!$this->cache instanceof ExtendedCacheInterface) {
+            $message = sprintf("Property `cache` must be set with instance of `%s` or configuration array|string", ExtendedCacheInterface::class);
+            throw new SessionException($message);
         }
         parent::init();
     }
@@ -47,18 +51,18 @@ class CachedSessionHandler extends SessionHandlerAbstract
     public function read($id)
     {
         $key = $this->getSessionKey($id);
-        $self = $this;
         return $this->getDataFromCache($key)->then(
-            function ($record) use ($self) {
-                return $self->extractData($record, true);
+            function ($record) {
+                return $this->extractData($record, true);
             }
         )->then(
             null,
-            function ($error = null) use ($self, $id) {
-                return $self->restoreSessionData($id, true)->then(
-                    function ($data) use ($self, $id, $error) {
+            function ($error = null) use ($id) {
+                //return $self->restoreSessionData($id, true)->then(
+                return $this->archive->get($id, true)->then(
+                    function ($data) use ($id, $error) {
                         if (is_array($data)) {
-                            return $self->write($id, $data);
+                            return $this->write($id, $data);
                         } else {
                             return \Reaction\Promise\reject($error);
                         }
@@ -83,12 +87,11 @@ class CachedSessionHandler extends SessionHandlerAbstract
     public function write($id, $data)
     {
         $key = $this->getSessionKey($id);
-        $self = $this;
         $record = $this->packRecord($data);
         return $this->writeDataToCache($key, $record)->then(
-            function () use ($self, $id) {
-                $self->keys[$id] = time();
-                return $self->read($id);
+            function () use ($id) {
+                $this->keys[$id] = time();
+                return $this->read($id);
             },
             function ($error = null) use ($id) {
                 $message = sprintf('Failed to write session data for "%s"', $id);
@@ -122,37 +125,39 @@ class CachedSessionHandler extends SessionHandlerAbstract
      * Sessions that have not updated for the last '$this->gcLifetime' seconds will be archived.
      * Sessions in archive with age bigger than '$this->sessionLifetime' seconds will be removed.
      * @see $gcLifetime
-     * @see $sessionLifetime
+     * @see $gcArchiveLifetime
      * @return void
      */
     public function gc()
     {
-        if ($this->_gcIsRunning || empty($this->keys)) {
-            return;
-        }
-        $this->_gcIsRunning = true;
-        $expiredTime = time() - $this->gcLifetime;
-        $self = $this;
         $promises = [];
-        foreach ($this->keys as $id => $ts) {
-            if ($ts > $expiredTime) {
-                continue;
+        if (!$this->_gcIsRunning) {
+            $this->_gcIsRunning = true;
+            if (!empty($this->keys)) {
+                $expiredTime = time() - $this->gcLifetime;
+                foreach ($this->keys as $id => $ts) {
+                    if ($ts > $expiredTime) {
+                        continue;
+                    }
+                    $promise = $this->read($id)->then(
+                        function ($data) use ($id) {
+                            return $this->archive->set($id, $data);
+                        }
+                    )->then(
+                        function () use ($id) {
+                            return $this->destroy($id);
+                        }
+                    );
+                    $promises[] = $promise;
+                }
             }
-            $promise = $this->read($id)->then(
-                function ($data) use ($self, $id) {
-                    return $self->archiveSessionData($id, $data);
-                }
-            )->then(
-                function () use ($self, $id) {
-                    return $self->destroy($id);
-                }
-            );
-            $promises[] = $promise;
+            $promises[] = $this->archive->gc($this->gcArchiveLifetime);
         }
-        $promises[] = $this->gcCleanupArchive();
         if (!empty($promises)) {
             \Reaction\Promise\all($promises)->always(
-                function () use ($self) { $self->_gcIsRunning = false; }
+                function () {
+                    $this->_gcIsRunning = false;
+                }
             );
         } else {
             $this->_gcIsRunning = false;

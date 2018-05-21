@@ -57,22 +57,6 @@ interface SessionHandlerInterface
     public function gc();
 
     /**
-     * Archive session and free main storage
-     * @param string $sessionId
-     * @param array  $data
-     * @return PromiseInterface  with bool
-     */
-    public function archiveSessionData($sessionId, $data);
-
-    /**
-     * Restore session data from archive
-     * @param string $sessionId
-     * @param bool   $deleteFromArchive
-     * @return PromiseInterface  with session data array or null
-     */
-    public function restoreSessionData($sessionId, $deleteFromArchive = false);
-
-    /**
      * Return a new session ID
      * @param RequestApplicationInterface $app
      * @return PromiseInterface  A session ID valid for session handler
