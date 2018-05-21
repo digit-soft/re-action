@@ -104,11 +104,10 @@ class SessionArchiveInFiles extends BaseObject implements SessionArchiveInterfac
         )->then(null,
             function() use (&$file, $createMode) { return $file->create($createMode); }
         )->then(
-            function() use (&$file) { return $file->open('wf'); }
+            function() use (&$file) { return $file->open('w'); }
         )->then(
             function(WritableStreamInterface $stream) use (&$file, $dataSr) {
                 $stream->write($dataSr);
-                $stream->close();
                 return $file->close();
             }
         )->then(null, function($error = null) {
@@ -154,7 +153,6 @@ class SessionArchiveInFiles extends BaseObject implements SessionArchiveInterfac
      */
     public function gc($lifeTime = 3600)
     {
-        \Reaction::info('GC archive');
         return $this->getArchivePath()->then(
             function($pathArchive) {
                 $path = \Reaction::$app->fs->dir($pathArchive);
