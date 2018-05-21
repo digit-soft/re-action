@@ -159,6 +159,7 @@ return [
             //Session handler
             'sessionHandlerDefault' => [
                 'class' => 'Reaction\Web\Sessions\SessionHandlerInterface',
+                'archive' => \Reaction\Web\Sessions\SessionArchiveInFiles::class,
             ],
             //Session handler
             'fileSystemDefault' => [
