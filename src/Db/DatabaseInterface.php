@@ -22,6 +22,7 @@ use Reaction\Promise\ExtendedPromiseInterface;
  * @property int     $queryCacheDuration
  * @property bool    $enableLogging
  * @property bool    $enableProfiling
+ * @property bool    $enableSavepoint
  */
 interface DatabaseInterface extends ComponentAutoloadInterface, ComponentInitBlockingInterface
 {
@@ -111,9 +112,22 @@ interface DatabaseInterface extends ComponentAutoloadInterface, ComponentInitBlo
 
     /**
      * Execute SQL statement string
-     * @param string $sql
-     * @param array  $params
+     * @param string $sql Statement SQL string
+     * @param array  $params Statement parameters
+     * @param bool   $lazy Use lazy promise
      * @return ExtendedPromiseInterface
      */
-    public function executeSql($sql, $params = []);
+    public function executeSql($sql, $params = [], $lazy = true);
+
+    /**
+     * Create transaction for query isolation
+     * @return TransactionInterface
+     */
+    public function createTransaction();
+
+    /**
+     * Get dedicated connection (Not used in shared pool)
+     * @return ConnectionInterface
+     */
+    public function getDedicatedConnection() ;
 }

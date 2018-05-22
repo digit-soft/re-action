@@ -4,8 +4,10 @@ namespace Reaction\Db\Pgsql;
 
 use PgAsync\Client as pgClient;
 use Reaction\Helpers\ArrayHelper;
-use Reaction\Promise\Deferred;
 use Reaction\Promise\ExtendedPromiseInterface;
+use Reaction\Promise\LazyPromise;
+use Reaction\Promise\LazyPromiseInterface;
+use Reaction\Promise\Promise;
 
 /**
  * Class Database
@@ -22,6 +24,11 @@ class Database extends \Reaction\Db\Database
         'Reaction\Db\QueryBuilderInterface' => 'Reaction\Db\Pgsql\QueryBuilder',
         'Reaction\Db\ColumnSchemaInterface' => 'Reaction\Db\Pgsql\ColumnSchema',
     ];
+
+    /**
+     * @var bool Enable savepoint support
+     */
+    public $enableSavepoint = false;
 
     /** @var \PgAsync\Client */
     protected $_pgClient;
@@ -55,27 +62,33 @@ class Database extends \Reaction\Db\Database
 
     /**
      * Execute SQL statement string
-     * @param string $sql SQL statement been executed
-     * @param array  $params An array of statement parameters
-     * @return ExtendedPromiseInterface
+     * @param string $sql Statement SQL string
+     * @param array  $params Statement parameters
+     * @param bool   $lazy Use lazy promise
+     * @return ExtendedPromiseInterface|LazyPromiseInterface
      */
-    public function executeSql($sql, $params = []) {
+    public function executeSql($sql, $params = [], $lazy = true) {
         list($sql, $params) = $this->convertSqlToIndexed($sql, $params);
-        $deferred = new Deferred();
-        $result = [];
-        $this->getPgClient()->executeStatement($sql, $params)->subscribe(
-            function($row) use (&$result) {
-                $result[] = $row;
-            },
-            function($error = null) use (&$deferred) {
-                $deferred->reject($error);
-            },
-            function() use (&$deferred, &$result) {
-                $deferred->resolve($result);
-            }
-        );
-
-        return $deferred->promise();
+        $promiseResolver = function($r, $c) use ($sql, $params) {
+            $this->getPgClient()->executeStatement($sql, $params)->subscribe(
+                function($row) use (&$result) {
+                    $result[] = $row;
+                },
+                function($error = null) use (&$c) {
+                    $c($error);
+                },
+                function() use (&$r, &$result) {
+                    $r($result);
+                }
+            );
+        };
+        if (!$lazy) {
+            return new Promise($promiseResolver);
+        }
+        $promiseCreator = function() use (&$promiseResolver) {
+            return new Promise($promiseResolver);
+        };
+        return new LazyPromise($promiseCreator);
     }
 
     /**

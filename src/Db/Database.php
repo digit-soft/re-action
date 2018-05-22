@@ -10,6 +10,7 @@ use Reaction\Exceptions\NotSupportedException;
 use Reaction\Helpers\ArrayHelper;
 use Reaction\Promise\ExtendedPromiseInterface;
 use function Reaction\Promise\all;
+use Reaction\Promise\LazyPromiseInterface;
 use function Reaction\Promise\resolve;
 
 /**
@@ -59,6 +60,10 @@ class Database extends Component implements DatabaseInterface
      * @var bool Enable query profiling
      */
     public $enableProfiling = false;
+    /**
+     * @var bool Enable savepoint support
+     */
+    public $enableSavepoint = false;
 
     protected $_queryBuilder;
     protected $_schema;
@@ -154,28 +159,6 @@ class Database extends Component implements DatabaseInterface
     }
 
     /**
-     * Create inner component
-     * @param string $interface
-     * @param array  $config
-     * @param bool   $injectDb
-     * @return QueryBuilderInterface|SchemaInterface|CommandInterface|ColumnSchemaInterface
-     * @throws null
-     */
-    protected function createComponent($interface, $config = [], $injectDb = true) {
-        if (!isset($this->componentsConfig[$interface])) {
-            $message = sprintf('Suitable component for interface "%s" not configured in "%s"', $interface, __CLASS__);
-            throw new InvalidConfigException($message);
-        }
-        $className = $this->componentsConfig[$interface];
-        $_config = is_array($className) ? $className : [ 'class' => $className ];
-        $_config = ArrayHelper::merge($_config, $config);
-        if ($injectDb) {
-            $_config = ArrayHelper::merge([ 'db' => $this ], $_config);
-        }
-        return \Reaction::create($_config);
-    }
-
-    /**
      * Quotes a string value for use in a query.
      * Note that if the parameter is not a string, it will be returned without change.
      * @param string $value string to be quoted
@@ -239,26 +222,14 @@ class Database extends Component implements DatabaseInterface
 
     /**
      * Execute SQL statement string
-     * @param string $sql
-     * @param array  $params
+     * @param string $sql Statement SQL string
+     * @param array  $params Statement parameters
+     * @param bool   $lazy Use lazy promise
      * @throws NotSupportedException
-     * @return ExtendedPromiseInterface
+     * @return ExtendedPromiseInterface|LazyPromiseInterface
      */
-    public function executeSql($sql, $params = []) {
+    public function executeSql($sql, $params = [], $lazy = true) {
         throw new NotSupportedException("Query execution is not supported by this driver");
-    }
-
-    /**
-     * Get default components config
-     * @return array
-     */
-    protected function getDefaultComponentsConfig() {
-        return [
-            'Reaction\Db\SchemaInterface' => 'Reaction\Db\Schema',
-            'Reaction\Db\QueryBuilderInterface' => 'Reaction\Db\QueryBuilder',
-            'Reaction\Db\CommandInterface' => 'Reaction\Db\Command',
-            'Reaction\Db\ColumnSchemaInterface' => 'Reaction\Db\ColumnSchema',
-        ];
     }
 
     /**
@@ -283,5 +254,58 @@ class Database extends Component implements DatabaseInterface
     public function isInitialized()
     {
         return $this->_initialized;
+    }
+
+    /**
+     * @return TransactionInterface
+     */
+    public function createTransaction() {
+        $config = [];
+        return $this->createComponent(TransactionInterface::class, $config);
+    }
+
+    /**
+     * Get dedicated connection (Not used in shared pool)
+     * @return ConnectionInterface
+     */
+    public function getDedicatedConnection() {
+        throw new NotSupportedException("Dedicated connection is not supported");
+    }
+
+    /**
+     * Get default components config
+     * @return array
+     */
+    protected function getDefaultComponentsConfig() {
+        return [
+            'Reaction\Db\SchemaInterface' => 'Reaction\Db\Schema',
+            'Reaction\Db\QueryBuilderInterface' => 'Reaction\Db\QueryBuilder',
+            'Reaction\Db\CommandInterface' => 'Reaction\Db\Command',
+            'Reaction\Db\ColumnSchemaInterface' => 'Reaction\Db\ColumnSchema',
+            'Reaction\Db\ConnectionInterface' => 'Reaction\Db\Connection',
+            'Reaction\Db\TransactionInterface' => 'Reaction\Db\Transaction',
+        ];
+    }
+
+    /**
+     * Create inner component
+     * @param string $interface
+     * @param array  $config
+     * @param bool   $injectDb
+     * @return QueryBuilderInterface|SchemaInterface|CommandInterface|ColumnSchemaInterface|ConnectionInterface|TransactionInterface
+     * @throws null
+     */
+    protected function createComponent($interface, $config = [], $injectDb = true) {
+        if (!isset($this->componentsConfig[$interface])) {
+            $message = sprintf('Suitable component for interface "%s" not configured in "%s"', $interface, __CLASS__);
+            throw new InvalidConfigException($message);
+        }
+        $className = $this->componentsConfig[$interface];
+        $_config = is_array($className) ? $className : [ 'class' => $className ];
+        $_config = ArrayHelper::merge($_config, $config);
+        if ($injectDb) {
+            $_config = ArrayHelper::merge([ 'db' => $this ], $_config);
+        }
+        return \Reaction::create($_config);
     }
 }
