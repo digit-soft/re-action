@@ -26,7 +26,8 @@ class Connection extends \Reaction\Db\Connection
      * @param bool   $lazy Use lazy promise
      * @return ExtendedPromiseInterface|LazyPromiseInterface
      */
-    public function executeSql($sql, $params = [], $lazy = true) {
+    public function executeSql($sql, $params = [], $lazy = true)
+    {
         list($sql, $params) = $this->convertSqlToIndexed($sql, $params);
         $promiseResolver = function($r, $c) use ($sql, $params) {
             $this->pgConnection->executeStatement($sql, $params)->subscribe(
@@ -64,7 +65,8 @@ class Connection extends \Reaction\Db\Connection
      * @param array  $params
      * @return array
      */
-    protected function convertSqlToIndexed($sql, $params = []) {
+    protected function convertSqlToIndexed($sql, $params = [])
+    {
         if (empty($params) || ArrayHelper::isIndexed($params)) {
             return [$sql, $params];
         }

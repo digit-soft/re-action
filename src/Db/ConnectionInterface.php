@@ -21,6 +21,14 @@ interface ConnectionInterface
     public function executeSql($sql, $params = [], $lazy = true);
 
     /**
+     * Create DB command
+     * @param string|null $sql
+     * @param array       $params
+     * @return CommandInterface
+     */
+    public function createCommand($sql = null, $params = []);
+
+    /**
      * Begin transaction
      * @param string|null $isolationLevel
      * @return ExtendedPromiseInterface

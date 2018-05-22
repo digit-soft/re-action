@@ -4,7 +4,6 @@ namespace Reaction\Db;
 
 use Reaction\Base\Component;
 use Reaction\Exceptions\NotSupportedException;
-use Reaction\Helpers\ArrayHelper;
 use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\Promise\LazyPromiseInterface;
 use function Reaction\Promise\allInOrder;
@@ -27,7 +26,7 @@ class Connection extends Component implements ConnectionInterface
      */
     public function beginTransaction($isolationLevel = null)
     {
-        $beginCmd = $this->db->createCommand("BEGIN")->execute(true, $this);
+        $beginCmd = $this->createCommand("BEGIN")->execute();
         $isolationCmd = isset($isolationLevel)
             ? $this->setTransactionIsolationLevel($isolationLevel)
             : resolve(true);
@@ -40,7 +39,7 @@ class Connection extends Component implements ConnectionInterface
      */
     public function commitTransaction()
     {
-        return $this->db->createCommand("COMMIT")->execute(true, $this);
+        return $this->createCommand("COMMIT")->execute();
     }
 
     /**
@@ -48,7 +47,7 @@ class Connection extends Component implements ConnectionInterface
      * @return LazyPromiseInterface
      */
     public function rollBackTransaction() {
-        return $this->db->createCommand("ROLLBACK")->execute(true, $this);
+        return $this->createCommand("ROLLBACK")->execute();
     }
 
     /**
@@ -58,7 +57,7 @@ class Connection extends Component implements ConnectionInterface
      */
     public function createSavepoint($name)
     {
-        return $this->db->createCommand("SAVEPOINT $name")->execute(true, $this);
+        return $this->createCommand("SAVEPOINT $name")->execute();
     }
 
     /**
@@ -68,7 +67,7 @@ class Connection extends Component implements ConnectionInterface
      */
     public function releaseSavepoint($name)
     {
-        return $this->db->createCommand("RELEASE SAVEPOINT $name")->execute(true, $this);
+        return $this->createCommand("RELEASE SAVEPOINT $name")->execute();
     }
 
     /**
@@ -78,7 +77,7 @@ class Connection extends Component implements ConnectionInterface
      */
     public function rollBackSavepoint($name)
     {
-        return $this->db->createCommand("ROLLBACK TO SAVEPOINT $name")->execute(true, $this);
+        return $this->createCommand("ROLLBACK TO SAVEPOINT $name")->execute();
     }
 
     /**
@@ -92,7 +91,18 @@ class Connection extends Component implements ConnectionInterface
      */
     public function setTransactionIsolationLevel($level)
     {
-        return $this->db->createCommand("SET TRANSACTION ISOLATION LEVEL $level")->execute(true, $this);
+        return $this->createCommand("SET TRANSACTION ISOLATION LEVEL $level")->execute();
+    }
+
+    /**
+     * Create DB command
+     * @param string|null $sql
+     * @param array       $params
+     * @return CommandInterface
+     */
+    public function createCommand($sql = null, $params = [])
+    {
+        return $this->db->createCommand($sql, $params, $this);
     }
 
     /**
@@ -102,7 +112,8 @@ class Connection extends Component implements ConnectionInterface
      * @param bool   $lazy Use lazy promise
      * @return ExtendedPromiseInterface|LazyPromiseInterface
      */
-    public function executeSql($sql, $params = [], $lazy = true) {
+    public function executeSql($sql, $params = [], $lazy = true)
+    {
         throw new NotSupportedException("SQL execution is not supported");
     }
 
@@ -111,6 +122,5 @@ class Connection extends Component implements ConnectionInterface
      */
     public function close()
     {
-
     }
 }
