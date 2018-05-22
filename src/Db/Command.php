@@ -26,6 +26,10 @@ class Command extends Component implements CommandInterface
      */
     public $params = [];
     /**
+     * @var ConnectionInterface the DB connection that this command is associated with. Used for transactions
+     */
+    public $connection;
+    /**
      * @var string Default fetch mode
      */
     public $fetchMode = self::FETCH_MODE_ASSOC;
@@ -42,7 +46,9 @@ class Command extends Component implements CommandInterface
      * @var string the SQL statement that this command represents
      */
     protected $_sql;
-    /** @var string Table name marked for schema refresh */
+    /**
+     * @var string Table name marked for schema refresh
+     */
     protected $_refreshTableName;
 
 
@@ -81,6 +87,20 @@ class Command extends Component implements CommandInterface
             $db = \Reaction::create($database);
         }
         $this->_db = $db;
+    }
+
+    /**
+     * Set connection to use with
+     * @param ConnectionInterface|TransactionInterface|null $connection
+     * @return $this this command instance
+     */
+    public function setConnection($connection = null)
+    {
+        if ($connection instanceof TransactionInterface) {
+            $connection = $connection->getConnection();
+        }
+        $this->connection = $connection;
+        return $this;
     }
 
     /**
@@ -841,7 +861,6 @@ class Command extends Component implements CommandInterface
      * @param string|Query $subquery the select statement which defines the view.
      * This can be either a string or a [[Query]] object.
      * @return $this the command object itself.
-     * @since 2.0.14
      */
     public function createView($viewName, $subquery)
     {
@@ -855,7 +874,6 @@ class Command extends Component implements CommandInterface
      *
      * @param string $viewName the name of the view to be dropped.
      * @return $this the command object itself.
-     * @since 2.0.14
      */
     public function dropView($viewName)
     {
@@ -881,7 +899,7 @@ class Command extends Component implements CommandInterface
             return reject(false);
         }
 
-        $execPromise = $this->internalExecute($rawSql, [], $lazy);
+        $execPromise = $this->internalExecute($rawSql, [], $lazy, $this->connection);
         return $execPromise instanceof LazyPromiseInterface
             ? $execPromise->thenLazy(function() { return $this->refreshTableSchema(); })
             : $execPromise->then(function() { return $this->refreshTableSchema(); });
@@ -1044,10 +1062,13 @@ class Command extends Component implements CommandInterface
      * @param string $sql
      * @param array  $params
      * @param bool   $lazy
+     * @param Connection|null   $connection
      * @return ExtendedPromiseInterface
      */
-    protected function internalExecute($sql, $params = [], $lazy = true) {
-        return $this->db->executeSql($sql, $params, $lazy);
+    protected function internalExecute($sql, $params = [], $lazy = true, $connection = null) {
+        return isset($connection)
+            ? $connection->executeSql($sql, $params, $lazy)
+            : $this->db->executeSql($sql, $params, $lazy);
     }
 
     /**

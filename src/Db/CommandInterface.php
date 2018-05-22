@@ -8,8 +8,11 @@ use Reaction\Promise\LazyPromiseInterface;
 /**
  * Interface CommandInterface
  * @package Reaction\Db
- * @property DatabaseInterface $db
- * @property array             $params
+ * @property DatabaseInterface   $db
+ * @property ConnectionInterface $connection
+ * @property array               $params
+ * @property string              $sql
+ * @property string              $rawSql
  */
 interface CommandInterface
 {
@@ -31,6 +34,12 @@ interface CommandInterface
      */
     public function cache($duration = null);
 
+    /**
+     * Set connection to use with
+     * @param ConnectionInterface|TransactionInterface|null $connection
+     * @return $this this command instance
+     */
+    public function setConnection($connection = null);
 
     /**
      * Returns the SQL statement for this command.
