@@ -70,7 +70,14 @@ interface TransactionInterface
 
     /**
      * Rolls back a transaction.
-     * @throws Exception if the transaction is not active
+     * @param bool $final
+     * @return ExtendedPromiseInterface
      */
-    public function rollBack();
+    public function rollBack($final = false);
+
+    /**
+     * Get DB connection
+     * @return ConnectionInterface
+     */
+    public function getConnection();
 }

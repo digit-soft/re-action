@@ -89,7 +89,6 @@ class Transaction extends BaseObject implements TransactionInterface
      *
      * [isolation level]: http://en.wikipedia.org/wiki/Isolation_%28database_systems%29#Isolation_levels
      * @return ExtendedPromiseInterface
-     * @throws InvalidConfigException if [[db]] is `null`.
      */
     public function begin($isolationLevel = null)
     {
@@ -134,7 +133,8 @@ class Transaction extends BaseObject implements TransactionInterface
         $this->_level--;
         if ($this->_level === 0) {
             Reaction::debug('Commit transaction');
-            return $connection->commitTransaction();
+            return $connection->commitTransaction()
+                ->thenLazy(function() { $this->closeConnection(); });
         }
 
         $schema = $this->db->getSchema();
@@ -149,9 +149,10 @@ class Transaction extends BaseObject implements TransactionInterface
 
     /**
      * Rolls back a transaction.
-     * @throws Exception if the transaction is not active
+     * @param bool $final
+     * @return ExtendedPromiseInterface
      */
-    public function rollBack()
+    public function rollBack($final = false)
     {
         if (!$this->getIsActive()) {
             // do nothing if transaction is not active: this could be the transaction is committed
@@ -159,11 +160,23 @@ class Transaction extends BaseObject implements TransactionInterface
             return Reaction\Promise\reject(new Exception("There is no active transactions"));
         }
 
+        //Roll back all transaction with save points
+        if ($final && $this->_level > 1) {
+            $promises = [];
+            while ($this->_level > 0) {
+                $promises[] = $this->rollBack(false);
+            }
+            return !empty($promises)
+                ? Reaction\Promise\allInOrder($promises)->then(function() { return true; })
+                : Reaction\Promise\resolve(true);
+        }
+
         $connection = $this->getConnection();
         $this->_level--;
         if ($this->_level === 0) {
             Reaction::debug('Roll back transaction');
-            return $connection->rollBackTransaction();
+            return $connection->rollBackTransaction()
+                ->thenLazy(function() { $this->closeConnection(); });
         }
 
         $schema = $this->db->getSchema();
@@ -173,7 +186,7 @@ class Transaction extends BaseObject implements TransactionInterface
         } else {
             Reaction::info('Transaction not rolled back: nested transaction not supported');
             // throw an exception to fail the outer transaction
-            throw new Exception('Roll back failed: nested transaction not supported.');
+            return Reaction\Promise\reject(new Exception('Roll back failed: nested transaction not supported.'));
         }
     }
 
@@ -211,10 +224,20 @@ class Transaction extends BaseObject implements TransactionInterface
      * Get DB connection
      * @return ConnectionInterface
      */
-    protected function getConnection() {
+    public function getConnection() {
         if (!isset($this->connection)) {
             $this->connection = $this->db->getDedicatedConnection();
         }
         return $this->connection;
+    }
+
+    /**
+     * Close connection at transaction end
+     */
+    protected function closeConnection()
+    {
+        $this->connection->close();
+        $this->connection = null;
+        Reaction::debug('DB connection closed');
     }
 }
