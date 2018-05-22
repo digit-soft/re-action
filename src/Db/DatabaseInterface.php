@@ -46,11 +46,12 @@ interface DatabaseInterface extends ComponentAutoloadInterface, ComponentInitBlo
 
     /**
      * Create command
-     * @param string|null $sql
-     * @param array       $params
+     * @param string|null              $sql
+     * @param array                    $params
+     * @param ConnectionInterface|null $connection
      * @return CommandInterface
      */
-    public function createCommand($sql = null, $params = []);
+    public function createCommand($sql = null, $params = [], $connection = null);
 
     /**
      * Create ColumnSchemaInterface instance

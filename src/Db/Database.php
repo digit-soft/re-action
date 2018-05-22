@@ -130,13 +130,14 @@ class Database extends Component implements DatabaseInterface
 
     /**
      * Create command
-     * @param string|null $sql
-     * @param array       $params
+     * @param string|null              $sql
+     * @param array                    $params
+     * @param ConnectionInterface|null $connection
      * @return CommandInterface
      */
-    public function createCommand($sql = null, $params = []) {
+    public function createCommand($sql = null, $params = [], $connection = null) {
         /** @var CommandInterface $command */
-        $config = ['sql' => $sql, 'params' => $params];
+        $config = ['sql' => $sql, 'params' => $params, 'connection' => $connection];
         $command = $this->createComponent(CommandInterface::class, $config);
         return $command;
     }

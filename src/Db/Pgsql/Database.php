@@ -3,6 +3,7 @@
 namespace Reaction\Db\Pgsql;
 
 use PgAsync\Client as pgClient;
+use Reaction\Db\ConnectionInterface;
 use Reaction\Helpers\ArrayHelper;
 use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\Promise\LazyPromise;
@@ -23,12 +24,13 @@ class Database extends \Reaction\Db\Database
         'Reaction\Db\SchemaInterface' => 'Reaction\Db\Pgsql\Schema',
         'Reaction\Db\QueryBuilderInterface' => 'Reaction\Db\Pgsql\QueryBuilder',
         'Reaction\Db\ColumnSchemaInterface' => 'Reaction\Db\Pgsql\ColumnSchema',
+        'Reaction\Db\ConnectionInterface' => 'Reaction\Db\Pgsql\Connection',
     ];
 
     /**
      * @var bool Enable savepoint support
      */
-    public $enableSavepoint = false;
+    public $enableSavepoint = true;
 
     /** @var \PgAsync\Client */
     protected $_pgClient;
@@ -89,6 +91,17 @@ class Database extends \Reaction\Db\Database
             return new Promise($promiseResolver);
         };
         return new LazyPromise($promiseCreator);
+    }
+
+    /**
+     * Get dedicated connection (Not used in shared pool)
+     * @return ConnectionInterface
+     */
+    public function getDedicatedConnection() {
+        $config = [
+            'pgConnection' => $this->getPgClient()->getIdleConnection(),
+        ];
+        return $this->createComponent(ConnectionInterface::class, $config);
     }
 
     /**
