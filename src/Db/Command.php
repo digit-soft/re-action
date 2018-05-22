@@ -6,6 +6,7 @@ use function PHPSTORM_META\elementType;
 use Reaction\Base\Component;
 use Reaction\Db\Expressions\Expression;
 use Reaction\Promise\ExtendedPromiseInterface;
+use Reaction\Promise\LazyPromiseInterface;
 use function Reaction\Promise\reject;
 use function Reaction\Promise\resolve;
 
@@ -864,14 +865,14 @@ class Command extends Component implements CommandInterface
     }
 
 
-
     /**
      * Executes the SQL statement.
      * This method should only be used for executing non-query SQL statement, such as `INSERT`, `DELETE`, `UPDATE` SQLs.
      * No result set will be returned.
-     * @return ExtendedPromiseInterface
+     * @param bool $lazy Use LazyPromise
+     * @return ExtendedPromiseInterface|LazyPromiseInterface
      */
-    public function execute()
+    public function execute($lazy = true)
     {
         $sql = $this->getSql();
         $rawSql = $this->getRawSql();
@@ -880,11 +881,10 @@ class Command extends Component implements CommandInterface
             return reject(false);
         }
 
-        return $this->internalExecute($rawSql)->then(
-            function() {
-                return $this->refreshTableSchema();
-            }
-        );
+        $execPromise = $this->internalExecute($rawSql, [], $lazy);
+        return $execPromise instanceof LazyPromiseInterface
+            ? $execPromise->thenLazy(function() { return $this->refreshTableSchema(); })
+            : $execPromise->then(function() { return $this->refreshTableSchema(); });
     }
 
 
@@ -938,7 +938,7 @@ class Command extends Component implements CommandInterface
     /**
      * Executes the SQL statement and returns query result.
      * This method is for executing a SQL query that returns result set, such as `SELECT`.
-     * @return ExtendedPromiseInterface with DataReader the reader object for fetching the query result
+     * @return LazyPromiseInterface with DataReader the reader object for fetching the query result
      */
     public function query()
     {
@@ -949,7 +949,7 @@ class Command extends Component implements CommandInterface
      * Executes the SQL statement and returns ALL rows at once.
      * @param int $fetchMode the result fetch mode. Please refer to [PHP manual](http://www.php.net/manual/en/function.PDOStatement-setFetchMode.php)
      * for valid fetch modes. If this parameter is null, the value set in [[fetchMode]] will be used.
-     * @return ExtendedPromiseInterface with all rows of the query result. Each array element is an array representing a row of data.
+     * @return LazyPromiseInterface with all rows of the query result. Each array element is an array representing a row of data.
      * An empty array is returned if the query results in nothing.
      */
     public function queryAll($fetchMode = null)
@@ -962,7 +962,7 @@ class Command extends Component implements CommandInterface
      * This method is best used when only the first row of result is needed for a query.
      * @param int $fetchMode the result fetch mode. Please refer to [PHP manual](http://php.net/manual/en/pdostatement.setfetchmode.php)
      * for valid fetch modes. If this parameter is null, the value set in [[fetchMode]] will be used.
-     * @return ExtendedPromiseInterface with the first row (in terms of an array) of the query result. False is returned if the query
+     * @return LazyPromiseInterface with the first row (in terms of an array) of the query result. False is returned if the query
      * results in nothing.
      */
     public function queryOne($fetchMode = null)
@@ -973,12 +973,12 @@ class Command extends Component implements CommandInterface
     /**
      * Executes the SQL statement and returns the value of the first column in the first row of data.
      * This method is best used when only a single value is needed for a query.
-     * @return ExtendedPromiseInterface the value of the first column in the first row of the query result.
+     * @return LazyPromiseInterface the value of the first column in the first row of the query result.
      * False is returned if there is no value.
      */
     public function queryScalar()
     {
-        return $this->queryInternal(static::FETCH_FIELD)->then(
+        return $this->queryInternal(static::FETCH_FIELD)->thenLazy(
             function($result) {
                 if (is_resource($result) && get_resource_type($result) === 'stream') {
                     return stream_get_contents($result);
@@ -992,7 +992,7 @@ class Command extends Component implements CommandInterface
      * Executes the SQL statement and returns the first column of the result.
      * This method is best used when only the first column of result (i.e. the first element in each row)
      * is needed for a query.
-     * @return ExtendedPromiseInterface with the first column of the query result. Empty array is returned if the query results in nothing.
+     * @return LazyPromiseInterface with the first column of the query result. Empty array is returned if the query results in nothing.
      */
     public function queryColumn()
     {
@@ -1004,39 +1004,50 @@ class Command extends Component implements CommandInterface
      * @param string $fetchMethod method of PDOStatement to be called
      * @param int    $fetchMode the result fetch mode. Please refer to [PHP manual](http://www.php.net/manual/en/function.PDOStatement-setFetchMode.php)
      * for valid fetch modes. If this parameter is null, the value set in [[fetchMode]] will be used.
-     * @return ExtendedPromiseInterface with the method execution result
+     * @param bool   $lazy Use LazyPromise
+     * @return ExtendedPromiseInterface|LazyPromiseInterface with the method execution result
      */
-    protected function queryInternal($fetchMethod, $fetchMode = null)
+    protected function queryInternal($fetchMethod, $fetchMode = null, $lazy = true)
     {
         $fetchMode = isset($fetchMode) ? $fetchMode : $this->fetchMode;
         list($profile, $rawSql) = $this->logQuery(__METHOD__);
 
         $self = $this;
-        $profileId = $profile ? \Reaction::$app->logger->profile('Query: ' . $rawSql) : null;
-        return $this->internalExecute($this->sql, $this->params)->then(
-            function($results) use ($self, $fetchMethod, $fetchMode) {
-                return $self->fetchResults($results, $fetchMethod, $fetchMode);
-            }
-        )->then(
-            function($data) use ($profileId) {
-                \Reaction::$app->logger->profileEnd($profileId);
-                return $data;
-            },
-            function($error = null) use ($profileId) {
-                \Reaction::$app->logger->profileEnd($profileId);
-                return reject($error);
-            }
-        );
+        $execPromise = $this->internalExecute($this->sql, $this->params, $lazy);
+        if ($execPromise instanceof LazyPromiseInterface) {
+            return $execPromise->thenLazy(
+                function($results) use ($fetchMethod, $fetchMode) {
+                    return $this->fetchResults($results, $fetchMethod, $fetchMode);
+                }
+            );
+        } else {
+            $profileId = $profile ? \Reaction::$app->logger->profile('Query: ' . $rawSql) : null;
+            return $execPromise->then(
+                function($results) use ($self, $fetchMethod, $fetchMode) {
+                    return $self->fetchResults($results, $fetchMethod, $fetchMode);
+                }
+            )->then(
+                function($data) use ($profileId) {
+                    \Reaction::$app->logger->profileEnd($profileId);
+                    return $data;
+                },
+                function($error = null) use ($profileId) {
+                    \Reaction::$app->logger->profileEnd($profileId);
+                    return reject($error);
+                }
+            );
+        }
     }
 
     /**
      * Execute SQL statement internally
      * @param string $sql
      * @param array  $params
+     * @param bool   $lazy
      * @return ExtendedPromiseInterface
      */
-    protected function internalExecute($sql, $params = []) {
-        return $this->db->executeSql($sql, $params);
+    protected function internalExecute($sql, $params = [], $lazy = true) {
+        return $this->db->executeSql($sql, $params, $lazy);
     }
 
     /**

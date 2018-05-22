@@ -3,6 +3,7 @@
 namespace Reaction\Db;
 
 use Reaction\Promise\ExtendedPromiseInterface;
+use Reaction\Promise\LazyPromiseInterface;
 
 /**
  * Interface CommandInterface
@@ -72,7 +73,7 @@ interface CommandInterface
     /**
      * Executes the SQL statement and returns query result.
      * This method is for executing a SQL query that returns result set, such as `SELECT`.
-     * @return ExtendedPromiseInterface with DataReader the reader object for fetching the query result
+     * @return LazyPromiseInterface with DataReader the reader object for fetching the query result
      */
     public function query();
 
@@ -80,7 +81,7 @@ interface CommandInterface
      * Executes the SQL statement and returns ALL rows at once.
      * @param int $fetchMode the result fetch mode. Please refer to [PHP manual](http://www.php.net/manual/en/function.PDOStatement-setFetchMode.php)
      * for valid fetch modes. If this parameter is null, the value set in [[fetchMode]] will be used.
-     * @return ExtendedPromiseInterface with all rows of the query result. Each array element is an array representing a row of data.
+     * @return LazyPromiseInterface with all rows of the query result. Each array element is an array representing a row of data.
      * An empty array is returned if the query results in nothing.
      */
     public function queryAll($fetchMode = null);
@@ -90,7 +91,7 @@ interface CommandInterface
      * This method is best used when only the first row of result is needed for a query.
      * @param int $fetchMode the result fetch mode. Please refer to [PHP manual](http://php.net/manual/en/pdostatement.setfetchmode.php)
      * for valid fetch modes. If this parameter is null, the value set in [[fetchMode]] will be used.
-     * @return ExtendedPromiseInterface with the first row (in terms of an array) of the query result. False is returned if the query
+     * @return LazyPromiseInterface with the first row (in terms of an array) of the query result. False is returned if the query
      * results in nothing.
      */
     public function queryOne($fetchMode = null);
@@ -98,7 +99,7 @@ interface CommandInterface
     /**
      * Executes the SQL statement and returns the value of the first column in the first row of data.
      * This method is best used when only a single value is needed for a query.
-     * @return ExtendedPromiseInterface the value of the first column in the first row of the query result.
+     * @return LazyPromiseInterface the value of the first column in the first row of the query result.
      * False is returned if there is no value.
      */
     public function queryScalar();
@@ -107,7 +108,7 @@ interface CommandInterface
      * Executes the SQL statement and returns the first column of the result.
      * This method is best used when only the first column of result (i.e. the first element in each row)
      * is needed for a query.
-     * @return ExtendedPromiseInterface with the first column of the query result. Empty array is returned if the query results in nothing.
+     * @return LazyPromiseInterface with the first column of the query result. Empty array is returned if the query results in nothing.
      */
     public function queryColumn();
 
@@ -159,9 +160,10 @@ interface CommandInterface
      * Executes the SQL statement.
      * This method should only be used for executing non-query SQL statement, such as `INSERT`, `DELETE`, `UPDATE` SQLs.
      * No result set will be returned.
-     * @return ExtendedPromiseInterface
+     * @param bool $lazy
+     * @return ExtendedPromiseInterface|LazyPromiseInterface
      */
-    public function execute();
+    public function execute($lazy = true);
 
     /**
      * Creates an INSERT command.
