@@ -9,6 +9,8 @@ use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Helpers\ArrayHelper;
 use Reaction\Db\Expressions\ExpressionInterface;
 use Reaction\Promise\ExtendedPromiseInterface;
+use Reaction\Promise\LazyPromise;
+use Reaction\Promise\LazyPromiseInterface;
 use function Reaction\Promise\reject;
 use function Reaction\Promise\resolve;
 
@@ -155,14 +157,14 @@ class Query extends Component implements QueryInterface, ExpressionInterface
      * Executes the query and returns all results as an array.
      * @param DatabaseInterface $db the database connection used to generate the SQL statement.
      * If this parameter is not given, the `db` application component will be used.
-     * @return ExtendedPromiseInterface with array the query results. If the query results in nothing, an empty array will be returned.
+     * @return LazyPromiseInterface with array the query results. If the query results in nothing, an empty array will be returned.
      */
     public function all($db = null)
     {
         if ($this->emulateExecution) {
-            return resolve([]);
+            return new LazyPromise(function() { return resolve([]); });
         }
-        return $this->createCommand($db)->queryAll()->then(
+        return $this->createCommand($db)->queryAll()->thenLazy(
             function($results) {
                 return $this->populate($results);
             }
@@ -193,13 +195,13 @@ class Query extends Component implements QueryInterface, ExpressionInterface
      * Executes the query and returns a single row of result.
      * @param DatabaseInterface $db the database connection used to generate the SQL statement.
      * If this parameter is not given, the `db` application component will be used.
-     * @return ExtendedPromiseInterface with array the first row (in terms of an array) of the query result. Rejects if the query
+     * @return LazyPromiseInterface with array the first row (in terms of an array) of the query result. Rejects if the query
      * results in nothing.
      */
     public function one($db = null)
     {
         if ($this->emulateExecution) {
-            return reject(false);
+            return new LazyPromise(function() { return reject(null); });
         }
 
         return $this->createCommand($db)->queryOne();
@@ -210,13 +212,13 @@ class Query extends Component implements QueryInterface, ExpressionInterface
      * The value returned will be the first column in the first row of the query results.
      * @param DatabaseInterface $db the database connection used to generate the SQL statement.
      * If this parameter is not given, the `db` application component will be used.
-     * @return ExtendedPromiseInterface with string|null the value of the first column in the first row of the query result.
+     * @return LazyPromiseInterface with string|null the value of the first column in the first row of the query result.
      * False is returned if the query result is empty.
      */
     public function scalar($db = null)
     {
         if ($this->emulateExecution) {
-            return reject(null);
+            return new LazyPromise(function() { return reject(null); });
         }
 
         return $this->createCommand($db)->queryScalar();
@@ -226,12 +228,12 @@ class Query extends Component implements QueryInterface, ExpressionInterface
      * Executes the query and returns the first column of the result.
      * @param DatabaseInterface $db the database connection used to generate the SQL statement.
      * If this parameter is not given, the `db` application component will be used.
-     * @return ExtendedPromiseInterface with array the first column of the query result. An empty array is returned if the query results in nothing.
+     * @return LazyPromiseInterface with array the first column of the query result. An empty array is returned if the query results in nothing.
      */
     public function column($db = null)
     {
         if ($this->emulateExecution) {
-            return resolve([]);
+            return new LazyPromise(function() { return resolve([]); });
         }
 
         if ($this->indexBy === null) {
@@ -245,7 +247,7 @@ class Query extends Component implements QueryInterface, ExpressionInterface
                 $this->select[] = $this->indexBy;
             }
         }
-        return $this->createCommand($db)->queryAll()->then(
+        return $this->createCommand($db)->queryAll()->thenLazy(
             function($results) {
                 $rows = [];
                 foreach ($results as $row) {
@@ -269,13 +271,13 @@ class Query extends Component implements QueryInterface, ExpressionInterface
      * Make sure you properly [quote](guide:db-dao#quoting-table-and-column-names) column names in the expression.
      * @param DatabaseInterface $db the database connection used to generate the SQL statement.
      * If this parameter is not given (or null), the `db` application component will be used.
-     * @return ExtendedPromiseInterface with int|string number of records. The result may be a string depending on the
+     * @return LazyPromiseInterface with int|string number of records. The result may be a string depending on the
      * underlying database engine and to support integer values higher than a 32bit PHP integer can handle.
      */
     public function count($q = '*', $db = null)
     {
         if ($this->emulateExecution) {
-            return resolve(0);
+            return new LazyPromise(function() { return resolve(0); });
         }
 
         return $this->queryScalar("COUNT($q)", $db);
@@ -287,12 +289,12 @@ class Query extends Component implements QueryInterface, ExpressionInterface
      * Make sure you properly [quote](guide:db-dao#quoting-table-and-column-names) column names in the expression.
      * @param DatabaseInterface $db the database connection used to generate the SQL statement.
      * If this parameter is not given, the `db` application component will be used.
-     * @return mixed the sum of the specified column values.
+     * @return LazyPromiseInterface with mixed the sum of the specified column values.
      */
     public function sum($q, $db = null)
     {
         if ($this->emulateExecution) {
-            return 0;
+            return new LazyPromise(function() { return resolve(0); });
         }
 
         return $this->queryScalar("SUM($q)", $db);
@@ -304,12 +306,12 @@ class Query extends Component implements QueryInterface, ExpressionInterface
      * Make sure you properly [quote](guide:db-dao#quoting-table-and-column-names) column names in the expression.
      * @param DatabaseInterface $db the database connection used to generate the SQL statement.
      * If this parameter is not given, the `db` application component will be used.
-     * @return mixed the average of the specified column values.
+     * @return LazyPromiseInterface with mixed the average of the specified column values.
      */
     public function average($q, $db = null)
     {
         if ($this->emulateExecution) {
-            return 0;
+            return new LazyPromise(function() { return resolve(0); });
         }
 
         return $this->queryScalar("AVG($q)", $db);
@@ -321,10 +323,13 @@ class Query extends Component implements QueryInterface, ExpressionInterface
      * Make sure you properly [quote](guide:db-dao#quoting-table-and-column-names) column names in the expression.
      * @param DatabaseInterface $db the database connection used to generate the SQL statement.
      * If this parameter is not given, the `db` application component will be used.
-     * @return mixed the minimum of the specified column values.
+     * @return LazyPromiseInterface with mixed the minimum of the specified column values.
      */
     public function min($q, $db = null)
     {
+        if ($this->emulateExecution) {
+            return new LazyPromise(function() { return resolve(0); });
+        }
         return $this->queryScalar("MIN($q)", $db);
     }
 
@@ -334,10 +339,13 @@ class Query extends Component implements QueryInterface, ExpressionInterface
      * Make sure you properly [quote](guide:db-dao#quoting-table-and-column-names) column names in the expression.
      * @param DatabaseInterface $db the database connection used to generate the SQL statement.
      * If this parameter is not given, the `db` application component will be used.
-     * @return mixed the maximum of the specified column values.
+     * @return LazyPromiseInterface with mixed the maximum of the specified column values.
      */
     public function max($q, $db = null)
     {
+        if ($this->emulateExecution) {
+            return new LazyPromise(function() { return resolve(0); });
+        }
         return $this->queryScalar("MAX($q)", $db);
     }
 
@@ -356,7 +364,7 @@ class Query extends Component implements QueryInterface, ExpressionInterface
         $params = $command->params;
         $command->setSql($command->db->getQueryBuilder()->selectExists($command->getSql()));
         $command->bindValues($params);
-        return $command->queryScalar()->then(
+        return $command->queryScalar()->thenLazy(
             function() { return true; }
         );
     }
@@ -366,12 +374,12 @@ class Query extends Component implements QueryInterface, ExpressionInterface
      * Restores the value of select to make this query reusable.
      * @param string|ExpressionInterface $selectExpression
      * @param DatabaseInterface|null $db
-     * @return ExtendedPromiseInterface with bool|string
+     * @return LazyPromiseInterface with bool|string
      */
     protected function queryScalar($selectExpression, $db)
     {
         if ($this->emulateExecution) {
-            return resolve(null);
+            return new LazyPromise(function() { return resolve(null); });
         }
 
         if (
@@ -544,7 +552,7 @@ PATTERN;
         } elseif (!is_array($columns)) {
             $columns = preg_split('/\s*,\s*/', trim($columns), -1, PREG_SPLIT_NO_EMPTY);
         }
-        // this sequantial assignment is needed in order to make sure select is being reset
+        // this sequential assignment is needed in order to make sure select is being reset
         // before using getUniqueColumns() that checks it
         $this->select = [];
         $this->select = $this->getUniqueColumns($columns);
@@ -915,8 +923,8 @@ PATTERN;
      * to represent the group-by information. Otherwise, the method will not be able to correctly determine
      * the group-by columns.
      *
-     * Since version 2.0.7, an [[ExpressionInterface]] object can be passed to specify the GROUP BY part explicitly in plain SQL.
-     * Since version 2.0.14, an [[ExpressionInterface]] object can be passed as well.
+     * An [[ExpressionInterface]] object can be passed to specify the GROUP BY part explicitly in plain SQL.
+     * An [[ExpressionInterface]] object can be passed as well.
      * @return $this the query object itself
      * @see addGroupBy()
      */
@@ -942,8 +950,8 @@ PATTERN;
      * to represent the group-by information. Otherwise, the method will not be able to correctly determine
      * the group-by columns.
      *
-     * Since version 2.0.7, an [[Expression]] object can be passed to specify the GROUP BY part explicitly in plain SQL.
-     * Since version 2.0.14, an [[ExpressionInterface]] object can be passed as well.
+     * An [[Expression]] object can be passed to specify the GROUP BY part explicitly in plain SQL.
+     * An [[ExpressionInterface]] object can be passed as well.
      * @return $this the query object itself
      * @see groupBy()
      */
