@@ -5,6 +5,7 @@ namespace Reaction\Db;
 use Reaction\Base\Component;
 use Reaction\Exceptions\NotSupportedException;
 use Reaction\Promise\ExtendedPromiseInterface;
+use Reaction\Promise\LazyPromise;
 use Reaction\Promise\LazyPromiseInterface;
 use function Reaction\Promise\allInOrder;
 use function Reaction\Promise\resolve;
@@ -22,7 +23,7 @@ class Connection extends Component implements ConnectionInterface, DbConnectionG
     /**
      * Begin transaction
      * @param string|null $isolationLevel
-     * @return ExtendedPromiseInterface
+     * @return LazyPromiseInterface
      */
     public function beginTransaction($isolationLevel = null)
     {
@@ -30,7 +31,10 @@ class Connection extends Component implements ConnectionInterface, DbConnectionG
         $isolationCmd = isset($isolationLevel)
             ? $this->setTransactionIsolationLevel($isolationLevel)
             : resolve(true);
-        return allInOrder([$beginCmd, $isolationCmd]);
+        $promises = [$beginCmd, $isolationCmd];
+        return new LazyPromise(function() use ($promises) {
+            return allInOrder($promises);
+        });
     }
 
     /**

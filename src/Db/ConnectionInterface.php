@@ -20,7 +20,7 @@ interface ConnectionInterface extends EventEmitterWildcardInterface
      * @param string $sql Statement SQL string
      * @param array  $params Statement parameters
      * @param bool   $lazy Use lazy promise
-     * @return ExtendedPromiseInterface
+     * @return ExtendedPromiseInterface|LazyPromiseInterface
      */
     public function executeSql($sql, $params = [], $lazy = true);
 
@@ -35,7 +35,7 @@ interface ConnectionInterface extends EventEmitterWildcardInterface
     /**
      * Begin transaction
      * @param string|null $isolationLevel
-     * @return ExtendedPromiseInterface
+     * @return LazyPromiseInterface
      */
     public function beginTransaction($isolationLevel = null);
 
