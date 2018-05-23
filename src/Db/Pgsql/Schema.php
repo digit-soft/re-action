@@ -3,6 +3,7 @@
 namespace Reaction\Db\Pgsql;
 
 use Reaction\Db\CommandInterface;
+use Reaction\Db\ConnectionInterface;
 use Reaction\Db\Constraints\CheckConstraint;
 use Reaction\Db\Constraints\Constraint;
 use Reaction\Db\Constraints\ConstraintFinderInterface;
@@ -148,13 +149,17 @@ class Schema extends \Reaction\Db\Schema implements ConstraintFinderInterface
 
     /**
      * Executes the INSERT command, returning primary key values.
-     * @param string $table the table that new rows will be inserted into.
-     * @param array $columns the column data (name => value) to be inserted into the table.
+     * @param string                   $table the table that new rows will be inserted into.
+     * @param array                    $columns the column data (name => value) to be inserted into the table.
+     * @param ConnectionInterface|null $connection
      * @return ExtendedPromiseInterface with array|false primary key values or false if the command fails
      */
-    public function insert($table, $columns)
+    public function insert($table, $columns, $connection = null)
     {
         $command = $this->db->createCommand()->insertAndReturn($table, $columns);
+        if (isset($connection)) {
+            $command->setConnection($connection);
+        }
         return $command->queryOne();
     }
 

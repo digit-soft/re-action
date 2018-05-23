@@ -430,18 +430,18 @@ class Schema extends BaseObject implements SchemaInterface
 
     /**
      * Executes the INSERT command, returning primary key values.
-     * @param string $table the table that new rows will be inserted into.
-     * @param array $columns the column data (name => value) to be inserted into the table.
+     * @param string                   $table the table that new rows will be inserted into.
+     * @param array                    $columns the column data (name => value) to be inserted into the table.
+     * @param ConnectionInterface|null $connection
      * @return ExtendedPromiseInterface with array|false primary key values or false if the command fails
      */
-    public function insert($table, $columns)
+    public function insert($table, $columns, $connection = null)
     {
-        return $this->db->createCommand()->insert($table, $columns)->then(
-            function($command) {
-                /** @var CommandInterface $command */
-                return $command->execute();
-            }
-        )->then(
+        $command = $this->db->createCommand()->insert($table, $columns);
+        if (isset($connection)) {
+            $command->setConnection($connection);
+        }
+        return $command->execute()->then(
             function() use ($table, $columns) {
                 $tableSchema = $this->getTableSchema($table);
                 $result = [];
