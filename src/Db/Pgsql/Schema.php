@@ -154,22 +154,8 @@ class Schema extends \Reaction\Db\Schema implements ConstraintFinderInterface
      */
     public function insert($table, $columns)
     {
-        $params = [];
-        return $this->db->getQueryBuilder()->insert($table, $columns, $params)->then(
-            function($sql) use ($table, &$params) {
-                $tableSchema = $this->getTableSchema($table);
-                $returnColumns = $tableSchema;
-                if (!empty($returnColumns)) {
-                    $returning = [];
-                    foreach ((array) $returnColumns as $name) {
-                        $returning[] = $this->quoteColumnName($name);
-                    }
-                    $sql .= ' RETURNING ' . implode(', ', $returning);
-                }
-                $command = $this->db->createCommand($sql, $params);
-                return $command->queryOne();
-            }
-        );
+        $command = $this->db->createCommand()->insertAndReturn($table, $columns);
+        return $command->queryOne();
     }
 
     /**

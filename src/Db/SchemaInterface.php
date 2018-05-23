@@ -2,6 +2,11 @@
 
 namespace Reaction\Db;
 
+use Reaction\Db\Constraints\CheckConstraint;
+use Reaction\Db\Constraints\Constraint;
+use Reaction\Db\Constraints\DefaultValueConstraint;
+use Reaction\Db\Constraints\ForeignKeyConstraint;
+use Reaction\Db\Constraints\IndexConstraint;
 use Reaction\Promise\ExtendedPromiseInterface;
 
 /**
@@ -219,6 +224,54 @@ interface SchemaInterface
      * @return ExtendedPromiseInterface
      */
     public function refreshTableMetadata($tableName, $nameIsRaw = false);
+
+    /**
+     * Obtains the primary key for the named table.
+     * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
+     * @param bool $refresh whether to reload the information even if it is found in the cache.
+     * @return Constraint|null table primary key, `null` if the table has no primary key.
+     */
+    public function getTablePrimaryKey($name, $refresh = false);
+
+    /**
+     * Obtains the foreign keys information for the named table.
+     * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
+     * @param bool $refresh whether to reload the information even if it is found in the cache.
+     * @return ForeignKeyConstraint[] table foreign keys.
+     */
+    public function getTableForeignKeys($name, $refresh = false);
+
+    /**
+     * Obtains the indexes information for the named table.
+     * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
+     * @param bool $refresh whether to reload the information even if it is found in the cache.
+     * @return IndexConstraint[] table indexes.
+     */
+    public function getTableIndexes($name, $refresh = false);
+
+    /**
+     * Obtains the unique constraints information for the named table.
+     * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
+     * @param bool $refresh whether to reload the information even if it is found in the cache.
+     * @return Constraint[] table unique constraints.
+     */
+    public function getTableUniques($name, $refresh = false);
+
+    /**
+     * Obtains the check constraints information for the named table.
+     * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
+     * @param bool $refresh whether to reload the information even if it is found in the cache.
+     * @return CheckConstraint[] table check constraints.
+     */
+    public function getTableChecks($name, $refresh = false);
+
+    /**
+     * Obtains the default value constraints information for the named table.
+     * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
+     * @param bool $refresh whether to reload the information even if it is found in the cache.
+     * @return DefaultValueConstraint[] table default value constraints.
+     */
+    public function getTableDefaultValues($name, $refresh = false);
 
     /**
      * Executes the INSERT command, returning primary key values.

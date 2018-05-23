@@ -318,6 +318,43 @@ class Command extends Component implements CommandInterface
     }
 
     /**
+     * Creates an INSERT command with RETURNING statement.
+     *
+     * For example,
+     *
+     * ```php
+     * $connection->createCommand()->insertAndReturn('user', [
+     *     'name' => 'Sam',
+     *     'age' => 30,
+     * ])->execute();
+     * ```
+     *
+     * The method will properly escape the column names, and bind the values to be inserted.
+     *
+     * Note that the created command is not executed until [[execute()]] is called.
+     *
+     * @param string $table the table that new rows will be inserted into.
+     * @param array|\Reaction\Db\Query $columns the column data (name => value) to be inserted into the table or instance
+     * of [[Reaction\Db\Query|Query]] to perform INSERT INTO ... SELECT SQL statement.
+     * @return $this the command object itself
+     */
+    public function insertAndReturn($table, $columns) {
+        $params = [];
+        $sql = $this->db->getQueryBuilder()->insert($table, $columns, $params);
+        $tableSchema = $this->db->getSchema()->getTableSchema($table);
+        $returnColumns = $tableSchema;
+        if (!empty($returnColumns)) {
+            $returning = [];
+            foreach ((array) $returnColumns as $name) {
+                $returning[] = $this->db->quoteColumnName($name);
+            }
+            $sql .= ' RETURNING ' . implode(', ', $returning);
+        }
+
+        return $this->setSql($sql)->bindValues($params);
+    }
+
+    /**
      * Creates a batch INSERT command.
      *
      * For example,
@@ -909,9 +946,18 @@ class Command extends Component implements CommandInterface
         }
 
         $execPromise = $this->internalExecute($rawSql, [], $lazy);
+        $needResCount = $this->needResultsCount();
+        $thenCallback = function($results = []) use ($needResCount) {
+            $result = $needResCount ? count($results) : true;
+            return $this->refreshTableSchema()->then(
+                function() use ($result) {
+                    return $result;
+                }
+            );
+        };
         return $execPromise instanceof LazyPromiseInterface
-            ? $execPromise->thenLazy(function() { return $this->refreshTableSchema(); })
-            : $execPromise->then(function() { return $this->refreshTableSchema(); });
+            ? $execPromise->thenLazy($thenCallback)
+            : $execPromise->then($thenCallback);
     }
 
 
@@ -1064,6 +1110,68 @@ class Command extends Component implements CommandInterface
                 }
             );
         }
+    }
+
+    /**
+     * Check that query must return affected rows count
+     * @return bool
+     */
+    protected function needResultsCount() {
+        $pattern = '/^\s*(DELETE|UPDATE)\b/i';
+        return $this->checkQueryByPattern($pattern);
+    }
+
+    /**
+     * Check that query is SELECT|SHOW|DESCRIBE type
+     * @return bool
+     */
+    protected function isReadQuery() {
+        $pattern = '/^\s*(SELECT|SHOW|DESCRIBE)\b/i';
+        return $this->checkQueryByPattern($pattern);
+    }
+
+    /**
+     * Check that query is INSERT type
+     * @return bool
+     */
+    protected function isInsertQuery() {
+        $pattern = '/^\s*(INSERT)\b/i';
+        return $this->checkQueryByPattern($pattern);
+    }
+
+    /**
+     * Check that query is UPDATE type
+     * @return bool
+     */
+    protected function isUpdateQuery() {
+        $pattern = '/^\s*(UPDATE)\b/i';
+        return $this->checkQueryByPattern($pattern);
+    }
+
+    /**
+     * Check that query is DELETE type
+     * @return bool
+     */
+    protected function isDeleteQuery() {
+        $pattern = '/^\s*(DELETE)\b/i';
+        return $this->checkQueryByPattern($pattern);
+    }
+
+    /**
+     * Check query string by pattern
+     * @param string      $pattern
+     * @param string|null $sql
+     * @return bool
+     * @internal
+     */
+    protected function checkQueryByPattern($pattern, $sql = null) {
+        if (!isset($sql)) {
+            $sql = $this->getSql();
+        }
+        if ($sql === "") {
+            return false;
+        }
+        return preg_match($pattern, $sql) > 0;
     }
 
     /**

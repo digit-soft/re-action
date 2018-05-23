@@ -723,4 +723,70 @@ class Schema extends BaseObject implements SchemaInterface
         $promises[] = $this->refreshTablesMetadata();
         return all($promises);
     }
+
+    /**
+     * Obtains the primary key for the named table.
+     * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
+     * @param bool   $refresh whether to reload the information even if it is found in the cache.
+     * @return Constraint|null table primary key, `null` if the table has no primary key.
+     */
+    public function getTablePrimaryKey($name, $refresh = false)
+    {
+        throw new NotSupportedException(get_class($this) . ' does not support loading primary key');
+    }
+
+    /**
+     * Obtains the foreign keys information for the named table.
+     * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
+     * @param bool   $refresh whether to reload the information even if it is found in the cache.
+     * @return ForeignKeyConstraint[] table foreign keys.
+     */
+    public function getTableForeignKeys($name, $refresh = false)
+    {
+        throw new NotSupportedException(get_class($this) . ' does not support loading foreign keys');
+    }
+
+    /**
+     * Obtains the indexes information for the named table.
+     * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
+     * @param bool   $refresh whether to reload the information even if it is found in the cache.
+     * @return IndexConstraint[] table indexes.
+     */
+    public function getTableIndexes($name, $refresh = false)
+    {
+        throw new NotSupportedException(get_class($this) . ' does not support loading indexes');
+    }
+
+    /**
+     * Obtains the unique constraints information for the named table.
+     * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
+     * @param bool   $refresh whether to reload the information even if it is found in the cache.
+     * @return Constraint[] table unique constraints.
+     */
+    public function getTableUniques($name, $refresh = false)
+    {
+        throw new NotSupportedException(get_class($this) . ' does not support loading uniques');
+    }
+
+    /**
+     * Obtains the check constraints information for the named table.
+     * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
+     * @param bool   $refresh whether to reload the information even if it is found in the cache.
+     * @return CheckConstraint[] table check constraints.
+     */
+    public function getTableChecks($name, $refresh = false)
+    {
+        throw new NotSupportedException(get_class($this) . ' does not support loading checks');
+    }
+
+    /**
+     * Obtains the default value constraints information for the named table.
+     * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
+     * @param bool   $refresh whether to reload the information even if it is found in the cache.
+     * @return DefaultValueConstraint[] table default value constraints.
+     */
+    public function getTableDefaultValues($name, $refresh = false)
+    {
+        throw new NotSupportedException(get_class($this) . ' does not support loading default values');
+    }
 }
