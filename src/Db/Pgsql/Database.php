@@ -74,6 +74,7 @@ class Database extends \Reaction\Db\Database
     public function executeSql($sql, $params = [], $lazy = true) {
         list($sql, $params) = $this->convertSqlToIndexed($sql, $params);
         $promiseResolver = function($r, $c) use ($sql, $params) {
+            $result = [];
             $this->getPgClient()->executeStatement($sql, $params)->subscribe(
                 function($row) use (&$result) {
                     $result[] = $row;
