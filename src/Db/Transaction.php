@@ -7,6 +7,7 @@ use Reaction\Base\BaseObject;
 use Reaction\Exceptions\Exception;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Promise\ExtendedPromiseInterface;
+use Reaction\Promise\LazyPromiseInterface;
 
 /**
  * Transaction represents a DB transaction.
@@ -88,7 +89,7 @@ class Transaction extends BaseObject implements TransactionInterface, DbConnecti
      * At the time of this writing affected DBMS are MSSQL and SQLite.
      *
      * [isolation level]: http://en.wikipedia.org/wiki/Isolation_%28database_systems%29#Isolation_levels
-     * @return ExtendedPromiseInterface
+     * @return ExtendedPromiseInterface|LazyPromiseInterface
      */
     public function begin($isolationLevel = null)
     {
@@ -96,7 +97,7 @@ class Transaction extends BaseObject implements TransactionInterface, DbConnecti
             $exception = new InvalidConfigException('Transaction::db must be set.');
             return Reaction\Promise\reject($exception);
         }
-        //$this->db->open();
+
         $connection = $this->getConnection();
 
         if ($this->_level === 0) {
@@ -115,13 +116,19 @@ class Transaction extends BaseObject implements TransactionInterface, DbConnecti
             $this->_level++;
         }
 
-        return isset($promise) ? $promise->then(function() { return $this->getConnection(); }) : Reaction\Promise\reject(null);
+        if (!isset($promise)) {
+            return Reaction\Promise\rejectLazy(null);
+        }
+
+        $callback = function() { return $this->getConnection(); };
+
+        return $promise instanceof LazyPromiseInterface ? $promise->thenLazy($callback) : $promise->then($callback);
     }
 
     /**
      * Commits a transaction.
      * @throws Exception if the transaction is not active
-     * @return ExtendedPromiseInterface
+     * @return ExtendedPromiseInterface|LazyPromiseInterface
      */
     public function commit()
     {
@@ -144,7 +151,7 @@ class Transaction extends BaseObject implements TransactionInterface, DbConnecti
         } else {
             Reaction::info('Transaction not committed: nested transaction not supported');
         }
-        return Reaction\Promise\reject(null);
+        return Reaction\Promise\rejectLazy(null);
     }
 
     /**
@@ -199,7 +206,7 @@ class Transaction extends BaseObject implements TransactionInterface, DbConnecti
      * @param string $level The transaction isolation level to use for this transaction.
      * This can be one of [[READ_UNCOMMITTED]], [[READ_COMMITTED]], [[REPEATABLE_READ]] and [[SERIALIZABLE]] but
      * also a string containing DBMS specific syntax to be used after `SET TRANSACTION ISOLATION LEVEL`.
-     * @return ExtendedPromiseInterface
+     * @return ExtendedPromiseInterface|LazyPromiseInterface
      * @throws Exception if the transaction is not active
      * @see http://en.wikipedia.org/wiki/Isolation_%28database_systems%29#Isolation_levels
      */
@@ -238,7 +245,6 @@ class Transaction extends BaseObject implements TransactionInterface, DbConnecti
     {
         $this->connection->close();
         $this->connection = null;
-        Reaction::debug('DB connection closed');
     }
 
     /**

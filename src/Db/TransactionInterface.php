@@ -4,6 +4,7 @@ namespace Reaction\Db;
 use Reaction\Exceptions\Exception;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Promise\ExtendedPromiseInterface;
+use Reaction\Promise\LazyPromiseInterface;
 
 /**
  * Interface TransactionInterface
@@ -56,7 +57,7 @@ interface TransactionInterface
      * At the time of this writing affected DBMS are MSSQL and SQLite.
      *
      * [isolation level]: http://en.wikipedia.org/wiki/Isolation_%28database_systems%29#Isolation_levels
-     * @return ExtendedPromiseInterface with connection
+     * @return ExtendedPromiseInterface|LazyPromiseInterface with connection
      * @throws InvalidConfigException if [[db]] is `null`.
      */
     public function begin($isolationLevel = null);
@@ -64,7 +65,7 @@ interface TransactionInterface
     /**
      * Commits a transaction.
      * @throws Exception if the transaction is not active
-     * @return ExtendedPromiseInterface
+     * @return ExtendedPromiseInterface|LazyPromiseInterface
      */
     public function commit();
 
