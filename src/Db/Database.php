@@ -17,7 +17,7 @@ use function Reaction\Promise\resolve;
  * Class Database
  * @package Reaction\Db
  */
-class Database extends Component implements DatabaseInterface
+class Database extends Component implements DatabaseInterface, DbConnectionGetterInterface
 {
     public $host = 'localhost';
     public $port = '5432';
@@ -308,5 +308,25 @@ class Database extends Component implements DatabaseInterface
             $_config = ArrayHelper::merge([ 'db' => $this ], $_config);
         }
         return \Reaction::create($_config);
+    }
+
+    /**
+     * Get Database if applicable
+     * @see DbConnectionGetterInterface
+     * @return DatabaseInterface|null
+     */
+    public function getDb()
+    {
+        return $this;
+    }
+
+    /**
+     * Get Connection if applicable
+     * @see DbConnectionGetterInterface
+     * @return ConnectionInterface|null
+     */
+    public function getConnection()
+    {
+        return null;
     }
 }

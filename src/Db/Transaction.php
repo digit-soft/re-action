@@ -44,7 +44,7 @@ use Reaction\Promise\ExtendedPromiseInterface;
  * write-only.
  * @property int $level The current nesting level of the transaction. This property is read-only.
  */
-class Transaction extends BaseObject implements TransactionInterface
+class Transaction extends BaseObject implements TransactionInterface, DbConnectionGetterInterface
 {
     /**
      * @var DatabaseInterface the database connection that this transaction is associated with.
@@ -239,5 +239,15 @@ class Transaction extends BaseObject implements TransactionInterface
         $this->connection->close();
         $this->connection = null;
         Reaction::debug('DB connection closed');
+    }
+
+    /**
+     * Get Database if applicable
+     * @see DbConnectionGetterInterface
+     * @return DatabaseInterface|null
+     */
+    public function getDb()
+    {
+        return $this->db;
     }
 }

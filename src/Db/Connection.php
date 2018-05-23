@@ -14,7 +14,7 @@ use function Reaction\Promise\resolve;
  * Used for isolated transactions
  * @package Reaction\Db
  */
-class Connection extends Component implements ConnectionInterface
+class Connection extends Component implements ConnectionInterface, DbConnectionGetterInterface
 {
     /** @var DatabaseInterface */
     public $db;
@@ -123,5 +123,25 @@ class Connection extends Component implements ConnectionInterface
     public function close()
     {
         $this->emit(static::EVENT_CLOSE, [$this]);
+    }
+
+    /**
+     * Get Database if applicable.
+     * @see DbConnectionGetterInterface
+     * @return DatabaseInterface|null
+     */
+    public function getDb()
+    {
+        return $this->db;
+    }
+
+    /**
+     * Get Connection if applicable
+     * @see DbConnectionGetterInterface
+     * @return ConnectionInterface|null
+     */
+    public function getConnection()
+    {
+        return $this;
     }
 }

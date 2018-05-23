@@ -9,6 +9,7 @@ use Reaction\Promise\LazyPromiseInterface;
 /**
  * Interface ConnectionInterface
  * @package Reaction\Db
+ * @property DatabaseInterface $db
  */
 interface ConnectionInterface extends EventEmitterWildcardInterface
 {
