@@ -229,6 +229,12 @@ interface SchemaInterface
     public function insert($table, $columns);
 
     /**
+     * Checks whether this DBMS supports savepoint
+     * @return bool whether this DBMS supports [savepoint](http://en.wikipedia.org/wiki/Savepoint).
+     */
+    public function supportsSavepoint();
+
+    /**
      * Init component
      * @return ExtendedPromiseInterface
      */

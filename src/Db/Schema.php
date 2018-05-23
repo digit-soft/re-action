@@ -138,6 +138,14 @@ class Schema extends BaseObject implements SchemaInterface
     }
 
     /**
+     * @return bool whether this DBMS supports [savepoint](http://en.wikipedia.org/wiki/Savepoint).
+     */
+    public function supportsSavepoint()
+    {
+        return $this->db->enableSavepoint;
+    }
+
+    /**
      * Obtains the metadata for the named table.
      * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
      * @param bool $refresh whether to reload the table schema even if it is found in the cache.
