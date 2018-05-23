@@ -7,7 +7,7 @@ use Reaction\Db\Expressions\ExpressionBuilderInterface;
 use Reaction\Db\Expressions\ExpressionInterface;
 use Reaction\Exceptions\Exception;
 use Reaction\Exceptions\InvalidArgumentException;
-use Reaction\Promise\ExtendedPromiseInterface;
+use Reaction\Promise\LazyPromiseInterface;
 
 /**
  * Interface QueryBuilderInterface
@@ -58,7 +58,7 @@ interface QueryBuilderInterface
      * @param Query $query the [[Query]] object from which the SQL statement will be generated.
      * @param array $params the parameters to be bound to the generated SQL statement. These parameters will
      * be included in the result with the additional parameters generated during the query building process.
-     * @return ExtendedPromiseInterface with array the generated SQL statement (the first array element) and the corresponding
+     * @return LazyPromiseInterface with array the generated SQL statement (the first array element) and the corresponding
      * parameters to be bound to the SQL statement (the second array element). The parameters returned
      * include those provided in `$params`.
      */

@@ -17,6 +17,8 @@ use Reaction\Exceptions\NotSupportedException;
 use Reaction\Helpers\StringHelper;
 use Reaction\Db\Expressions\ExpressionInterface;
 use Reaction\Promise\ExtendedPromiseInterface;
+use Reaction\Promise\LazyPromise;
+use Reaction\Promise\LazyPromiseInterface;
 use function Reaction\Promise\reject;
 use function Reaction\Promise\resolve;
 
@@ -256,15 +258,17 @@ class QueryBuilder extends BaseObject implements QueryBuilderInterface
      * @param Query|ActiveQueryInterface $query the [[Query]] object from which the SQL statement will be generated.
      * @param array $params the parameters to be bound to the generated SQL statement. These parameters will
      * be included in the result with the additional parameters generated during the query building process.
-     * @return ExtendedPromiseInterface with array the generated SQL statement (the first array element) and the corresponding
+     * @return LazyPromiseInterface with array the generated SQL statement (the first array element) and the corresponding
      * parameters to be bound to the SQL statement (the second array element). The parameters returned
      * include those provided in `$params`.
      */
     public function buildAsync($query, $params = [])
     {
-        $queryPr = $query instanceof ActiveQueryInterface ? $query->prepareAsync($this) : resolve($query->prepare($this));
+        $queryPr = $query instanceof ActiveQueryInterface
+            ? $query->prepareAsync($this)
+            : new LazyPromise(function() use ($query) { return resolve($query->prepare($this)); });
 
-        return $queryPr->then(
+        return $queryPr->thenLazy(
             function($query) use (&$params) {
                 /** @var Query $query */
                 $params = empty($params) ? $query->params : array_merge($params, $query->params);

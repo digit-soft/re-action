@@ -268,7 +268,28 @@ class QueryBuilder extends \Reaction\Db\QueryBuilder
      */
     public function update($table, $columns, $condition, &$params)
     {
-        return parent::update($table, $this->normalizeTableRowData($table, $columns), $condition, $params);
+        $columns = $this->normalizeTableRowData($table, $columns);
+        $pk = $this->getTablePrimaryKey($table);
+        list($lines, $params) = $this->prepareUpdateSets($table, $columns, $params);
+        $sql = 'UPDATE ' . $this->db->quoteTableName($table) . ' SET ' . implode(', ', $lines);
+        $where = $this->buildWhere($condition, $params);
+        $sql = $where === '' ? $sql : $sql . ' ' . $where;
+        $sql .= isset($pk) ? " RETURNING " . $this->db->quoteColumnName($pk) : " RETURNING *";
+        return $sql;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function delete($table, $condition, &$params)
+    {
+        $pk = $this->getTablePrimaryKey($table);
+        $sql = 'DELETE FROM ' . $this->db->quoteTableName($table);
+        $where = $this->buildWhere($condition, $params);
+
+        $sql = $where === '' ? $sql : $sql . ' ' . $where;
+        $sql .= isset($pk) ? " RETURNING " . $this->db->quoteColumnName($pk) : " RETURNING *";
+        return $sql;
     }
 
     /**
@@ -467,5 +488,20 @@ class QueryBuilder extends \Reaction\Db\QueryBuilder
         }*/
 
         return $columns;
+    }
+
+    /**
+     * Get table primary key column(s)
+     * @param string $table
+     * @param bool   $asArray
+     * @return array|mixed|null|string[]
+     */
+    protected function getTablePrimaryKey($table, $asArray = false) {
+        $tableSchema = $this->db->getSchema()->getTableSchema($table);
+        $primaryKeys = $tableSchema->primaryKey;
+        if (empty($primaryKeys)) {
+            return $asArray ? [] : null;
+        }
+        return $asArray ? $primaryKeys : reset($primaryKeys);
     }
 }
