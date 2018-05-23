@@ -5,6 +5,7 @@ namespace Reaction\Db;
 use function PHPSTORM_META\elementType;
 use Reaction\Base\Component;
 use Reaction\Db\Expressions\Expression;
+use Reaction\Events\EventEmitterWildcardInterface;
 use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\Promise\LazyPromiseInterface;
 use function Reaction\Promise\reject;
@@ -100,10 +101,14 @@ class Command extends Component implements CommandInterface
             $connection = $connection->getConnection();
         }
         $this->connection = $connection;
-        //Remove connection instance on close
-        $this->connection->once(ConnectionInterface::EVENT_CLOSE, function() {
-            $this->connection = null;
-        });
+        if ($connection instanceof EventEmitterWildcardInterface) {
+            //Remove connection instance on close
+            $this->connection->once(ConnectionInterface::EVENT_CLOSE, function() use ($connection) {
+                if ($this->connection === $connection) {
+                    $this->connection = null;
+                }
+            });
+        }
         return $this;
     }
 

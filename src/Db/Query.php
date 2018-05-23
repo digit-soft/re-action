@@ -124,18 +124,22 @@ class Query extends Component implements QueryInterface, ExpressionInterface
 
     /**
      * Creates a DB command that can be used to execute this query.
-     * @param DatabaseInterface $db the database connection used to generate the SQL statement.
+     * @param DatabaseInterface|DbConnectionGetterInterface $db the database connection used to generate the SQL statement.
      * If this parameter is not given, the `db` application component will be used.
      * @return CommandInterface the created DB command instance.
      */
     public function createCommand($db = null)
     {
+        $connection = null;
         if ($db === null) {
             $db = \Reaction::$app->getDb();
+        } elseif ($db instanceof DbConnectionGetterInterface && !$db instanceof DatabaseInterface) {
+            $connection = $db->getConnection();
+            $db = $db->getDb();
         }
         list($sql, $params) = $db->getQueryBuilder()->build($this);
 
-        $command = $db->createCommand($sql, $params);
+        $command = $db->createCommand($sql, $params)->setConnection($connection);
         $this->setCommandCache($command);
 
         return $command;
@@ -155,7 +159,7 @@ class Query extends Component implements QueryInterface, ExpressionInterface
 
     /**
      * Executes the query and returns all results as an array.
-     * @param DatabaseInterface $db the database connection used to generate the SQL statement.
+     * @param DatabaseInterface|DbConnectionGetterInterface $db the database connection used to generate the SQL statement.
      * If this parameter is not given, the `db` application component will be used.
      * @return LazyPromiseInterface with array the query results. If the query results in nothing, an empty array will be returned.
      */
@@ -193,7 +197,7 @@ class Query extends Component implements QueryInterface, ExpressionInterface
 
     /**
      * Executes the query and returns a single row of result.
-     * @param DatabaseInterface $db the database connection used to generate the SQL statement.
+     * @param DatabaseInterface|DbConnectionGetterInterface $db the database connection used to generate the SQL statement.
      * If this parameter is not given, the `db` application component will be used.
      * @return LazyPromiseInterface with array the first row (in terms of an array) of the query result. Rejects if the query
      * results in nothing.
@@ -210,7 +214,7 @@ class Query extends Component implements QueryInterface, ExpressionInterface
     /**
      * Returns the query result as a scalar value.
      * The value returned will be the first column in the first row of the query results.
-     * @param DatabaseInterface $db the database connection used to generate the SQL statement.
+     * @param DatabaseInterface|DbConnectionGetterInterface $db the database connection used to generate the SQL statement.
      * If this parameter is not given, the `db` application component will be used.
      * @return LazyPromiseInterface with string|null the value of the first column in the first row of the query result.
      * False is returned if the query result is empty.
@@ -226,7 +230,7 @@ class Query extends Component implements QueryInterface, ExpressionInterface
 
     /**
      * Executes the query and returns the first column of the result.
-     * @param DatabaseInterface $db the database connection used to generate the SQL statement.
+     * @param DatabaseInterface|DbConnectionGetterInterface $db the database connection used to generate the SQL statement.
      * If this parameter is not given, the `db` application component will be used.
      * @return LazyPromiseInterface with array the first column of the query result. An empty array is returned if the query results in nothing.
      */
@@ -269,7 +273,7 @@ class Query extends Component implements QueryInterface, ExpressionInterface
      * Returns the number of records.
      * @param string $q the COUNT expression. Defaults to '*'.
      * Make sure you properly [quote](guide:db-dao#quoting-table-and-column-names) column names in the expression.
-     * @param DatabaseInterface $db the database connection used to generate the SQL statement.
+     * @param DatabaseInterface|DbConnectionGetterInterface $db the database connection used to generate the SQL statement.
      * If this parameter is not given (or null), the `db` application component will be used.
      * @return LazyPromiseInterface with int|string number of records. The result may be a string depending on the
      * underlying database engine and to support integer values higher than a 32bit PHP integer can handle.
@@ -287,7 +291,7 @@ class Query extends Component implements QueryInterface, ExpressionInterface
      * Returns the sum of the specified column values.
      * @param string $q the column name or expression.
      * Make sure you properly [quote](guide:db-dao#quoting-table-and-column-names) column names in the expression.
-     * @param DatabaseInterface $db the database connection used to generate the SQL statement.
+     * @param DatabaseInterface|DbConnectionGetterInterface $db the database connection used to generate the SQL statement.
      * If this parameter is not given, the `db` application component will be used.
      * @return LazyPromiseInterface with mixed the sum of the specified column values.
      */
@@ -304,7 +308,7 @@ class Query extends Component implements QueryInterface, ExpressionInterface
      * Returns the average of the specified column values.
      * @param string $q the column name or expression.
      * Make sure you properly [quote](guide:db-dao#quoting-table-and-column-names) column names in the expression.
-     * @param DatabaseInterface $db the database connection used to generate the SQL statement.
+     * @param DatabaseInterface|DbConnectionGetterInterface $db the database connection used to generate the SQL statement.
      * If this parameter is not given, the `db` application component will be used.
      * @return LazyPromiseInterface with mixed the average of the specified column values.
      */
@@ -321,7 +325,7 @@ class Query extends Component implements QueryInterface, ExpressionInterface
      * Returns the minimum of the specified column values.
      * @param string $q the column name or expression.
      * Make sure you properly [quote](guide:db-dao#quoting-table-and-column-names) column names in the expression.
-     * @param DatabaseInterface $db the database connection used to generate the SQL statement.
+     * @param DatabaseInterface|DbConnectionGetterInterface $db the database connection used to generate the SQL statement.
      * If this parameter is not given, the `db` application component will be used.
      * @return LazyPromiseInterface with mixed the minimum of the specified column values.
      */
@@ -337,7 +341,7 @@ class Query extends Component implements QueryInterface, ExpressionInterface
      * Returns the maximum of the specified column values.
      * @param string $q the column name or expression.
      * Make sure you properly [quote](guide:db-dao#quoting-table-and-column-names) column names in the expression.
-     * @param DatabaseInterface $db the database connection used to generate the SQL statement.
+     * @param DatabaseInterface|DbConnectionGetterInterface $db the database connection used to generate the SQL statement.
      * If this parameter is not given, the `db` application component will be used.
      * @return LazyPromiseInterface with mixed the maximum of the specified column values.
      */
@@ -351,7 +355,7 @@ class Query extends Component implements QueryInterface, ExpressionInterface
 
     /**
      * Returns a value indicating whether the query result contains any row of data.
-     * @param DatabaseInterface $db the database connection used to generate the SQL statement.
+     * @param DatabaseInterface|DbConnectionGetterInterface $db the database connection used to generate the SQL statement.
      * If this parameter is not given, the `db` application component will be used.
      * @return ExtendedPromiseInterface with bool whether the query result contains any row of data.
      */
@@ -373,7 +377,7 @@ class Query extends Component implements QueryInterface, ExpressionInterface
      * Queries a scalar value by setting [[select]] first.
      * Restores the value of select to make this query reusable.
      * @param string|ExpressionInterface $selectExpression
-     * @param DatabaseInterface|null $db
+     * @param DatabaseInterface|DbConnectionGetterInterface|null $db
      * @return LazyPromiseInterface with bool|string
      */
     protected function queryScalar($selectExpression, $db)

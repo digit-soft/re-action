@@ -2,7 +2,6 @@
 
 namespace Reaction\Db;
 
-use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\Promise\LazyPromiseInterface;
 
 /**
@@ -18,7 +17,7 @@ interface QueryInterface
 {
     /**
      * Executes the query and returns all results as an array.
-     * @param DatabaseInterface $db the database connection used to execute the query.
+     * @param DatabaseInterface|DbConnectionGetterInterface $db the database connection used to execute the query.
      * If this parameter is not given, the `db` application component will be used.
      * @return LazyPromiseInterface with array the query results. If the query results in nothing, an empty array will be returned.
      */
@@ -26,7 +25,7 @@ interface QueryInterface
 
     /**
      * Executes the query and returns a single row of result.
-     * @param DatabaseInterface $db the database connection used to execute the query.
+     * @param DatabaseInterface|DbConnectionGetterInterface $db the database connection used to execute the query.
      * If this parameter is not given, the `db` application component will be used.
      * @return LazyPromiseInterface with array|bool the first row (in terms of an array) of the query result. False is returned if the query
      * results in nothing.
@@ -36,7 +35,7 @@ interface QueryInterface
     /**
      * Returns the number of records.
      * @param string $q the COUNT expression. Defaults to '*'.
-     * @param DatabaseInterface $db the database connection used to execute the query.
+     * @param DatabaseInterface|DbConnectionGetterInterface $db the database connection used to execute the query.
      * If this parameter is not given, the `db` application component will be used.
      * @return LazyPromiseInterface with int number of records.
      */
@@ -44,7 +43,7 @@ interface QueryInterface
 
     /**
      * Returns a value indicating whether the query result contains any row of data.
-     * @param DatabaseInterface $db the database connection used to execute the query.
+     * @param DatabaseInterface|DbConnectionGetterInterface $db the database connection used to execute the query.
      * If this parameter is not given, the `db` application component will be used.
      * @return LazyPromiseInterface with bool whether the query result contains any row of data.
      */
