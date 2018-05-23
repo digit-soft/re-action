@@ -4,6 +4,7 @@ namespace Reaction\Db\Orm;
 
 use Reaction\Db\Command;
 use Reaction\Db\DatabaseInterface;
+use Reaction\Db\DbConnectionGetterInterface;
 use Reaction\Db\QueryBuilder;
 use Reaction\Db\QueryInterface;
 use Reaction\Promise\ExtendedPromiseInterface;
@@ -29,7 +30,7 @@ interface ActiveQueryInterface extends QueryInterface
 
     /**
      * Executes query and returns a single row of result.
-     * @param DatabaseInterface $db the DB connection used to create the DB command.
+     * @param DatabaseInterface|DbConnectionGetterInterface $db the DB connection used to create the DB command.
      * If `null`, the DB connection returned by [[ActiveQueryTrait::$modelClass|modelClass]] will be used.
      * @return LazyPromiseInterface with ActiveRecordInterface|array|null a single row of query result. Depending on the setting of [[asArray]],
      * the query result may be either an array or an ActiveRecord object. `null` will be returned
@@ -39,7 +40,7 @@ interface ActiveQueryInterface extends QueryInterface
 
     /**
      * Executes the query and returns all results as an array.
-     * @param DatabaseInterface $db the database connection used to execute the query.
+     * @param DatabaseInterface|DbConnectionGetterInterface $db the database connection used to execute the query.
      * If this parameter is not given, the `db` application component will be used.
      * @return LazyPromiseInterface with array|ActiveRecordInterface[] the query results. If the query results in nothing, an empty array will be returned.
      */
@@ -142,7 +143,7 @@ interface ActiveQueryInterface extends QueryInterface
 
     /**
      * Creates a DB command that can be used to execute this query.
-     * @param DatabaseInterface|null $db the DB connection used to create the DB command.
+     * @param DatabaseInterface|DbConnectionGetterInterface|null $db the DB connection used to create the DB command.
      * If `null`, the DB connection returned by [[modelClass]] will be used.
      * @return LazyPromiseInterface with Command the created DB command instance.
      */

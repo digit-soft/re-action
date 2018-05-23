@@ -4,6 +4,7 @@ namespace Reaction\Db\Orm;
 
 use Reaction\Db\CommandInterface;
 use Reaction\Db\DatabaseInterface;
+use Reaction\Db\DbConnectionGetterInterface;
 use Reaction\Db\Expressions\ExpressionInterface;
 use Reaction\Db\Query;
 use Reaction\Db\QueryInterface;
@@ -126,7 +127,7 @@ class ActiveQuery extends Query implements ActiveQueryInterface
 
     /**
      * Executes query and returns all results as an array.
-     * @param DatabaseInterface $db the DB connection used to create the DB command.
+     * @param DatabaseInterface|DbConnectionGetterInterface|null $db the DB connection used to create the DB command.
      * If null, the DB connection returned by [[modelClass]] will be used.
      * @return ExtendedPromiseInterface with array|ActiveRecordInterface[] the query results. If the query results in nothing, an empty array will be returned.
      */
@@ -334,7 +335,7 @@ class ActiveQuery extends Query implements ActiveQueryInterface
 
     /**
      * Executes query and returns a single row of result.
-     * @param DatabaseInterface|null $db the DB connection used to create the DB command.
+     * @param DatabaseInterface|DbConnectionGetterInterface|null $db the DB connection used to create the DB command.
      * If `null`, the DB connection returned by [[modelClass]] will be used.
      * @return ExtendedPromiseInterface with ActiveRecordInterface|array|null a single row of query result. Depending on the setting of [[asArray]],
      * the query result may be either an array or an ActiveRecord object. `null` will be returned
@@ -367,7 +368,7 @@ class ActiveQuery extends Query implements ActiveQueryInterface
     /**
      * Returns the query result as a scalar value.
      * The value returned will be the first column in the first row of the query results.
-     * @param DatabaseInterface $db the database connection used to generate the SQL statement.
+     * @param DatabaseInterface|DbConnectionGetterInterface|null $db the database connection used to generate the SQL statement.
      * If this parameter is not given, the `db` application component will be used.
      * @return ExtendedPromiseInterface with string|null the value of the first column in the first row of the query result.
      * False is returned if the query result is empty.
@@ -387,7 +388,7 @@ class ActiveQuery extends Query implements ActiveQueryInterface
 
     /**
      * Creates a DB command that can be used to execute this query.
-     * @param DatabaseInterface|null $db the DB connection used to create the DB command.
+     * @param DatabaseInterface|DbConnectionGetterInterface|null $db the DB connection used to create the DB command.
      * If `null`, the DB connection returned by [[modelClass]] will be used.
      * @return LazyPromiseInterface with Command the created DB command instance.
      */
@@ -395,8 +396,12 @@ class ActiveQuery extends Query implements ActiveQueryInterface
     {
         /* @var $modelClass ActiveRecordInterface */
         $modelClass = $this->modelClass;
+        $connection = null;
         if ($db === null) {
             $db = $modelClass::getDb();
+        } elseif ($db instanceof DbConnectionGetterInterface && !$db instanceof DatabaseInterface) {
+            $connection = $db->getConnection();
+            $db = $db->getDb();
         }
 
         if ($this->sql === null) {
@@ -406,9 +411,9 @@ class ActiveQuery extends Query implements ActiveQueryInterface
         }
 
         return $sqlParamsPr->thenLazy(
-            function($data) use (&$db) {
+            function($data) use (&$db, &$connection) {
                 list($sql, $params) = $data;
-                $command = $db->createCommand($sql, $params);
+                $command = $db->createCommand($sql, $params, $connection);
                 $this->setCommandCache($command);
 
                 return $command;
@@ -447,8 +452,8 @@ class ActiveQuery extends Query implements ActiveQueryInterface
      * Queries a scalar value by setting [[select]] first.
      * Restores the value of select to make this query reusable.
      * @param string|ExpressionInterface $selectExpression
-     * @param DatabaseInterface|null $db
-     * @return ExtendedPromiseInterface with bool|string
+     * @param DatabaseInterface|DbConnectionGetterInterface|null $db
+     * @return LazyPromiseInterface with bool|string
      */
     protected function queryScalarAsync($selectExpression, $db)
     {
@@ -467,7 +472,7 @@ class ActiveQuery extends Query implements ActiveQueryInterface
             $this->orderBy = null;
             $this->limit = null;
             $this->offset = null;
-            return $this->createCommand($db)->then(
+            return $this->createCommand($db)->thenLazy(
                 function(CommandInterface $command) use (&$select, &$order, &$limit, &$offset) {
                     $this->select = $select;
                     $this->orderBy = $order;
