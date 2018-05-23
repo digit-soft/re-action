@@ -899,7 +899,7 @@ class Command extends Component implements CommandInterface
             return reject(false);
         }
 
-        $execPromise = $this->internalExecute($rawSql, [], $lazy, $this->connection);
+        $execPromise = $this->internalExecute($rawSql, [], $lazy);
         return $execPromise instanceof LazyPromiseInterface
             ? $execPromise->thenLazy(function() { return $this->refreshTableSchema(); })
             : $execPromise->then(function() { return $this->refreshTableSchema(); });
@@ -1062,12 +1062,12 @@ class Command extends Component implements CommandInterface
      * @param string $sql
      * @param array  $params
      * @param bool   $lazy
-     * @param Connection|null   $connection
      * @return ExtendedPromiseInterface
      */
-    protected function internalExecute($sql, $params = [], $lazy = true, $connection = null) {
-        return isset($connection)
-            ? $connection->executeSql($sql, $params, $lazy)
+    protected function internalExecute($sql, $params = [], $lazy = true)
+    {
+        return isset($this->connection)
+            ? $this->connection->executeSql($sql, $params, $lazy)
             : $this->db->executeSql($sql, $params, $lazy);
     }
 
@@ -1077,10 +1077,8 @@ class Command extends Component implements CommandInterface
     protected function reset()
     {
         $this->_sql = null;
-        //$this->_pendingParams = [];
         $this->params = [];
-        //$this->_refreshTableName = null;
+        $this->_refreshTableName = null;
         //$this->_isolationLevel = false;
-        //$this->_retryHandler = null;
     }
 }
