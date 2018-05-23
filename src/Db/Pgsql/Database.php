@@ -2,7 +2,7 @@
 
 namespace Reaction\Db\Pgsql;
 
-use PgAsync\Client as pgClient;
+use Reaction;
 use Reaction\Db\ConnectionInterface;
 use Reaction\Helpers\ArrayHelper;
 use Reaction\Promise\ExtendedPromiseInterface;
@@ -44,20 +44,22 @@ class Database extends \Reaction\Db\Database
     }
 
     /**
-     * Get \PgAsync\Client instance
-     * @return \PgAsync\Client
+     * Get PgClient instance
+     * @return PgClient
      */
     protected function getPgClient() {
         if (!isset($this->_pgClient)) {
-            $params = [
-                'host' => $this->host,
-                'port' => $this->port,
-                'user' => $this->username,
-                'password' => $this->password,
-                'database' => $this->database,
+            $config = [
+                'dbCredentials' => [
+                    'host' => $this->host,
+                    'port' => $this->port,
+                    'user' => $this->username,
+                    'password' => $this->password,
+                    'database' => $this->database,
+                ],
+                'loop' => Reaction::$app->loop
             ];
-            $loop = \Reaction::$app->loop;
-            $this->_pgClient = new pgClient($params, $loop);
+            $this->_pgClient = new PgClient($config);
         }
         return $this->_pgClient;
     }
@@ -99,7 +101,7 @@ class Database extends \Reaction\Db\Database
      */
     public function getDedicatedConnection() {
         $config = [
-            'pgConnection' => $this->getPgClient()->getIdleConnection(),
+            'pgConnection' => $this->getPgClient()->getDedicatedConnection(false),
         ];
         return $this->createComponent(ConnectionInterface::class, $config);
     }
