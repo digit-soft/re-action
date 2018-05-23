@@ -57,6 +57,7 @@ class Connection extends \Reaction\Db\Connection
     public function close()
     {
         $this->pgConnection->disconnect();
+        parent::close();
     }
 
     /**

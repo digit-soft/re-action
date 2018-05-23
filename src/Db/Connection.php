@@ -122,5 +122,6 @@ class Connection extends Component implements ConnectionInterface
      */
     public function close()
     {
+        $this->emit(static::EVENT_CLOSE, [$this]);
     }
 }

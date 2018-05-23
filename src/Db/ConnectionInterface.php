@@ -2,6 +2,7 @@
 
 namespace Reaction\Db;
 
+use Reaction\Events\EventEmitterWildcardInterface;
 use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\Promise\LazyPromiseInterface;
 
@@ -9,8 +10,10 @@ use Reaction\Promise\LazyPromiseInterface;
  * Interface ConnectionInterface
  * @package Reaction\Db
  */
-interface ConnectionInterface
+interface ConnectionInterface extends EventEmitterWildcardInterface
 {
+    const EVENT_CLOSE = 'close';
+
     /**
      * Execute SQL statement string
      * @param string $sql Statement SQL string

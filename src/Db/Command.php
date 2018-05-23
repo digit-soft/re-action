@@ -100,6 +100,10 @@ class Command extends Component implements CommandInterface
             $connection = $connection->getConnection();
         }
         $this->connection = $connection;
+        //Remove connection instance on close
+        $this->connection->once(ConnectionInterface::EVENT_CLOSE, function() {
+            $this->connection = null;
+        });
         return $this;
     }
 
