@@ -342,7 +342,7 @@ class Command extends Component implements CommandInterface
         $params = [];
         $sql = $this->db->getQueryBuilder()->insert($table, $columns, $params);
         $tableSchema = $this->db->getSchema()->getTableSchema($table);
-        $returnColumns = $tableSchema;
+        $returnColumns = $tableSchema->getColumnNames();
         if (!empty($returnColumns)) {
             $returning = [];
             foreach ((array) $returnColumns as $name) {
