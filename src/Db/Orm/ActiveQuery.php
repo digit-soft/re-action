@@ -9,6 +9,8 @@ use Reaction\Db\Query;
 use Reaction\Db\QueryInterface;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Promise\ExtendedPromiseInterface;
+use Reaction\Promise\LazyPromise;
+use Reaction\Promise\LazyPromiseInterface;
 use Reaction\Promise\Promise;
 use function Reaction\Promise\reject;
 use function Reaction\Promise\resolve;
@@ -133,11 +135,11 @@ class ActiveQuery extends Query implements ActiveQueryInterface
         if ($this->emulateExecution) {
             return resolve([]);
         }
-        return $this->createCommand($db)->then(
+        return $this->createCommand($db)->thenLazy(
             function(CommandInterface $command) {
                 return $command->queryAll();
             }
-        )->then(
+        )->thenLazy(
             function($results) {
                 return $this->populate($results);
             }
@@ -169,15 +171,15 @@ class ActiveQuery extends Query implements ActiveQueryInterface
 
         if ($this->primaryModel === null) {
             // eager loading
-            $queryPr = new Promise(function($r, $c) {
-                 $r(Query::create($this));
+            $queryPr = new LazyPromise(function() {
+                return resolve(Query::create($this));
             });
         } else {
             // lazy loading of a relation
             $queryPr = $this->prepareAsyncVia();
         }
 
-        return $queryPr->then(function($query) {
+        return $queryPr->thenLazy(function($query) {
             /** @var QueryInterface $query */
             if (!empty($this->on)) {
                 $query->andWhere($this->on);
@@ -188,21 +190,23 @@ class ActiveQuery extends Query implements ActiveQueryInterface
 
     /**
      * Prepare query with relations
-     * @return ExtendedPromiseInterface
+     * @return ExtendedPromiseInterface|LazyPromise
      */
     protected function prepareAsyncVia() {
         // lazy loading of a relation
         $where = $this->where;
 
-        $promise = resolve(true);
+        $promise = new LazyPromise(function() {
+            return resolve(true);
+        });
 
         if ($this->via instanceof self) {
             // via junction table
-            $promise->then(
+            $promise->thenLazy(
                 function() {
                     return $this->via->findJunctionRows([$this->primaryModel]);
                 }
-            )->then(
+            )->thenLazy(
                 function($viaModels) {
                     $this->filterByModels($viaModels);
                     return true;
@@ -216,11 +220,11 @@ class ActiveQuery extends Query implements ActiveQueryInterface
             $viaModelsPr->otherwise(function() use (&$viaQuery) {
                 return $viaQuery->multiple ? [] : null;
             });
-            $promise->then(
+            $promise->thenLazy(
                 function() use ($viaModelsPr) {
                     return $viaModelsPr;
                 }
-            )->then(
+            )->thenLazy(
                 function($viaModels) use ($viaName, &$viaQuery) {
                     $this->primaryModel->populateRelation($viaName, $viaModels);
                     if (!$viaQuery->multiple) {
@@ -228,7 +232,7 @@ class ActiveQuery extends Query implements ActiveQueryInterface
                     }
                     return $viaModels;
                 }
-            )->then(
+            )->thenLazy(
                 function($viaModels) {
                     $this->filterByModels($viaModels);
                     return true;
@@ -237,7 +241,7 @@ class ActiveQuery extends Query implements ActiveQueryInterface
         } else {
             $this->filterByModels([$this->primaryModel]);
         }
-        return $promise->then(
+        return $promise->thenLazy(
             function() use (&$where) {
                 $query = Query::create($this);
                 $this->where = $where;
@@ -342,18 +346,18 @@ class ActiveQuery extends Query implements ActiveQueryInterface
             return reject(false);
         }
 
-        return $this->createCommand($db)->then(
+        return $this->createCommand($db)->thenLazy(
             function(CommandInterface $command) {
                 return $command->queryOne();
             }
-        )->then(
+        )->thenLazy(
             function($row) {
                 if ($row !== false) {
                     return $this->populate([$row]);
                 }
                 return reject(null);
             }
-        )->then(
+        )->thenLazy(
             function($models) {
                 return reset($models) ?: reject(null);
             }
@@ -385,7 +389,7 @@ class ActiveQuery extends Query implements ActiveQueryInterface
      * Creates a DB command that can be used to execute this query.
      * @param DatabaseInterface|null $db the DB connection used to create the DB command.
      * If `null`, the DB connection returned by [[modelClass]] will be used.
-     * @return ExtendedPromiseInterface with Command the created DB command instance.
+     * @return LazyPromiseInterface with Command the created DB command instance.
      */
     public function createCommand($db = null)
     {
@@ -398,10 +402,10 @@ class ActiveQuery extends Query implements ActiveQueryInterface
         if ($this->sql === null) {
             $sqlParamsPr = $db->getQueryBuilder()->buildAsync($this);
         } else {
-            $sqlParamsPr = resolve([$this->sql, $this->params]);
+            $sqlParamsPr = new LazyPromise(function() { return resolve([$this->sql, $this->params]); });
         }
 
-        return $sqlParamsPr->then(
+        return $sqlParamsPr->thenLazy(
             function($data) use (&$db) {
                 list($sql, $params) = $data;
                 $command = $db->createCommand($sql, $params);
@@ -415,7 +419,7 @@ class ActiveQuery extends Query implements ActiveQueryInterface
     /**
      * {@inheritdoc}
      */
-    protected function queryScalar($selectExpression, $db)
+    protected function queryScalar($selectExpression, $db = null)
     {
         if ($this->emulateExecution) {
             return resolve(null);
