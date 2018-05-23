@@ -3,8 +3,10 @@
 namespace Reaction\Db\Orm;
 
 use Reaction\Base\StaticInstanceInterface;
+use Reaction\Db\ConnectionInterface;
 use Reaction\Db\DatabaseInterface;
 use Reaction\Promise\ExtendedPromiseInterface;
+use Reaction\Promise\LazyPromiseInterface;
 
 /**
  * ActiveRecordInterface.
@@ -205,7 +207,7 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * ```
      *
      * @param mixed $condition primary key value or a set of column values
-     * @return ExtendedPromiseInterface with static ActiveRecord instance matching the condition, or `null` if nothing matches.
+     * @return ExtendedPromiseInterface|LazyPromiseInterface with static ActiveRecord instance matching the condition, or `null` if nothing matches.
      */
     public static function findOne($condition);
 
@@ -272,7 +274,7 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * ```
      *
      * @param mixed $condition primary key value or a set of column values
-     * @return ExtendedPromiseInterface with array an array of ActiveRecord instance, or an empty array if nothing matches.
+     * @return ExtendedPromiseInterface|LazyPromiseInterface with array an array of ActiveRecord instance, or an empty array if nothing matches.
      */
     public static function findAll($condition);
 
@@ -290,9 +292,10 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * @param array $condition the condition that matches the records that should get updated.
      * Please refer to [[QueryInterface::where()]] on how to specify this parameter.
      * An empty condition will match all records.
-     * @return ExtendedPromiseInterface with int the number of rows updated
+     * @param ConnectionInterface|null  $connection
+     * @return ExtendedPromiseInterface|LazyPromiseInterface with int the number of rows updated
      */
-    public static function updateAll($attributes, $condition = null);
+    public static function updateAll($attributes, $condition = null, $connection = null);
 
     /**
      * Deletes records using the provided conditions.
@@ -304,12 +307,14 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * Customer::deleteAll([status = 3]);
      * ```
      *
-     * @param array $condition the condition that matches the records that should get deleted.
+     * @param array                    $condition the condition that matches the records that should get deleted.
      * Please refer to [[QueryInterface::where()]] on how to specify this parameter.
      * An empty condition will match all records.
-     * @return ExtendedPromiseInterface with int the number of rows deleted
+     * @param array                    $params the parameters (name => value) to be bound to the query.
+     * @param ConnectionInterface|null $connection
+     * @return ExtendedPromiseInterface|LazyPromiseInterface with int the number of rows deleted
      */
-    public static function deleteAll($condition = null);
+    public static function deleteAll($condition = null, $params = [], $connection = null);
 
     /**
      * Saves the current record.
@@ -331,7 +336,7 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * will not be saved to the database and this method will return `false`.
      * @param array $attributeNames list of attribute names that need to be saved. Defaults to `null`,
      * meaning all attributes that are loaded from DB will be saved.
-     * @return ExtendedPromiseInterface with bool whether the saving succeeded (i.e. no validation errors occurred).
+     * @return ExtendedPromiseInterface|LazyPromiseInterface with bool whether the saving succeeded (i.e. no validation errors occurred).
      */
     public function save($runValidation = true, $attributeNames = null);
 
@@ -352,7 +357,7 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * will not be saved to the database and this method will return `false`.
      * @param array $attributes list of attributes that need to be saved. Defaults to `null`,
      * meaning all attributes that are loaded from DB will be saved.
-     * @return ExtendedPromiseInterface with bool whether the attributes are valid and the record is inserted successfully.
+     * @return ExtendedPromiseInterface|LazyPromiseInterface with bool whether the attributes are valid and the record is inserted successfully.
      */
     public function insert($runValidation = true, $attributes = null);
 

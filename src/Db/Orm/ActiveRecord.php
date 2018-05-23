@@ -2,15 +2,22 @@
 
 namespace Reaction\Db\Orm;
 
-use React\Promise\ExtendedPromiseInterface;
+use Reaction;
+use Reaction\Db\ConnectionInterface;
 use Reaction\Db\DatabaseInterface;
+use Reaction\Db\Expressions\Expression;
+use Reaction\Db\StaleObjectException;
 use Reaction\Db\TableSchema;
 use Reaction\Exceptions\InvalidArgumentException;
 use Reaction\Exceptions\InvalidConfigException;
+use Reaction\Exceptions\Model\ValidationError;
 use Reaction\Helpers\ArrayHelper;
 use Reaction\Helpers\Inflector;
 use Reaction\Helpers\StringHelper;
+use Reaction\Promise\ExtendedPromiseInterface;
+use Reaction\Promise\LazyPromiseInterface;
 use function Reaction\Promise\reject;
+use function Reaction\Promise\rejectLazy;
 
 /**
  * ActiveRecord is the base class for classes representing relational data in terms of objects.
@@ -126,7 +133,7 @@ class ActiveRecord extends BaseActiveRecord
      */
     public static function getDb()
     {
-        return \Reaction::$app->getDb();
+        return Reaction::$app->getDb();
     }
 
     /**
@@ -230,9 +237,13 @@ class ActiveRecord extends BaseActiveRecord
         }
         $query->where($pk);
 
-        /* @var $record BaseActiveRecord */
-        $record = $query->one();
-        return $this->refreshInternal($record);
+        return $query->one()->then(
+            function($record) {
+                /* @var $record BaseActiveRecord */
+                $result = $this->refreshInternal($record);
+                return $result ? true : reject(false);
+            }
+        );
     }
 
     /**
@@ -260,16 +271,20 @@ class ActiveRecord extends BaseActiveRecord
      *
      * For a large set of models you might consider using [[ActiveQuery::each()]] to keep memory usage within limits.
      *
-     * @param array $attributes attribute values (name-value pairs) to be saved into the table
-     * @param string|array $condition the conditions that will be put in the WHERE part of the UPDATE SQL.
+     * @param array                    $attributes attribute values (name-value pairs) to be saved into the table
+     * @param string|array             $condition the conditions that will be put in the WHERE part of the UPDATE SQL.
      * Please refer to [[Query::where()]] on how to specify this parameter.
-     * @param array $params the parameters (name => value) to be bound to the query.
-     * @return int the number of rows updated
+     * @param array                    $params the parameters (name => value) to be bound to the query.
+     * @param ConnectionInterface|null $connection
+     * @return LazyPromiseInterface with int the number of rows updated
      */
-    public static function updateAll($attributes, $condition = '', $params = [])
+    public static function updateAll($attributes, $condition = '', $params = [], $connection = null)
     {
         $command = static::getDb()->createCommand();
         $command->update(static::tableName(), $attributes, $condition, $params);
+        if (isset($connection)) {
+            $command->setConnection($connection);
+        }
 
         return $command->execute();
     }
@@ -291,7 +306,7 @@ class ActiveRecord extends BaseActiveRecord
      * Please refer to [[Query::where()]] on how to specify this parameter.
      * @param array $params the parameters (name => value) to be bound to the query.
      * Do not name the parameters as `:bp0`, `:bp1`, etc., because they are used internally by this method.
-     * @return int the number of rows updated
+     * @return LazyPromiseInterface with int the number of rows updated
      */
     public static function updateAllCounters($counters, $condition = '', $params = [])
     {
@@ -330,15 +345,19 @@ class ActiveRecord extends BaseActiveRecord
      *
      * For a large set of models you might consider using [[ActiveQuery::each()]] to keep memory usage within limits.
      *
-     * @param string|array $condition the conditions that will be put in the WHERE part of the DELETE SQL.
+     * @param string|array             $condition the conditions that will be put in the WHERE part of the DELETE SQL.
      * Please refer to [[Query::where()]] on how to specify this parameter.
-     * @param array $params the parameters (name => value) to be bound to the query.
-     * @return int the number of rows deleted
+     * @param array                    $params the parameters (name => value) to be bound to the query.
+     * @param ConnectionInterface|null $connection
+     * @return LazyPromiseInterface with int the number of rows deleted
      */
-    public static function deleteAll($condition = null, $params = [])
+    public static function deleteAll($condition = null, $params = [], $connection = null)
     {
         $command = static::getDb()->createCommand();
         $command->delete(static::tableName(), $condition, $params);
+        if (isset($connection)) {
+            $command->setConnection($connection);
+        }
 
         return $command->execute();
     }
@@ -349,7 +368,7 @@ class ActiveRecord extends BaseActiveRecord
      */
     public static function find()
     {
-        return \Reaction::create(ActiveQuery::class, [get_called_class()]);
+        return Reaction::create(ActiveQuery::class, [get_called_class()]);
     }
 
     /**
@@ -494,55 +513,57 @@ class ActiveRecord extends BaseActiveRecord
      * will not be saved to the database and this method will return `false`.
      * @param array $attributes list of attributes that need to be saved. Defaults to `null`,
      * meaning all attributes that are loaded from DB will be saved.
-     * @return ExtendedPromiseInterface with bool whether the attributes are valid and the record is inserted successfully.
+     * @return LazyPromiseInterface with bool whether the attributes are valid and the record is inserted successfully.
      * @throws \Exception|\Throwable in case insert failed.
      */
     public function insert($runValidation = true, $attributes = null)
     {
         if ($runValidation && !$this->validate($attributes)) {
-            \Reaction::info('Model not inserted due to validation error in {method}.', ['method' => __METHOD__]);
-            return reject(false);
+            Reaction::info('Model not inserted due to validation error in {method}.', ['method' => __METHOD__]);
+            return rejectLazy(new ValidationError("Model validation error"));
         }
 
-        return $this->insertInternal($attributes);
-
-        /*if (!$this->isTransactional(self::OP_INSERT)) {
-            return $this->insertInternal($attributes);
+        if (!$this->isTransactional(self::OP_INSERT)) {
+            return new Reaction\Promise\LazyPromise(function() use ($attributes) {
+                return $this->insertInternal($attributes);
+            });
         }
 
-        $transaction = static::getDb()->beginTransaction();
-        try {
-            $result = $this->insertInternal($attributes);
-            if ($result === false) {
-                $transaction->rollBack();
-            } else {
-                $transaction->commit();
+        $transaction = static::getDb()->createTransaction();
+        return $transaction->begin()->thenLazy(
+            function(ConnectionInterface $connection) use ($attributes) {
+                return $this->insertInternal($attributes, $connection);
             }
-
-            return $result;
-        } catch (\Exception $e) {
-            $transaction->rollBack();
-            throw $e;
-        } catch (\Throwable $e) {
-            $transaction->rollBack();
-            throw $e;
-        }*/
+        )->thenLazy(
+            function($result) use ($transaction) {
+                return $transaction->commit()->then(function() use ($result) {
+                    return $result;
+                });
+            },
+            function($exception) use ($transaction) {
+                return $transaction->rollBack()->then(
+                    function() use ($exception) { throw $exception; },
+                    function($e) use ($exception) { throw $exception; }
+                );
+            }
+        );
     }
 
     /**
      * Inserts an ActiveRecord into DB without considering transaction.
-     * @param array $attributes list of attributes that need to be saved. Defaults to `null`,
+     * @param array                    $attributes list of attributes that need to be saved. Defaults to `null`,
      * meaning all attributes that are loaded from DB will be saved.
+     * @param ConnectionInterface|null $connection
      * @return ExtendedPromiseInterface with bool whether the record is inserted successfully.
      */
-    protected function insertInternal($attributes = null)
+    protected function insertInternal($attributes = null, $connection = null)
     {
         if (!$this->beforeSave(true)) {
             return reject(false);
         }
         $values = $this->getDirtyAttributes($attributes);
-        return static::getDb()->getSchema()->insert(static::tableName(), $values)->then(
-            function($primaryKeys) {
+        return static::getDb()->getSchema()->insert(static::tableName(), $values, $connection)->then(
+            function($primaryKeys) use ($values) {
                 if ($primaryKeys === false) {
                     return reject(false);
                 }
@@ -606,40 +627,40 @@ class ActiveRecord extends BaseActiveRecord
      * will not be saved to the database and this method will return `false`.
      * @param array $attributeNames list of attributes that need to be saved. Defaults to `null`,
      * meaning all attributes that are loaded from DB will be saved.
-     * @return int|false the number of rows affected, or false if validation fails
+     * @return LazyPromiseInterface with int|false the number of rows affected, or false if validation fails
      * or [[beforeSave()]] stops the updating process.
-     * @throws StaleObjectException if [[optimisticLock|optimistic locking]] is enabled and the data
      * being updated is outdated.
      * @throws \Exception|\Throwable in case update failed.
      */
     public function update($runValidation = true, $attributeNames = null)
     {
         if ($runValidation && !$this->validate($attributeNames)) {
-            Yii::info('Model not updated due to validation error.', __METHOD__);
-            return false;
+            Reaction::info('Model not inserted due to validation error in {method}.', ['method' => __METHOD__]);
+            return rejectLazy(new ValidationError("Model validation error"));
         }
 
         if (!$this->isTransactional(self::OP_UPDATE)) {
             return $this->updateInternal($attributeNames);
         }
 
-        $transaction = static::getDb()->beginTransaction();
-        try {
-            $result = $this->updateInternal($attributeNames);
-            if ($result === false) {
-                $transaction->rollBack();
-            } else {
-                $transaction->commit();
+        $transaction = static::getDb()->createTransaction();
+        return $transaction->begin()->thenLazy(
+            function(ConnectionInterface $connection) use ($attributeNames) {
+                return $this->updateInternal($attributeNames, $connection);
             }
-
-            return $result;
-        } catch (\Exception $e) {
-            $transaction->rollBack();
-            throw $e;
-        } catch (\Throwable $e) {
-            $transaction->rollBack();
-            throw $e;
-        }
+        )->thenLazy(
+            function($result) use ($transaction) {
+                return $transaction->commit()->then(function() use ($result) {
+                    return $result;
+                });
+            },
+            function($exception) use ($transaction) {
+                return $transaction->rollBack()->then(
+                    function() use ($exception) { throw $exception; },
+                    function($e) use ($exception) { throw $exception; }
+                );
+            }
+        );
     }
 
     /**
@@ -655,10 +676,8 @@ class ActiveRecord extends BaseActiveRecord
      * In the above step 1 and 3, events named [[EVENT_BEFORE_DELETE]] and [[EVENT_AFTER_DELETE]]
      * will be raised by the corresponding methods.
      *
-     * @return int|false the number of rows deleted, or `false` if the deletion is unsuccessful for some reason.
+     * @return LazyPromiseInterface with int|false the number of rows deleted, or `false` if the deletion is unsuccessful for some reason.
      * Note that it is possible the number of rows deleted is 0, even though the deletion execution is successful.
-     * @throws StaleObjectException if [[optimisticLock|optimistic locking]] is enabled and the data
-     * being deleted is outdated.
      * @throws \Exception|\Throwable in case delete failed.
      */
     public function delete()
@@ -667,35 +686,36 @@ class ActiveRecord extends BaseActiveRecord
             return $this->deleteInternal();
         }
 
-        $transaction = static::getDb()->beginTransaction();
-        try {
-            $result = $this->deleteInternal();
-            if ($result === false) {
-                $transaction->rollBack();
-            } else {
-                $transaction->commit();
+        $transaction = static::getDb()->createTransaction();
+        return $transaction->begin()->thenLazy(
+            function(ConnectionInterface $connection) {
+                return $this->deleteInternal($connection);
             }
-
-            return $result;
-        } catch (\Exception $e) {
-            $transaction->rollBack();
-            throw $e;
-        } catch (\Throwable $e) {
-            $transaction->rollBack();
-            throw $e;
-        }
+        )->thenLazy(
+            function($result) use ($transaction) {
+                return $transaction->commit()->then(function() use ($result) {
+                    return $result;
+                });
+            },
+            function($exception) use ($transaction) {
+                return $transaction->rollBack()->then(
+                    function() use ($exception) { throw $exception; },
+                    function($e) use ($exception) { throw $exception; }
+                );
+            }
+        );
     }
 
     /**
      * Deletes an ActiveRecord without considering transaction.
-     * @return int|false the number of rows deleted, or `false` if the deletion is unsuccessful for some reason.
+     * @param ConnectionInterface|null $connection
+     * @return LazyPromiseInterface with int|false the number of rows deleted, or `false` if the deletion is unsuccessful for some reason.
      * Note that it is possible the number of rows deleted is 0, even though the deletion execution is successful.
-     * @throws StaleObjectException
      */
-    protected function deleteInternal()
+    protected function deleteInternal($connection = null)
     {
         if (!$this->beforeDelete()) {
-            return false;
+            return Reaction\Promise\rejectLazy(false);
         }
 
         // we do not check the return value of deleteAll() because it's possible
@@ -705,14 +725,17 @@ class ActiveRecord extends BaseActiveRecord
         if ($lock !== null) {
             $condition[$lock] = $this->$lock;
         }
-        $result = static::deleteAll($condition);
-        if ($lock !== null && !$result) {
-            throw new StaleObjectException('The object being deleted is outdated.');
-        }
-        $this->setOldAttributes(null);
-        $this->afterDelete();
+        return static::deleteAll($condition, [], $connection)->thenLazy(
+            function($result) use ($lock) {
+                if ($lock !== null && !$result) {
+                    throw new StaleObjectException('The object being deleted is outdated.');
+                }
+                $this->setOldAttributes(null);
+                $this->afterDelete();
 
-        return $result;
+                return $result;
+            }
+        );
     }
 
     /**

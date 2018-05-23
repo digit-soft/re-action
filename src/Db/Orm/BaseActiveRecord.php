@@ -3,6 +3,10 @@
 namespace Reaction\Db\Orm;
 
 use Reaction\Db\CommandInterface;
+use Reaction\Db\ConnectionInterface;
+use Reaction\Exceptions\Model\BeforeSaveError;
+use Reaction\Exceptions\Model\Error;
+use Reaction\Exceptions\Model\ValidationError;
 use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\Db\StaleObjectException;
 use Reaction\Exceptions\Exception;
@@ -14,6 +18,11 @@ use Reaction\Base\Model;
 use Reaction\Exceptions\NotSupportedException;
 use Reaction\Exceptions\UnknownMethodException;
 use Reaction\Helpers\ArrayHelper;
+use Reaction\Promise\LazyPromiseInterface;
+use function Reaction\Promise\reject;
+use function Reaction\Promise\rejectLazy;
+use function Reaction\Promise\resolve;
+use function Reaction\Promise\resolveLazy;
 
 /**
  * ActiveRecord is the base class for classes representing relational data in terms of objects.
@@ -97,7 +106,7 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
 
     /**
      * {@inheritdoc}
-     * @return ExtendedPromiseInterface with static|null ActiveRecord instance matching the condition, or `null` if nothing matches.
+     * @return ExtendedPromiseInterface|LazyPromiseInterface with static|null ActiveRecord instance matching the condition, or `null` if nothing matches.
      */
     public static function findOne($condition)
     {
@@ -106,7 +115,7 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
 
     /**
      * {@inheritdoc}
-     * @return ExtendedPromiseInterface with static[] an array of ActiveRecord instances, or an empty array if nothing matches.
+     * @return ExtendedPromiseInterface|LazyPromiseInterface with static[] an array of ActiveRecord instances, or an empty array if nothing matches.
      */
     public static function findAll($condition)
     {
@@ -148,13 +157,14 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
      * Customer::updateAll(['status' => 1], 'status = 2');
      * ```
      *
-     * @param array $attributes attribute values (name-value pairs) to be saved into the table
-     * @param string|array $condition the conditions that will be put in the WHERE part of the UPDATE SQL.
+     * @param array                    $attributes attribute values (name-value pairs) to be saved into the table
+     * @param string|array             $condition the conditions that will be put in the WHERE part of the UPDATE SQL.
      * Please refer to [[Query::where()]] on how to specify this parameter.
-     * @return int the number of rows updated
+     * @param ConnectionInterface|null $connection
+     * @return LazyPromiseInterface with int the number of rows updated
      * @throws NotSupportedException if not overridden
      */
-    public static function updateAll($attributes, $condition = '')
+    public static function updateAll($attributes, $condition = '', $connection = null)
     {
         throw new NotSupportedException(__METHOD__ . ' is not supported.');
     }
@@ -172,7 +182,7 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
      * Use negative values if you want to decrement the counters.
      * @param string|array $condition the conditions that will be put in the WHERE part of the UPDATE SQL.
      * Please refer to [[Query::where()]] on how to specify this parameter.
-     * @return int the number of rows updated
+     * @return LazyPromiseInterface with int the number of rows updated
      * @throws NotSupportedException if not overrided
      */
     public static function updateAllCounters($counters, $condition = '')
@@ -190,12 +200,14 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
      * Customer::deleteAll('status = 3');
      * ```
      *
-     * @param string|array $condition the conditions that will be put in the WHERE part of the DELETE SQL.
+     * @param string|array             $condition the conditions that will be put in the WHERE part of the DELETE SQL.
      * Please refer to [[Query::where()]] on how to specify this parameter.
-     * @return int the number of rows deleted
+     * @param array                    $params the parameters (name => value) to be bound to the query.
+     * @param ConnectionInterface|null $connection
+     * @return LazyPromiseInterface with int the number of rows deleted
      * @throws NotSupportedException if not overridden.
      */
-    public static function deleteAll($condition = null)
+    public static function deleteAll($condition = null, $params = [], $connection = null)
     {
         throw new NotSupportedException(__METHOD__ . ' is not supported.');
     }
@@ -269,6 +281,7 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
      *
      * @param string $name property name
      * @throws InvalidArgumentException if relation name is wrong
+     * @throws \Reaction\Exceptions\UnknownPropertyException
      * @return mixed property value
      * @see getAttribute()
      */
@@ -288,7 +301,11 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
         $value = parent::__get($name);
         if ($value instanceof ActiveQueryInterface) {
             $this->setRelationDependencies($name, $value);
-            return $this->_related[$name] = $value->findFor($name, $this);
+            return $value->findFor($name, $this)->then(
+                function($data) use ($name) {
+                    $this->_related[$name] = $data;
+                }
+            );
         }
 
         return $value;
@@ -653,7 +670,7 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
      * will not be saved to the database and this method will return `false`.
      * @param array $attributeNames list of attribute names that need to be saved. Defaults to null,
      * meaning all attributes that are loaded from DB will be saved.
-     * @return bool whether the saving succeeded (i.e. no validation errors occurred).
+     * @return ExtendedPromiseInterface with bool whether the saving succeeded (i.e. no validation errors occurred).
      */
     public function save($runValidation = true, $attributeNames = null)
     {
@@ -661,7 +678,7 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
             return $this->insert($runValidation, $attributeNames);
         }
 
-        return $this->update($runValidation, $attributeNames) !== false;
+        return $this->update($runValidation, $attributeNames);
     }
 
     /**
@@ -710,7 +727,7 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
      * will not be saved to the database and this method will return `false`.
      * @param array $attributeNames list of attribute names that need to be saved. Defaults to null,
      * meaning all attributes that are loaded from DB will be saved.
-     * @return int|false the number of rows affected, or `false` if validation fails
+     * @return ExtendedPromiseInterface with int|false the number of rows affected, or `false` if validation fails
      * or [[beforeSave()]] stops the updating process.
      * @throws StaleObjectException if [[optimisticLock|optimistic locking]] is enabled and the data
      * being updated is outdated.
@@ -719,7 +736,7 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
     public function update($runValidation = true, $attributeNames = null)
     {
         if ($runValidation && !$this->validate($attributeNames)) {
-            return false;
+            return reject(new ValidationError("Model is not valid"));
         }
 
         return $this->updateInternal($attributeNames);
@@ -738,7 +755,7 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
      * Note that this method will **not** perform data validation and will **not** trigger events.
      *
      * @param array $attributes the attributes (names or name-value pairs) to be updated
-     * @return int the number of rows affected.
+     * @return ExtendedPromiseInterface with int the number of rows affected.
      */
     public function updateAttributes($attributes)
     {
@@ -754,33 +771,34 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
 
         $values = $this->getDirtyAttributes($attrs);
         if (empty($values) || $this->getIsNewRecord()) {
-            return 0;
+            return resolve(0);
         }
 
-        $rows = static::updateAll($values, $this->getOldPrimaryKey(true));
-
-        foreach ($values as $name => $value) {
-            $this->_oldAttributes[$name] = $this->_attributes[$name];
-        }
-
-        return $rows;
+        return static::updateAll($values, $this->getOldPrimaryKey(true))->then(
+            function($rows) use ($values) {
+                foreach ($values as $name => $value) {
+                    $this->_oldAttributes[$name] = $this->_attributes[$name];
+                }
+                return $rows;
+            }
+        );
     }
 
     /**
      * @see update()
      * @param array $attributes attributes to update
-     * @return int|false the number of rows affected, or false if [[beforeSave()]] stops the updating process.
-     * @throws StaleObjectException
+     * @param ConnectionInterface|null  $connection
+     * @return LazyPromiseInterface with int|false the number of rows affected, or false if [[beforeSave()]] stops the updating process.
      */
-    protected function updateInternal($attributes = null)
+    protected function updateInternal($attributes = null, $connection = null)
     {
         if (!$this->beforeSave(false)) {
-            return false;
+            return rejectLazy(new BeforeSaveError("Model::beforeSave() returned `false`"));
         }
         $values = $this->getDirtyAttributes($attributes);
         if (empty($values)) {
             $this->afterSave(false, $values);
-            return 0;
+            return resolveLazy(0);
         }
         $condition = $this->getOldPrimaryKey(true);
         $lock = $this->optimisticLock();
@@ -790,24 +808,24 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
         }
         // We do not check the return value of updateAll() because it's possible
         // that the UPDATE statement doesn't change anything and thus returns 0.
-        $rows = static::updateAll($values, $condition);
+        return static::updateAll($values, $condition, $connection)
+            ->thenLazy(function($rows) use ($lock, $values) {
+                if ($lock !== null && !$rows) {
+                    throw new StaleObjectException('The object being updated is outdated.');
+                }
 
-        if ($lock !== null && !$rows) {
-            throw new StaleObjectException('The object being updated is outdated.');
-        }
+                if (isset($values[$lock])) {
+                    $this->$lock = $values[$lock];
+                }
 
-        if (isset($values[$lock])) {
-            $this->$lock = $values[$lock];
-        }
-
-        $changedAttributes = [];
-        foreach ($values as $name => $value) {
-            $changedAttributes[$name] = isset($this->_oldAttributes[$name]) ? $this->_oldAttributes[$name] : null;
-            $this->_oldAttributes[$name] = $value;
-        }
-        $this->afterSave(false, $changedAttributes);
-
-        return $rows;
+                $changedAttributes = [];
+                foreach ($values as $name => $value) {
+                    $changedAttributes[$name] = isset($this->_oldAttributes[$name]) ? $this->_oldAttributes[$name] : null;
+                    $this->_oldAttributes[$name] = $value;
+                }
+                $this->afterSave(false, $changedAttributes);
+                return $rows;
+            });
     }
 
     /**
@@ -824,25 +842,28 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
      *
      * @param array $counters the counters to be updated (attribute name => increment value)
      * Use negative values if you want to decrement the counters.
-     * @return bool whether the saving is successful
+     * @return ExtendedPromiseInterface with bool whether the saving is successful
      * @see updateAllCounters()
      */
     public function updateCounters($counters)
     {
-        if (static::updateAllCounters($counters, $this->getOldPrimaryKey(true)) > 0) {
-            foreach ($counters as $name => $value) {
-                if (!isset($this->_attributes[$name])) {
-                    $this->_attributes[$name] = $value;
-                } else {
-                    $this->_attributes[$name] += $value;
+        return static::updateAllCounters($counters, $this->getOldPrimaryKey(true))->then(
+            function($count) use(&$counters) {
+                if ($count > 0) {
+                    foreach ($counters as $name => $value) {
+                        if (!isset($this->_attributes[$name])) {
+                            $this->_attributes[$name] = $value;
+                        } else {
+                            $this->_attributes[$name] += $value;
+                        }
+                        $this->_oldAttributes[$name] = $this->_attributes[$name];
+                    }
+
+                    return true;
                 }
-                $this->_oldAttributes[$name] = $this->_attributes[$name];
+                throw new Error("Can not update counters");
             }
-
-            return true;
-        }
-
-        return false;
+        );
     }
 
     /**
@@ -858,15 +879,13 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
      * In the above step 1 and 3, events named [[EVENT_BEFORE_DELETE]] and [[EVENT_AFTER_DELETE]]
      * will be raised by the corresponding methods.
      *
-     * @return int|false the number of rows deleted, or `false` if the deletion is unsuccessful for some reason.
+     * @return ExtendedPromiseInterface with int|false the number of rows deleted, or `false` if the deletion is unsuccessful for some reason.
      * Note that it is possible the number of rows deleted is 0, even though the deletion execution is successful.
-     * @throws StaleObjectException if [[optimisticLock|optimistic locking]] is enabled and the data
      * being deleted is outdated.
      * @throws Exception in case delete failed.
      */
     public function delete()
     {
-        $result = false;
         if ($this->beforeDelete()) {
             // we do not check the return value of deleteAll() because it's possible
             // the record is already deleted in the database and thus the method will return 0
@@ -875,15 +894,18 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
             if ($lock !== null) {
                 $condition[$lock] = $this->$lock;
             }
-            $result = static::deleteAll($condition);
-            if ($lock !== null && !$result) {
-                throw new StaleObjectException('The object being deleted is outdated.');
-            }
-            $this->_oldAttributes = null;
-            $this->afterDelete();
+            return static::deleteAll($condition)->then(
+                function($result) use ($lock) {
+                    if ($lock !== null && !$result) {
+                        throw new StaleObjectException('The object being deleted is outdated.');
+                    }
+                    $this->_oldAttributes = null;
+                    $this->afterDelete();
+                }
+            );
+        } else {
+            return reject(false);
         }
-
-        return $result;
     }
 
     /**
@@ -1036,7 +1058,8 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
         return static::findOne($this->getPrimaryKey(true))->then(
             function($record) {
                 /* @var $record BaseActiveRecord */
-                return $this->refreshInternal($record);
+                $result = $this->refreshInternal($record);
+                return $result ? true : reject(false);
             }
         );
     }
@@ -1268,11 +1291,12 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
      *
      * Note that this method requires that the primary key value is not null.
      *
-     * @param string $name the case sensitive name of the relationship, e.g. `orders` for a relation defined via `getOrders()` method.
+     * @param string                $name the case sensitive name of the relationship, e.g. `orders` for a relation defined via `getOrders()` method.
      * @param ActiveRecordInterface $model the model to be linked with the current one.
-     * @param array $extraColumns additional column values to be saved into the junction table.
+     * @param array                 $extraColumns additional column values to be saved into the junction table.
      * This parameter is only meaningful for a relationship involving a junction table
      * (i.e., a relation set with [[ActiveRelationTrait::via()]] or [[ActiveQuery::viaTable()]].)
+     * @return ExtendedPromiseInterface
      * @throws InvalidCallException if the method is unable to link two models.
      */
     public function link($name, $model, $extraColumns = [])
@@ -1310,16 +1334,10 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
                 foreach ($columns as $column => $value) {
                     $record->$column = $value;
                 }
-                $waitPromise = $record->insert(false);
+                $promise = $record->insert(false);
             } else {
                 /* @var $viaTable string */
-                $waitPromise = static::getDb()->createCommand()
-                    ->insert($viaTable, $columns)->then(
-                        function($command) {
-                            /** @var CommandInterface $command */
-                            return $command->execute();
-                        }
-                    );
+                $promise = static::getDb()->createCommand()->insert($viaTable, $columns)->execute();
             }
         } else {
             $p1 = $model->isPrimaryKey(array_keys($relation->link));
@@ -1328,34 +1346,39 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
                 if ($this->getIsNewRecord() && $model->getIsNewRecord()) {
                     throw new InvalidCallException('Unable to link models: at most one model can be newly created.');
                 } elseif ($this->getIsNewRecord()) {
-                    $this->bindModels(array_flip($relation->link), $this, $model);
+                    $promise = $this->bindModels(array_flip($relation->link), $this, $model);
                 } else {
-                    $this->bindModels($relation->link, $model, $this);
+                    $promise = $this->bindModels($relation->link, $model, $this);
                 }
             } elseif ($p1) {
-                $this->bindModels(array_flip($relation->link), $this, $model);
+                $promise = $this->bindModels(array_flip($relation->link), $this, $model);
             } elseif ($p2) {
-                $this->bindModels($relation->link, $model, $this);
+                $promise = $this->bindModels($relation->link, $model, $this);
             } else {
                 throw new InvalidCallException('Unable to link models: the link defining the relation does not involve any primary key.');
             }
         }
 
-        // update lazily loaded related objects
-        if (!$relation->multiple) {
-            $this->_related[$name] = $model;
-        } elseif (isset($this->_related[$name])) {
-            if ($relation->indexBy !== null) {
-                if ($relation->indexBy instanceof \Closure) {
-                    $index = call_user_func($relation->indexBy, $model);
-                } else {
-                    $index = $model->{$relation->indexBy};
+        return $promise->then(
+            function() use (&$relation, &$model, $name) {
+                // update lazily loaded related objects
+                if (!$relation->multiple) {
+                    $this->_related[$name] = $model;
+                } elseif (isset($this->_related[$name])) {
+                    if ($relation->indexBy !== null) {
+                        if ($relation->indexBy instanceof \Closure) {
+                            $index = call_user_func($relation->indexBy, $model);
+                        } else {
+                            $index = $model->{$relation->indexBy};
+                        }
+                        $this->_related[$name][$index] = $model;
+                    } else {
+                        $this->_related[$name][] = $model;
+                    }
                 }
-                $this->_related[$name][$index] = $model;
-            } else {
-                $this->_related[$name][] = $model;
+                return true;
             }
-        }
+        );
     }
 
     /**
@@ -1364,13 +1387,14 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
      * The model with the foreign key of the relationship will be deleted if `$delete` is `true`.
      * Otherwise, the foreign key will be set `null` and the model will be saved without validation.
      *
-     * @param string $name the case sensitive name of the relationship, e.g. `orders` for a relation defined via `getOrders()` method.
+     * @param string                $name the case sensitive name of the relationship, e.g. `orders` for a relation defined via `getOrders()` method.
      * @param ActiveRecordInterface $model the model to be unlinked from the current one.
      * You have to make sure that the model is really related with the current model as this method
      * does not check this.
-     * @param bool $delete whether to delete the model that contains the foreign key.
+     * @param bool                  $delete whether to delete the model that contains the foreign key.
      * If `false`, the model's foreign key will be set `null` and saved.
      * If `true`, the model containing the foreign key will be deleted.
+     * @return ExtendedPromiseInterface
      * @throws InvalidCallException if the models cannot be unlinked
      */
     public function unlink($name, $model, $delete = false)
@@ -1401,18 +1425,18 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
             if (is_array($relation->via)) {
                 /* @var $viaClass ActiveRecordInterface */
                 if ($delete) {
-                    $viaClass::deleteAll($columns);
+                    $promise = $viaClass::deleteAll($columns);
                 } else {
-                    $viaClass::updateAll($nulls, $columns);
+                    $promise = $viaClass::updateAll($nulls, $columns);
                 }
             } else {
                 /* @var $viaTable string */
-                /* @var $command Command */
+                /* @var $command CommandInterface */
                 $command = static::getDb()->createCommand();
                 if ($delete) {
-                    $command->delete($viaTable, $columns)->execute();
+                    $promise = $command->delete($viaTable, $columns)->execute();
                 } else {
-                    $command->update($viaTable, $nulls, $columns)->execute();
+                    $promise = $command->update($viaTable, $nulls, $columns)->execute();
                 }
             }
         } else {
@@ -1420,12 +1444,12 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
             $p2 = static::isPrimaryKey(array_values($relation->link));
             if ($p2) {
                 if ($delete) {
-                    $model->delete();
+                    $promise = $model->delete();
                 } else {
                     foreach ($relation->link as $a => $b) {
                         $model->$a = null;
                     }
-                    $model->save(false);
+                    $promise = $model->save(false);
                 }
             } elseif ($p1) {
                 foreach ($relation->link as $a => $b) {
@@ -1439,22 +1463,31 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
                         $this->$b = null;
                     }
                 }
-                $delete ? $this->delete() : $this->save(false);
+                if ($delete) {
+                    $promise = $this->delete();
+                } else {
+                    $promise = $this->save(false);
+                }
             } else {
                 throw new InvalidCallException('Unable to unlink models: the link does not involve any primary key.');
             }
         }
 
-        if (!$relation->multiple) {
-            unset($this->_related[$name]);
-        } elseif (isset($this->_related[$name])) {
-            /* @var $b ActiveRecordInterface */
-            foreach ($this->_related[$name] as $a => $b) {
-                if ($model->getPrimaryKey() === $b->getPrimaryKey()) {
-                    unset($this->_related[$name][$a]);
+        return $promise->then(
+            function() use (&$relation, &$model, $name) {
+                if (!$relation->multiple) {
+                    unset($this->_related[$name]);
+                } elseif (isset($this->_related[$name])) {
+                    /* @var $b ActiveRecordInterface */
+                    foreach ($this->_related[$name] as $a => $b) {
+                        if ($model->getPrimaryKey() === $b->getPrimaryKey()) {
+                            unset($this->_related[$name][$a]);
+                        }
+                    }
                 }
+                return true;
             }
-        }
+        );
     }
 
     /**
@@ -1466,11 +1499,12 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
      * Note that to destroy the relationship without removing records make sure your keys can be set to null
      *
      * @param string $name the case sensitive name of the relationship, e.g. `orders` for a relation defined via `getOrders()` method.
-     * @param bool $delete whether to delete the model that contains the foreign key.
+     * @param bool   $delete whether to delete the model that contains the foreign key.
      *
      * Note that the deletion will be performed using [[deleteAll()]], which will not trigger any events on the related models.
      * If you need [[EVENT_BEFORE_DELETE]] or [[EVENT_AFTER_DELETE]] to be triggered, you need to [[find()|find]] the models first
      * and then call [[delete()]] on each of them.
+     * @return ExtendedPromiseInterface
      */
     public function unlinkAll($name, $delete = false)
     {
@@ -1501,18 +1535,18 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
             if (is_array($relation->via)) {
                 /* @var $viaClass ActiveRecordInterface */
                 if ($delete) {
-                    $viaClass::deleteAll($condition);
+                    $promise = $viaClass::deleteAll($condition);
                 } else {
-                    $viaClass::updateAll($nulls, $condition);
+                    $promise = $viaClass::updateAll($nulls, $condition);
                 }
             } else {
                 /* @var $viaTable string */
-                /* @var $command Command */
+                /* @var $command CommandInterface */
                 $command = static::getDb()->createCommand();
                 if ($delete) {
-                    $command->delete($viaTable, $condition)->execute();
+                    $promise = $command->delete($viaTable, $condition)->execute();
                 } else {
-                    $command->update($viaTable, $nulls, $condition)->execute();
+                    $promise = $command->update($viaTable, $nulls, $condition)->execute();
                 }
             }
         } else {
@@ -1521,7 +1555,7 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
             if (!$delete && count($relation->link) === 1 && is_array($this->{$b = reset($relation->link)})) {
                 // relation via array valued attribute
                 $this->$b = [];
-                $this->save(false);
+                $promise = $this->save(false);
             } else {
                 $nulls = [];
                 $condition = [];
@@ -1536,28 +1570,31 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
                     $condition = ['and', $condition, $relation->on];
                 }
                 if ($delete) {
-                    $relatedModel::deleteAll($condition);
+                    $promise = $relatedModel::deleteAll($condition);
                 } else {
-                    $relatedModel::updateAll($nulls, $condition);
+                    $promise = $relatedModel::updateAll($nulls, $condition);
                 }
             }
         }
 
-        unset($this->_related[$name]);
+        return $promise->always(function() use ($name) {
+            unset($this->_related[$name]);
+        });
     }
 
     /**
-     * @param array $link
+     * @param array                 $link
      * @param ActiveRecordInterface $foreignModel
      * @param ActiveRecordInterface $primaryModel
-     * @throws InvalidCallException
+     * @return ExtendedPromiseInterface|LazyPromiseInterface
      */
     private function bindModels($link, $foreignModel, $primaryModel)
     {
         foreach ($link as $fk => $pk) {
             $value = $primaryModel->$pk;
             if ($value === null) {
-                throw new InvalidCallException('Unable to link models: the primary key of ' . get_class($primaryModel) . ' is null.');
+                $exception = new InvalidCallException('Unable to link models: the primary key of ' . get_class($primaryModel) . ' is null.');
+                return reject($exception);
             }
             if (is_array($foreignModel->$fk)) { // relation via array valued attribute
                 $foreignModel->$fk = array_merge($foreignModel->$fk, [$value]);
@@ -1565,7 +1602,7 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
                 $foreignModel->$fk = $value;
             }
         }
-        $foreignModel->save(false);
+        return $foreignModel->save(false);
     }
 
     /**
