@@ -4,7 +4,12 @@ namespace Reaction\Db;
 
 use Reaction\Base\Component;
 use Reaction\DI\Instance;
+use Reaction\Exceptions\Exception;
 use Reaction\Helpers\StringHelper;
+use function Reaction\Promise\allInOrder;
+use Reaction\Promise\ExtendedPromiseInterface;
+use function Reaction\Promise\reject;
+use function Reaction\Promise\resolve;
 
 /**
  * Migration is the base class for representing a database migration.
@@ -92,60 +97,58 @@ class Migration extends Component implements MigrationInterface
     /**
      * This method contains the logic to be executed when applying this migration.
      * Child classes may override this method to provide actual migration logic.
-     * @return bool return a false value to indicate the migration fails
+     * @return ExtendedPromiseInterface
      * and should not proceed further. All other return values mean the migration succeeds.
      */
     public function up()
     {
-        //TODO: make transactions work
-        $transaction = $this->db->beginTransaction();
-        try {
-            if ($this->safeUp() === false) {
-                $transaction->rollBack();
-                return false;
+        $transaction = $this->db->createTransaction();
+        return $transaction->begin()->thenLazy(
+            function($connection) {
+                $promise = $this->safeUp($connection);
+                return is_array($promise) ? allInOrder($promise) : $promise;
             }
-            $transaction->commit();
-        } catch (\Exception $e) {
-            $this->printException($e);
-            $transaction->rollBack();
-            return false;
-        } catch (\Throwable $e) {
-            $this->printException($e);
-            $transaction->rollBack();
-            return false;
-        }
-
-        return null;
+        )->thenLazy(
+            function() use ($transaction) {
+                return $transaction->commit();
+            },
+            function($error) use ($transaction) {
+                $this->printException($error);
+                return $transaction->rollBack()->then(
+                    function() use ($error) { throw $error; },
+                    function($e) { throw $e; }
+                );
+            }
+        );
     }
 
     /**
      * This method contains the logic to be executed when removing this migration.
      * The default implementation throws an exception indicating the migration cannot be removed.
      * Child classes may override this method if the corresponding migrations can be removed.
-     * @return bool return a false value to indicate the migration fails
+     * @return ExtendedPromiseInterface
      * and should not proceed further. All other return values mean the migration succeeds.
      */
     public function down()
     {
-        //TODO: make transactions work
-        $transaction = $this->db->beginTransaction();
-        try {
-            if ($this->safeDown() === false) {
-                $transaction->rollBack();
-                return false;
+        $transaction = $this->db->createTransaction();
+        return $transaction->begin()->thenLazy(
+            function($connection) {
+                $promise = $this->safeDown($connection);
+                return is_array($promise) ? allInOrder($promise) : $promise;
             }
-            $transaction->commit();
-        } catch (\Exception $e) {
-            $this->printException($e);
-            $transaction->rollBack();
-            return false;
-        } catch (\Throwable $e) {
-            $this->printException($e);
-            $transaction->rollBack();
-            return false;
-        }
-
-        return null;
+        )->thenLazy(
+            function() use ($transaction) {
+                return $transaction->commit();
+            },
+            function($error) use ($transaction) {
+                $this->printException($error);
+                return $transaction->rollBack()->then(
+                    function() use ($error) { throw $error; },
+                    function($e) { throw $e; }
+                );
+            }
+        );
     }
 
     /**
@@ -167,11 +170,13 @@ class Migration extends Component implements MigrationInterface
      * Note: Not all DBMS support transactions. And some DB queries cannot be put into a transaction. For some examples,
      * please refer to [implicit commit](http://dev.mysql.com/doc/refman/5.7/en/implicit-commit.html).
      *
-     * @return bool return a false value to indicate the migration fails
+     * @param ConnectionInterface $connection
+     * @return ExtendedPromiseInterface|ExtendedPromiseInterface[] Promise that migration succeeded
      * and should not proceed further. All other return values mean the migration succeeds.
      */
-    public function safeUp()
+    public function safeUp(ConnectionInterface $connection)
     {
+        return reject(new Exception("Empty ::safeUp() migration method"));
     }
 
     /**
@@ -184,11 +189,13 @@ class Migration extends Component implements MigrationInterface
      * Note: Not all DBMS support transactions. And some DB queries cannot be put into a transaction. For some examples,
      * please refer to [implicit commit](http://dev.mysql.com/doc/refman/5.7/en/implicit-commit.html).
      *
-     * @return bool return a false value to indicate the migration fails
+     * @param ConnectionInterface $connection
+     * @return ExtendedPromiseInterface|ExtendedPromiseInterface[] Promise that migration rollback succeeded
      * and should not proceed further. All other return values mean the migration succeeds.
      */
-    public function safeDown()
+    public function safeDown(ConnectionInterface $connection)
     {
+        return reject(new Exception("Empty ::safeDown() migration method"));
     }
 
     /**

@@ -58,7 +58,6 @@ interface TransactionInterface
      *
      * [isolation level]: http://en.wikipedia.org/wiki/Isolation_%28database_systems%29#Isolation_levels
      * @return ExtendedPromiseInterface|LazyPromiseInterface with connection
-     * @throws InvalidConfigException if [[db]] is `null`.
      */
     public function begin($isolationLevel = null);
 

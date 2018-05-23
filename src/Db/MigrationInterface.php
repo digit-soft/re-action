@@ -2,6 +2,8 @@
 
 namespace Reaction\Db;
 
+use Reaction\Promise\ExtendedPromiseInterface;
+
 /**
  * The MigrationInterface defines the minimum set of methods to be implemented by a database migration.
  *
@@ -12,7 +14,7 @@ interface MigrationInterface
 {
     /**
      * This method contains the logic to be executed when applying this migration.
-     * @return bool return a false value to indicate the migration fails
+     * @return ExtendedPromiseInterface
      * and should not proceed further. All other return values mean the migration succeeds.
      */
     public function up();
@@ -20,7 +22,7 @@ interface MigrationInterface
     /**
      * This method contains the logic to be executed when removing this migration.
      * The default implementation throws an exception indicating the migration cannot be removed.
-     * @return bool return a false value to indicate the migration fails
+     * @return ExtendedPromiseInterface
      * and should not proceed further. All other return values mean the migration succeeds.
      */
     public function down();
