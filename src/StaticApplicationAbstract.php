@@ -9,6 +9,7 @@ use Reaction\Db\DatabaseInterface;
 use Reaction\DI\ServiceLocator;
 use Reaction\DI\ServiceLocatorAutoloadInterface;
 use Reaction\Exceptions\InvalidArgumentException;
+use Reaction\Promise\ExtendedPromiseInterface;
 
 /**
  * Class StaticApplicationAbstract
@@ -42,6 +43,11 @@ abstract class StaticApplicationAbstract extends ServiceLocator implements Stati
     public $hostname = 'localhost';
     /** @var integer */
     public $port = 4000;
+
+    /** @var ExtendedPromiseInterface */
+    public $initPromise;
+    /** @var bool */
+    public $initialized = false;
 
     /** @var array Added middleware */
     protected $middleware = [];

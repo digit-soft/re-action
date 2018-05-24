@@ -4,19 +4,13 @@ namespace Reaction;
 
 use React\Http\Server as Http;
 use React\Socket\ServerInterface as SocketServerInterface;
-use Reaction\Promise\ExtendedPromiseInterface;
 
 /**
  * Class StaticApplication
  * @package Reaction
  */
-class StaticApplication extends StaticApplicationAbstract
+class StaticApplicationWeb extends StaticApplicationAbstract
 {
-    /** @var ExtendedPromiseInterface */
-    public $initPromise;
-    /** @var bool */
-    public $initialized = false;
-
     /**
      * Run application
      * @throws Exceptions\InvalidConfigException
