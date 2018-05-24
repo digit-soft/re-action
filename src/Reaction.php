@@ -23,18 +23,22 @@ class Reaction
 
     /** @var string */
     protected static $configsPath;
+    /** @var string */
+    protected static $appType;
 
     /**
      * Initialize whole application
      * @param \Composer\Autoload\ClassLoader $composer
-     * @param string                         $configsPath
+     * @param string                         $configsPath Path where to look for config files
+     * @param string                         $appType Application type (web|console)
      */
-    public static function init(Composer\Autoload\ClassLoader $composer, $configsPath = null) {
+    public static function init(Composer\Autoload\ClassLoader $composer, $configsPath = null, $appType = 'web') {
         static::$composer = $composer;
         if (!isset($configsPath)) {
             throw new \Reaction\Exceptions\InvalidArgumentException("Missing \$configsPath option");
         }
         static::$configsPath = $configsPath;
+        static::$appType = $appType;
         static::$config = static::getConfigReader();
         static::initAnnotationReader();
         static::initContainer();
@@ -221,6 +225,7 @@ class Reaction
     protected static function getConfigReader() {
         $conf = [
             'path' => static::$configsPath,
+            'appType' => static::$appType,
         ];
         return new \Reaction\Base\ConfigReader($conf);
     }

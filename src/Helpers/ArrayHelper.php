@@ -173,8 +173,9 @@ class ArrayHelper
      * Cleanup merged array values from instances of IgnoreArrayValue, ReplaceArrayValue, UnsetArrayValue
      * @param array $array
      * @return array
+     * @internal
      */
-    private static function cleanupMergedValues($array = []) {
+    public static function cleanupMergedValues($array = []) {
         if (!is_array($array)) {
             return $array;
         }
