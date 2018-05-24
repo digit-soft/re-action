@@ -33,8 +33,12 @@ return [
             ],
             'logger' => 'stdioLogger',
             'formatter' => 'formatterDefault',
-            'security' => 'securityDefault',
-            'sessionHandler' => 'sessionHandlerDefault',
+            'security' => 'Reaction\Base\Security',
+            //Session handler
+            'sessionHandler' => [
+                'class' => 'Reaction\Web\Sessions\SessionHandlerInterface',
+                'archive' => 'Reaction\Web\Sessions\SessionArchiveInterface',
+            ],
             'fs' => 'fileSystemDefault',
             'db' => [
                 'class' => 'Reaction\Db\Pgsql\Database',
@@ -97,11 +101,13 @@ return [
     //DI definitions
     'container' => [
         'definitions' => [
+            'React\Socket\ServerInterface' => 'React\Socket\Server',
             'Reaction\Web\ResponseBuilderInterface' => 'Reaction\Web\ResponseBuilder',
             'Reaction\Web\Sessions\SessionHandlerInterface' => [
                 'class' => 'Reaction\Web\Sessions\CachedSessionHandler',
                 'loop' => Instance::of('React\EventLoop\LoopInterface'),
             ],
+            'Reaction\Web\Sessions\SessionArchiveInterface' => 'Reaction\Web\Sessions\SessionArchiveInFiles',
             'Reaction\Routes\RouteInterface' => 'Reaction\Routes\Route',
             'Reaction\Routes\UrlManagerInterface' => 'Reaction\Routes\UrlManager',
             'Reaction\Web\UserInterface' => 'Reaction\Web\User',
@@ -115,27 +121,17 @@ return [
                 $loop = $di->get('React\EventLoop\LoopInterface');
                 return \React\Filesystem\Filesystem::createFromAdapter(new \React\Filesystem\ChildProcess\Adapter($loop, []));
             },
-            //React socket server
-            'React\Socket\ServerInterface' => [
-                ['class' => \React\Socket\Server::class],
-                ['0.0.0.0:4000', Instance::of(\React\EventLoop\LoopInterface::class)],
-            ],
-            //React http server
-            \React\Http\Server::class => [
-                'class' => \React\Http\Server::class,
-            ],
-            //Application
-            'Reaction\StaticApplicationInterface' => \Reaction\StaticApplication::class,
-            //'Reaction\BaseApplication' => \Reaction\BaseApplication::class,
             //Router
-            'Reaction\Routes\RouterInterface' => \Reaction\Routes\Router::class,
-            //'Reaction\Routes\Router' => \DI\create()->scope(\DI\Scope::SINGLETON),
-            //Stdout writable stream
-            'stdoutWriteStream' => Definition::of(\React\Stream\WritableResourceStream::class)
-                ->withParams([STDOUT, Instance::of(\React\EventLoop\LoopInterface::class)]),
+            'Reaction\Routes\RouterInterface' => 'Reaction\Routes\Router',
+            //StdOut writable stream
+            'stdoutWriteStream' => Definition::of('React\Stream\WritableResourceStream')
+                ->withParams([STDOUT, Instance::of('React\EventLoop\LoopInterface')]),
+            //StdIn readable stream
+            'stdinReadStream' => Definition::of('React\Stream\ReadableResourceStream')
+                ->withParams([STDIN, Instance::of('React\EventLoop\LoopInterface')]),
             //Stdio logger
-            'stdioLogger' => Definition::of(\Reaction\Base\Logger\StdioLogger::class)
-                ->withParams([Instance::of('stdoutWriteStream'), Instance::of(\React\EventLoop\LoopInterface::class)])
+            'stdioLogger' => Definition::of('Reaction\Base\Logger\StdioLogger')
+                ->withParams([Instance::of('stdoutWriteStream'), Instance::of('React\EventLoop\LoopInterface')])
                 ->withConfig(['withLineNum' => true]),
             //I18n Formatter
             'formatterDefault' => Definition::of(\Reaction\I18n\Formatter::class)->withConfig([
@@ -148,18 +144,9 @@ return [
                 'thousandSeparator' => ' ',
                 'currencyCode' => 'UAH',
             ]),
-            //Security component
-            'securityDefault' => [
-                'class' => 'Reaction\Base\Security',
-            ],
             //Default array cache
             'arrayCacheDefault' => [
                 'class' => 'Reaction\Cache\ArrayExpiringCache'
-            ],
-            //Session handler
-            'sessionHandlerDefault' => [
-                'class' => 'Reaction\Web\Sessions\SessionHandlerInterface',
-                'archive' => \Reaction\Web\Sessions\SessionArchiveInFiles::class,
             ],
             //Session handler
             'fileSystemDefault' => [
