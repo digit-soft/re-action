@@ -767,7 +767,7 @@ class RequestHelper extends RequestAppComponent
      */
     public function getAbsoluteUrl()
     {
-        return $this->getHostInfo().rtrim($this->getUrl(), '/');
+        return $this->getHostInfo() . rtrim($this->getUrl(), '/');
     }
 
     /**
