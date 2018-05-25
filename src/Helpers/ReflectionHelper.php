@@ -11,6 +11,7 @@ class ReflectionHelper
 {
     const REFLECTION_CLASS = 'class';
     const REFLECTION_METHOD = 'method';
+    const REFLECTION_PROPERTY = 'property';
 
     /**
      * @var array Reflections cache
@@ -18,6 +19,7 @@ class ReflectionHelper
     protected static $_reflections = [
         self::REFLECTION_CLASS => [],
         self::REFLECTION_METHOD => [],
+        self::REFLECTION_PROPERTY => [],
     ];
 
     /**
@@ -84,6 +86,26 @@ class ReflectionHelper
     }
 
     /**
+     * Get property reflection
+     * @param string|object $objectOrName
+     * @param string        $propertyName
+     * @return mixed|null|\ReflectionProperty
+     */
+    public static function getPropertyReflection($objectOrName, $propertyName) {
+        $cached = static::getReflectionFromCache(static::REFLECTION_PROPERTY, $objectOrName, $propertyName);
+        if ($cached !== null) {
+            return $cached;
+        }
+        try {
+            $reflection = new \ReflectionProperty($objectOrName, $propertyName);
+            return static::setReflectionToCache($reflection, static::REFLECTION_PROPERTY, $objectOrName, $propertyName);
+        } catch (\ReflectionException $exception) {
+            $reflection = null;
+        }
+        return $reflection;
+    }
+
+    /**
      * Get reflection from cache
      * @param string $type
      * @param string|object $objectOrName
@@ -129,8 +151,9 @@ class ReflectionHelper
         $key = $className;
         switch ($type) {
             case static::REFLECTION_METHOD:
-                $method = $params[0];
-                $key .= '::' . $method;
+            case static::REFLECTION_PROPERTY:
+                $methodOrProperty = $params[0];
+                $key .= '::' . $methodOrProperty;
                 break;
         }
         return $key;
@@ -146,6 +169,7 @@ class ReflectionHelper
         $nameGetters = [
             \ReflectionClass::class => 'getName()',
             \ReflectionMethod::class => 'class',
+            \ReflectionProperty::class => 'class',
         ];
         foreach ($nameGetters as $class => $getter) {
             if ($object instanceof $class) {
@@ -158,5 +182,67 @@ class ReflectionHelper
             }
         }
         return get_class($object);
+    }
+
+    /**
+     * Parses the comment block into tags.
+     * @param \ReflectionClass|\ReflectionMethod|\ReflectionProperty $reflection the comment block
+     * @return array the parsed tags
+     */
+    protected static function parseDocCommentTags($reflection)
+    {
+        $comment = $reflection->getDocComment();
+        $comment = "@description \n" . strtr(trim(preg_replace('/^\s*\**( |\t)?/m', '', trim($comment, '/'))), "\r", '');
+        $parts = preg_split('/^\s*@/m', $comment, -1, PREG_SPLIT_NO_EMPTY);
+        $tags = [];
+        foreach ($parts as $part) {
+            if (preg_match('/^(\w+)(.*)/ms', trim($part), $matches)) {
+                $name = $matches[1];
+                if (!isset($tags[$name])) {
+                    $tags[$name] = trim($matches[2]);
+                } elseif (is_array($tags[$name])) {
+                    $tags[$name][] = trim($matches[2]);
+                } else {
+                    $tags[$name] = [$tags[$name], trim($matches[2])];
+                }
+            }
+        }
+
+        return $tags;
+    }
+
+    /**
+     * Returns the first line of docblock.
+     *
+     * @param \ReflectionClass|\ReflectionMethod|\ReflectionProperty  $reflection
+     * @return string
+     */
+    protected static function parseDocCommentSummary($reflection)
+    {
+        $docLines = preg_split('~\R~u', $reflection->getDocComment());
+        if (isset($docLines[1])) {
+            return trim($docLines[1], "\t *");
+        }
+
+        return '';
+    }
+
+    /**
+     * Returns full description from the docblock.
+     *
+     * @param \Reflector $reflection
+     * @return string
+     */
+    protected static function parseDocCommentDetail($reflection)
+    {
+        $comment = strtr(trim(preg_replace('/^\s*\**( |\t)?/m', '', trim($reflection->getDocComment(), '/'))), "\r", '');
+        if (preg_match('/^\s*@\w+/m', $comment, $matches, PREG_OFFSET_CAPTURE)) {
+            $comment = trim(substr($comment, 0, $matches[0][1]));
+        }
+        if ($comment !== '') {
+            return rtrim(Console::renderColoredString(Console::markdownToAnsi($comment)));
+        }
+
+        return '';
     }
 }
