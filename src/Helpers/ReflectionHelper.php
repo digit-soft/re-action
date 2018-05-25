@@ -9,10 +9,16 @@ namespace Reaction\Helpers;
  */
 class ReflectionHelper
 {
-    /** @var \ReflectionClass[] Reflection classes cached */
-    protected static $_reflectionClasses = [];
-    /** @var \ReflectionMethod[] Reflection methods cached */
-    protected static $_reflectionMethods = [];
+    const REFLECTION_CLASS = 'class';
+    const REFLECTION_METHOD = 'method';
+
+    /**
+     * @var array Reflections cache
+     */
+    protected static $_reflections = [
+        self::REFLECTION_CLASS => [],
+        self::REFLECTION_METHOD => [],
+    ];
 
     /**
      * Check that class (by name) implements some interface
@@ -21,11 +27,8 @@ class ReflectionHelper
      * @return bool
      */
     public static function isImplements($className, $interfaceName) {
-        $reflection = static::getClassReflection($className);
-        if ($reflection === null) {
-            return false;
-        }
-        return $reflection->implementsInterface($interfaceName);
+        $implementations = class_implements($className, true);
+        return isset($implementations[$interfaceName]);
     }
 
     /**
@@ -47,12 +50,14 @@ class ReflectionHelper
      * @param string $methodName
      * @return null|\ReflectionMethod
      */
-    protected static function getMethodReflection($objectOrName, $methodName) {
+    public static function getMethodReflection($objectOrName, $methodName) {
+        $cached = static::getReflectionFromCache(static::REFLECTION_METHOD, $objectOrName, $methodName);
+        if ($cached !== null) {
+            return $cached;
+        }
         try {
             $reflection = new \ReflectionMethod($objectOrName, $methodName);
-            $className = is_object($objectOrName) ? get_class($objectOrName) : $objectOrName;
-            $key = $className . '::' . $methodName;
-            static::$_reflectionMethods[$key] = $reflection;
+            return static::setReflectionToCache($reflection, static::REFLECTION_METHOD, $objectOrName, $methodName);
         } catch (\ReflectionException $exception) {
             $reflection = null;
         }
@@ -64,15 +69,14 @@ class ReflectionHelper
      * @param string|object $objectOrName
      * @return null|\ReflectionClass
      */
-    protected static function getClassReflection($objectOrName) {
-        $cached = static::getClassReflectionFromCache($objectOrName);
+    public static function getClassReflection($objectOrName) {
+        $cached = static::getReflectionFromCache(static::REFLECTION_CLASS, $objectOrName);
         if ($cached !== null) {
             return $cached;
         }
         try {
             $reflection = new \ReflectionClass($objectOrName);
-            $className = is_object($objectOrName) ? get_class($objectOrName) : $objectOrName;
-            static::$_reflectionClasses[$className] = $reflection;
+            return static::setReflectionToCache($reflection, static::REFLECTION_CLASS, $objectOrName);
         } catch (\ReflectionException $exception) {
             $reflection = null;
         }
@@ -80,24 +84,79 @@ class ReflectionHelper
     }
 
     /**
-     * Get class reflection from static cache
+     * Get reflection from cache
+     * @param string $type
      * @param string|object $objectOrName
-     * @return \ReflectionClass|null
+     * @param mixed  ...$params
+     * @return mixed
      */
-    protected static function getClassReflectionFromCache($objectOrName) {
-        $className = is_object($objectOrName) ? get_class($objectOrName) : $objectOrName;
-        return isset(static::$_reflectionClasses[$className]) ? static::$_reflectionClasses[$className] : null;
+    protected static function getReflectionFromCache($type = self::REFLECTION_CLASS, $objectOrName, ...$params) {
+        $cache = &static::$_reflections[$type];
+        $key = static::getCacheKey($type, $objectOrName, ...$params);
+        return isset($cache[$key]) ? $cache[$key] : null;
     }
 
     /**
-     * Get class method reflection from static cache
-     * @param string|object $objectOrName
-     * @param string        $methodName
-     * @return \ReflectionMethod|null
+     * Save reflection to cache
+     * @param \Reflector $reflection
+     * @param string     $type
+     * @param null       $objectOrName
+     * @param mixed      ...$params
+     * @return mixed
      */
-    protected static function getMethodReflectionFromCache($objectOrName, $methodName) {
-        $className = is_object($objectOrName) ? get_class($objectOrName) : $objectOrName;
-        $key = $className . '::' . $methodName;
-        return isset(static::$_reflectionMethods[$key]) ? static::$_reflectionMethods[$key] : null;
+    protected static function setReflectionToCache($reflection, $type = self::REFLECTION_CLASS, $objectOrName = null, ...$params) {
+        if (null === $reflection || null === $objectOrName) {
+            return null;
+        }
+        $key = static::getCacheKey($type, $objectOrName, $params);
+        static::$_reflections[$type][$key] = $reflection;
+        return $reflection;
+    }
+
+    /**
+     * Get object cache key
+     * @param string $type
+     * @param string|object $objectOrName
+     * @param mixed[]  ...$params
+     * @return mixed|string
+     */
+    protected static function getCacheKey($type = self::REFLECTION_CLASS, $objectOrName, ...$params) {
+        if (is_object($objectOrName)) {
+            $className = static::getObjectClassName($objectOrName);
+        } else {
+            $className = $objectOrName;
+        }
+        $key = $className;
+        switch ($type) {
+            case static::REFLECTION_METHOD:
+                $method = $params[0];
+                $key .= '::' . $method;
+                break;
+        }
+        return $key;
+    }
+
+    /**
+     * Get class name of object or its reflection
+     * @param object $object
+     * @return mixed|string
+     */
+    protected static function getObjectClassName($object)
+    {
+        $nameGetters = [
+            \ReflectionClass::class => 'getName()',
+            \ReflectionMethod::class => 'class',
+        ];
+        foreach ($nameGetters as $class => $getter) {
+            if ($object instanceof $class) {
+                $isMethod = substr($getter, -2) === '()';
+                if ($isMethod) {
+                    $getter = substr($getter, 0, -2);
+                    return call_user_func([$object, $getter]);
+                }
+                return $object->$getter;
+            }
+        }
+        return get_class($object);
     }
 }
