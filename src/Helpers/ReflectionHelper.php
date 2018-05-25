@@ -103,28 +103,31 @@ class ReflectionHelper
     /**
      * Get class property PHPDoc full text
      * @param string|object $objectOrName
+     * @param string        $property
      * @return array|null|string
      */
-    public static function getPropertyDocFull($objectOrName, $method) {
-        return static::getMethodPropertyDoc($objectOrName, $method, static::REFLECTION_PROPERTY,'parseDocCommentDetail');
+    public static function getPropertyDocFull($objectOrName, $property) {
+        return static::getMethodPropertyDoc($objectOrName, $property, static::REFLECTION_PROPERTY,'parseDocCommentDetail');
     }
 
     /**
      * Get class property PHPDoc short text (first line)
      * @param string|object $objectOrName
+     * @param string        $property
      * @return array|null|string
      */
-    public static function getPropertyDocSummary($objectOrName, $method) {
-        return static::getMethodPropertyDoc($objectOrName, $method, static::REFLECTION_PROPERTY, 'parseDocCommentSummary');
+    public static function getPropertyDocSummary($objectOrName, $property) {
+        return static::getMethodPropertyDoc($objectOrName, $property, static::REFLECTION_PROPERTY, 'parseDocCommentSummary');
     }
 
     /**
      * Get class property PHPDoc tags array
      * @param string|object $objectOrName
+     * @param string        $property
      * @return array|null|string
      */
-    public static function getPropertyDocTags($objectOrName, $method) {
-        return static::getMethodPropertyDoc($objectOrName, $method, static::REFLECTION_PROPERTY, 'parseDocCommentTags');
+    public static function getPropertyDocTags($objectOrName, $property) {
+        return static::getMethodPropertyDoc($objectOrName, $property, static::REFLECTION_PROPERTY, 'parseDocCommentTags');
     }
 
     /**
