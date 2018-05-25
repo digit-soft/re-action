@@ -345,6 +345,8 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
             'name' => $this->getExceptionName($exception),
         ];
         if (\Reaction::isDebug() || \Reaction::isDev()) {
+            $data['file'] = $exception->getFile();
+            $data['line'] = $exception->getLine();
             $data['trace'] = $exception->getTraceAsString();
         }
         return $data;

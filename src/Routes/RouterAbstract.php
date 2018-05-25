@@ -173,7 +173,7 @@ abstract class RouterAbstract extends Component implements RouterInterface
      */
     public function resolveRequest(ServerRequestInterface $request) {
         $app = $this->createRequestApplication($request);
-        $initPromise = Reaction::$app->initialized ? Reaction::$app->initPromise : Reaction\Promise\resolve(true);
+        $initPromise = !Reaction::$app->initialized ? Reaction::$app->initPromise : Reaction\Promise\resolve(true);
         return $initPromise->then(
             function() use(&$app) {
                 return $app->loadComponents();
