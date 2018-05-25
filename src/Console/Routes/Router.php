@@ -18,6 +18,11 @@ class Router extends RouterAbstract implements RouterInterface
         'Reaction\Console\Controllers',
     ];
 
+    /** @var array|string|object Error controller */
+    public $_errorController = [
+        'class' => 'Reaction\Console\Routes\ErrorController',
+    ];
+
     /**
      * Register all defined routes in dispatcher
      */
@@ -41,18 +46,18 @@ class Router extends RouterAbstract implements RouterInterface
         if (null === $controller) {
             return [Dispatcher::NOT_FOUND];
         }
-        return [$controller, $actionName];
+        return [Dispatcher::FOUND, [$controller, $actionName]];
     }
 
     protected function searchController($controllerName, $actionName) {
         $controller = null;
         foreach ($this->controllerNamespaces as $namespace) {
-            $fullName = $namespace . '\\' . $controllerName;
-            if (!class_exists($fullName)) {
+            $controllerNameFull = $namespace . '\\' . $controllerName;
+            if (!class_exists($controllerNameFull)) {
                 continue;
             }
             try {
-                $reflection = new \ReflectionClass($controllerName);
+                $reflection = new \ReflectionClass($controllerNameFull);
                 $hasAction = $reflection->hasMethod($actionName);
             } catch (\ReflectionException $exception) {
                 $hasAction = false;
@@ -60,7 +65,7 @@ class Router extends RouterAbstract implements RouterInterface
             if(!$hasAction) {
                 continue;
             }
-            $controller = Reaction::create($controllerName);
+            $controller = Reaction::create($controllerNameFull);
         }
         return $controller;
     }
