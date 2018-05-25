@@ -199,6 +199,10 @@ class Route extends RequestAppComponent implements RouteInterface
         if ($response instanceof ResponseBuilderInterface) {
             return $response->build();
         }
+        //Do not throw error on console app
+        if (\Reaction::isConsoleApp()) {
+            return $response;
+        }
         $type = is_object($response) ? get_class($response) : gettype($response);
         $message = sprintf('Return value must be instance of "%s", but "%s" given', ResponseInterface::class, $type);
         throw new InvalidArgumentException($message);
