@@ -8,6 +8,7 @@ use Reaction\Base\Model;
 use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\Promise\Promise;
 use function Reaction\Promise\reject;
+use cebe\markdown\Markdown as ConsoleMarkdown;
 
 /**
  * Console helper provides useful methods for command line related tasks such as getting input or formatting and coloring
@@ -460,8 +461,8 @@ class Console
      */
     public static function markdownToAnsi($markdown)
     {
-        //$parser = new ConsoleMarkdown();
-        //return $parser->parse($markdown);
+        $parser = new ConsoleMarkdown();
+        return $parser->parse($markdown);
     }
 
     /**
