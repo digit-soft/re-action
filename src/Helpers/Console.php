@@ -2,7 +2,12 @@
 
 namespace Reaction\Helpers;
 
+use React\Stream\ReadableStreamInterface;
+use React\Stream\WritableStreamInterface;
 use Reaction\Base\Model;
+use Reaction\Promise\ExtendedPromiseInterface;
+use Reaction\Promise\Promise;
+use function Reaction\Promise\reject;
 
 /**
  * Console helper provides useful methods for command line related tasks such as getting input or formatting and coloring
@@ -50,7 +55,7 @@ class Console
      */
     public static function moveCursorUp($rows = 1)
     {
-        echo "\033[" . (int) $rows . 'A';
+        static::stdout("\033[" . (int) $rows . 'A');
     }
 
     /**
@@ -60,7 +65,7 @@ class Console
      */
     public static function moveCursorDown($rows = 1)
     {
-        echo "\033[" . (int) $rows . 'B';
+        static::stdout("\033[" . (int) $rows . 'B');
     }
 
     /**
@@ -70,7 +75,7 @@ class Console
      */
     public static function moveCursorForward($steps = 1)
     {
-        echo "\033[" . (int) $steps . 'C';
+        static::stdout("\033[" . (int) $steps . 'C');
     }
 
     /**
@@ -80,7 +85,7 @@ class Console
      */
     public static function moveCursorBackward($steps = 1)
     {
-        echo "\033[" . (int) $steps . 'D';
+        static::stdout("\033[" . (int) $steps . 'D');
     }
 
     /**
@@ -89,7 +94,7 @@ class Console
      */
     public static function moveCursorNextLine($lines = 1)
     {
-        echo "\033[" . (int) $lines . 'E';
+        static::stdout("\033[" . (int) $lines . 'E');
     }
 
     /**
@@ -98,7 +103,7 @@ class Console
      */
     public static function moveCursorPrevLine($lines = 1)
     {
-        echo "\033[" . (int) $lines . 'F';
+        static::stdout("\033[" . (int) $lines . 'F');
     }
 
     /**
@@ -109,9 +114,9 @@ class Console
     public static function moveCursorTo($column, $row = null)
     {
         if ($row === null) {
-            echo "\033[" . (int) $column . 'G';
+            static::stdout("\033[" . (int) $column . 'G');
         } else {
-            echo "\033[" . (int) $row . ';' . (int) $column . 'H';
+            static::stdout("\033[" . (int) $row . ';' . (int) $column . 'H');
         }
     }
 
@@ -122,7 +127,7 @@ class Console
      */
     public static function scrollUp($lines = 1)
     {
-        echo "\033[" . (int) $lines . 'S';
+        static::stdout("\033[" . (int) $lines . 'S');
     }
 
     /**
@@ -132,7 +137,7 @@ class Console
      */
     public static function scrollDown($lines = 1)
     {
-        echo "\033[" . (int) $lines . 'T';
+        static::stdout("\033[" . (int) $lines . 'T');
     }
 
     /**
@@ -141,7 +146,7 @@ class Console
      */
     public static function saveCursorPosition()
     {
-        echo "\033[s";
+        static::stdout("\033[s");
     }
 
     /**
@@ -149,7 +154,7 @@ class Console
      */
     public static function restoreCursorPosition()
     {
-        echo "\033[u";
+        static::stdout("\033[u");
     }
 
     /**
@@ -159,7 +164,7 @@ class Console
      */
     public static function hideCursor()
     {
-        echo "\033[?25l";
+        static::stdout("\033[?25l");
     }
 
     /**
@@ -167,7 +172,7 @@ class Console
      */
     public static function showCursor()
     {
-        echo "\033[?25h";
+        static::stdout("\033[?25h");
     }
 
     /**
@@ -177,7 +182,7 @@ class Console
      */
     public static function clearScreen()
     {
-        echo "\033[2J";
+        static::stdout("\033[2J");
     }
 
     /**
@@ -186,7 +191,7 @@ class Console
      */
     public static function clearScreenBeforeCursor()
     {
-        echo "\033[1J";
+        static::stdout("\033[1J");
     }
 
     /**
@@ -195,7 +200,7 @@ class Console
      */
     public static function clearScreenAfterCursor()
     {
-        echo "\033[0J";
+        static::stdout("\033[0J");
     }
 
     /**
@@ -204,7 +209,8 @@ class Console
      */
     public static function clearLine()
     {
-        echo "\033[2K";
+        static::stdout("\033[2K");
+        static::moveCursorTo(0);
     }
 
     /**
@@ -213,7 +219,7 @@ class Console
      */
     public static function clearLineBeforeCursor()
     {
-        echo "\033[1K";
+        static::stdout("\033[1K");
     }
 
     /**
@@ -222,7 +228,7 @@ class Console
      */
     public static function clearLineAfterCursor()
     {
-        echo "\033[0K";
+        static::stdout("\033[0K");
     }
 
     /**
@@ -249,7 +255,7 @@ class Console
      */
     public static function beginAnsiFormat($format)
     {
-        echo "\033[" . implode(';', $format) . 'm';
+        static::stdout("\033[" . implode(';', $format) . 'm');
     }
 
     /**
@@ -263,7 +269,7 @@ class Console
      */
     public static function endAnsiFormat()
     {
-        echo "\033[0m";
+        static::stdout("\033[0m");
     }
 
     /**
@@ -612,12 +618,18 @@ class Console
 
                 // Linux stty output
                 if (preg_match('/rows\s+(\d+);\s*columns\s+(\d+);/mi', $stty, $matches)) {
-                    return $size = [(int) $matches[2], (int) $matches[1]];
+                    $size = [(int) $matches[2], (int) $matches[1]];
+                    if ($size !== [0, 0]) {
+                        return $size;
+                    }
                 }
 
                 // MacOS stty output
                 if (preg_match('/(\d+)\s+rows;\s*(\d+)\s+columns;/mi', $stty, $matches)) {
-                    return $size = [(int) $matches[2], (int) $matches[1]];
+                    $size = [(int) $matches[2], (int) $matches[1]];
+                    if ($size !== [0, 0]) {
+                        return $size;
+                    }
                 }
             }
 
@@ -654,7 +666,6 @@ class Console
      * @param bool $refresh whether to force refresh of screen size.
      * This will be passed to [[getScreenSize()]].
      * @return string the wrapped text.
-     * @since 2.0.4
      */
     public static function wrapText($text, $indent = 0, $refresh = false)
     {
@@ -680,33 +691,41 @@ class Console
      * Gets input from STDIN and returns a string right-trimmed for EOLs.
      *
      * @param bool $raw If set to true, returns the raw string without trimming
-     * @return string the string read from stdin
+     * @return ExtendedPromiseInterface with string the string read from stdin
      */
     public static function stdin($raw = false)
     {
-        return $raw ? fgets(\STDIN) : rtrim(fgets(\STDIN), PHP_EOL);
+        $promise = new Promise(function($r, $c) use ($raw) {
+            static::getStdInStream()->once('data', function($chunk) use ($r, $raw) {
+                if (!$raw) {
+                    $chunk = rtrim($chunk, PHP_EOL);
+                }
+                $r($chunk);
+            });
+        });
+        return $promise;
     }
 
     /**
      * Prints a string to STDOUT.
      *
      * @param string $string the string to print
-     * @return int|bool Number of bytes printed or false on error
+     * @return bool Number of bytes printed or false on error
      */
     public static function stdout($string)
     {
-        return fwrite(\STDOUT, $string);
+        return static::getStdOutStream()->write($string);
     }
 
     /**
      * Prints a string to STDERR.
      *
      * @param string $string the string to print
-     * @return int|bool Number of bytes printed or false on error
+     * @return bool Number of bytes printed or false on error
      */
     public static function stderr($string)
     {
-        return fwrite(\STDERR, $string);
+        return static::getStdOutStream()->write($string);
     }
 
     /**
@@ -714,7 +733,7 @@ class Console
      * prompt.
      *
      * @param string $prompt the prompt to display before waiting for input (optional)
-     * @return string the user's input
+     * @return ExtendedPromiseInterface with string the user's input
      */
     public static function input($prompt = null)
     {
@@ -729,7 +748,7 @@ class Console
      * Prints text to STDOUT appended with a carriage return (PHP_EOL).
      *
      * @param string $string the text to print
-     * @return int|bool number of bytes printed or false on error.
+     * @return bool number of bytes printed or false on error.
      */
     public static function output($string = null)
     {
@@ -740,7 +759,7 @@ class Console
      * Prints text to STDERR appended with a carriage return (PHP_EOL).
      *
      * @param string $string the text to print
-     * @return int|bool number of bytes printed or false on error.
+     * @return bool number of bytes printed or false on error.
      */
     public static function error($string = null)
     {
@@ -760,7 +779,7 @@ class Console
      * - `input`: the user input to validate
      * - `error`: the error value passed by reference if validation failed.
      *
-     * @return string the user input
+     * @return ExtendedPromiseInterface with string the user input
      */
     public static function prompt($text, $options = [])
     {
@@ -776,29 +795,47 @@ class Console
         );
         $error = null;
 
-        top:
-        $input = $options['default']
-            ? static::input("$text [" . $options['default'] . '] ')
-            : static::input("$text ");
+        $basePromptFunc =
+            function() use ($text, $options) {
+            return $options['default']
+                ? static::input("$text [" . $options['default'] . '] ')
+                : static::input("$text ");
+        };
 
-        if ($input === '') {
-            if (isset($options['default'])) {
-                $input = $options['default'];
-            } elseif ($options['required']) {
+        return $basePromptFunc()->then(static::promptValidationCallback($options, $basePromptFunc, $error));
+    }
+
+    /**
+     * @param array       $options
+     * @param \Closure    $basePromptFunc
+     * @param string|null $error
+     * @return \Closure
+     * @internal
+     */
+    protected static function promptValidationCallback($options, $basePromptFunc, &$error) {
+        $thenPromptFunction = function($input) use ($options, $basePromptFunc, &$error) {
+            if ($input === '') {
+                if (isset($options['default'])) {
+                    $input = $options['default'];
+                } elseif ($options['required']) {
+                    static::output($options['error']);
+                    return $basePromptFunc()
+                        ->then(static::promptValidationCallback($options, $basePromptFunc, $error));
+                }
+            } elseif ($options['pattern'] && !preg_match($options['pattern'], $input)) {
                 static::output($options['error']);
-                goto top;
+                return $basePromptFunc()
+                    ->then(static::promptValidationCallback($options, $basePromptFunc, $error));
+            } elseif ($options['validator'] &&
+                !call_user_func_array($options['validator'], [$input, &$error])
+            ) {
+                static::output(isset($error) ? $error : $options['error']);
+                return $basePromptFunc()
+                    ->then(static::promptValidationCallback($options, $basePromptFunc, $error));
             }
-        } elseif ($options['pattern'] && !preg_match($options['pattern'], $input)) {
-            static::output($options['error']);
-            goto top;
-        } elseif ($options['validator'] &&
-            !call_user_func_array($options['validator'], [$input, &$error])
-        ) {
-            static::output(isset($error) ? $error : $options['error']);
-            goto top;
-        }
-
-        return $input;
+            return $input;
+        };
+        return $thenPromptFunction;
     }
 
     /**
@@ -816,26 +853,38 @@ class Console
      *
      * @param string $message to print out before waiting for user input
      * @param bool $default this value is returned if no selection is made.
-     * @return bool whether user confirmed
+     * @return ExtendedPromiseInterface with bool whether user confirmed
      */
-    public static function confirm($message, $default = false)
+    public static function confirm($message, $default = false, $rejectIfNo = true)
     {
-        while (true) {
-            static::stdout($message . ' (yes|no) [' . ($default ? 'yes' : 'no') . ']:');
-            $input = trim(static::stdin());
-
-            if (empty($input)) {
-                return $default;
-            }
+        $promptMessage = $message . ' (yes|no) :';
+        $promptOptions = [
+            'default' => $default ? 'yes' : 'no',
+            'validator' => function($input, &$error) {
+                $input = trim($input);
+                $variants = ['yes', 'no', 'y', 'n'];
+                foreach ($variants as $variant) {
+                    if (!strcasecmp($input, $variant)) {
+                        return true;
+                    }
+                }
+                $error = "You must type 'yes' or 'no' (y|n)";
+                return false;
+            },
+        ];
+        return static::prompt($promptMessage, $promptOptions)->then(function($input) use ($default, $rejectIfNo) {
+            $input = trim($input);
 
             if (!strcasecmp($input, 'y') || !strcasecmp($input, 'yes')) {
                 return true;
             }
 
             if (!strcasecmp($input, 'n') || !strcasecmp($input, 'no')) {
-                return false;
+                return $rejectIfNo ? reject(new \Error("User canceled")) : false;
             }
-        }
+
+            return $default ? $default : ($rejectIfNo ? reject(new \Error("User canceled")) : false);
+        });
     }
 
     /**
@@ -846,24 +895,33 @@ class Console
      * @param array $options Key-value array of options to choose from. Key is what is inputed and used, value is
      * what's displayed to end user by help command.
      *
-     * @return string An option character the user chose
+     * @return ExtendedPromiseInterface with string An option character the user chose
      */
     public static function select($prompt, $options = [])
     {
-        top:
-        static::stdout("$prompt [" . implode(',', array_keys($options)) . ',?]: ');
-        $input = static::stdin();
-        if ($input === '?') {
-            foreach ($options as $key => $value) {
-                static::output(" $key - $value");
-            }
-            static::output(' ? - Show help');
-            goto top;
-        } elseif (!array_key_exists($input, $options)) {
-            goto top;
+        $helpText = '';
+        foreach ($options as $key => $value) {
+            $helpText .= " $key - $value\n";
         }
+        $helpText .= ' ? - Show help';
+        $promptText = "$prompt [" . implode(',', array_keys($options)) . ',?]: ';
+        $promptOptions = [
+            'required' => true,
+            'validator' => function($input, &$error) use($options, $helpText) {
+                $input = trim($input);
+                if ($input === '?') {
+                    $error = $helpText;
+                    return false;
+                }
+                if (array_key_exists($input, $options)) {
+                    return true;
+                }
 
-        return $input;
+                $error = "Invalid input, please enter '?' for help";
+                return false;
+            }
+        ];
+        return static::prompt($promptText, $promptOptions);
     }
 
     private static $_progressStart;
@@ -977,7 +1035,6 @@ class Console
      * @param string $prefix an optional string to display before the progress bar.
      * @see updateProgress
      * @return int screen width
-     * @since 2.0.14
      */
     private static function getProgressbarWidth($prefix)
     {
@@ -1008,7 +1065,6 @@ class Console
      * @param int $done the number of items that are completed.
      * @param int $total the total value of items that are to be done.
      * @see updateProgress
-     * @since 2.0.14
      */
     private static function setETA($done, $total)
     {
@@ -1066,7 +1122,6 @@ class Console
      *   only the first error message for each attribute will be shown. Defaults to `false`.
      *
      * @return string the generated error summary
-     * @since 2.0.14
      */
     public static function errorSummary($models, $options = [])
     {
@@ -1082,7 +1137,6 @@ class Console
      * @param $showAllErrors boolean, if set to true every error message for each attribute will be shown otherwise
      * only the first error message for each attribute will be shown.
      * @return array of the validation errors
-     * @since 2.0.14
      */
     private static function collectErrors($models, $showAllErrors)
     {
@@ -1096,5 +1150,21 @@ class Console
         }
 
         return $lines;
+    }
+
+    /**
+     * @return ReadableStreamInterface
+     */
+    protected static function getStdInStream()
+    {
+        return \Reaction::create('stdinReadStream');
+    }
+
+    /**
+     * @return WritableStreamInterface
+     */
+    protected static function getStdOutStream()
+    {
+        return \Reaction::create('stdoutWriteStream');
     }
 }
