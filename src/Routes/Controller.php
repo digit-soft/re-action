@@ -28,8 +28,18 @@ use Reaction\Web\ResponseBuilderInterface;
  */
 class Controller extends Component implements ControllerInterface, ViewContextInterface
 {
+    /**
+     * @var string
+     */
     public $baseViewPath;
+    /**
+     * @var string
+     */
     public $layout;
+    /**
+     * @var string default controller action
+     */
+    public static $defaultAction = 'index';
 
     protected $_viewPath;
 
@@ -416,7 +426,10 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
      * @param string $actionId
      * @return string
      */
-    public static function getActionMethod($actionId) {
+    public static function getActionMethod($actionId = '') {
+        if ($actionId === '') {
+            $actionId = static::$defaultAction;
+        }
         $actionMethod = Inflector::id2camel($actionId, '-');
         return 'action' . $actionMethod;
     }

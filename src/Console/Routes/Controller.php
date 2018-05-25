@@ -4,6 +4,8 @@ namespace Reaction\Console\Routes;
 
 use Reaction\Exceptions\HttpException;
 use Reaction\Helpers\Console;
+use Reaction\Helpers\Inflector;
+use Reaction\Helpers\ReflectionHelper;
 use Reaction\Promise\ExtendedPromiseInterface;
 use function Reaction\Promise\resolve;
 use Reaction\RequestApplicationInterface;
@@ -69,6 +71,12 @@ class Controller extends \Reaction\Routes\Controller
             ->setStatusCodeByException($exception)
             ->setFormat(Response::FORMAT_RAW);
         return $app->response;
+    }
+
+    public function resolveAction(RequestApplicationInterface $app, string $action, ...$params)
+    {
+        \Reaction::warning($action);
+        return parent::resolveAction($app, $action, $params);
     }
 
 
@@ -290,5 +298,129 @@ class Controller extends \Reaction\Routes\Controller
         }
 
         return $properties;
+    }
+
+    /**
+     * Returns the help information for the anonymous arguments for the action.
+     *
+     * The returned value should be an array. The keys are the argument names, and the values are
+     * the corresponding help information. Each value must be an array of the following structure:
+     *
+     * - required: boolean, whether this argument is required.
+     * - type: string, the PHP type of this argument.
+     * - default: string, the default value of this argument
+     * - comment: string, the comment of this argument
+     *
+     * The default implementation will return the help information extracted from the doc-comment of
+     * the parameters corresponding to the action method.
+     *
+     * @param Action $action
+     * @return array the help information of the action arguments
+     */
+    public function getActionArgsHelp($action)
+    {
+        $method = $this->getActionMethodReflection($action);
+        $tags = $this->parseDocCommentTags($method);
+        $params = isset($tags['param']) ? (array) $tags['param'] : [];
+
+        $args = [];
+
+        /** @var \ReflectionParameter $reflection */
+        foreach ($method->getParameters() as $i => $reflection) {
+            if ($reflection->getClass() !== null) {
+                continue;
+            }
+            $name = $reflection->getName();
+            $tag = isset($params[$i]) ? $params[$i] : '';
+            if (preg_match('/^(\S+)\s+(\$\w+\s+)?(.*)/s', $tag, $matches)) {
+                $type = $matches[1];
+                $comment = $matches[3];
+            } else {
+                $type = null;
+                $comment = $tag;
+            }
+            if ($reflection->isDefaultValueAvailable()) {
+                $args[$name] = [
+                    'required' => false,
+                    'type' => $type,
+                    'default' => $reflection->getDefaultValue(),
+                    'comment' => $comment,
+                ];
+            } else {
+                $args[$name] = [
+                    'required' => true,
+                    'type' => $type,
+                    'default' => null,
+                    'comment' => $comment,
+                ];
+            }
+        }
+
+        return $args;
+    }
+
+    /**
+     * Returns the help information for the options for the action.
+     *
+     * The returned value should be an array. The keys are the option names, and the values are
+     * the corresponding help information. Each value must be an array of the following structure:
+     *
+     * - type: string, the PHP type of this argument.
+     * - default: string, the default value of this argument
+     * - comment: string, the comment of this argument
+     *
+     * The default implementation will return the help information extracted from the doc-comment of
+     * the properties corresponding to the action options.
+     *
+     * @param string $actionId
+     * @return array the help information of the action options
+     */
+    public function getActionOptionsHelp($actionId)
+    {
+        $optionNames = $this->options($actionId);
+        if (empty($optionNames)) {
+            return [];
+        }
+
+        $class = ReflectionHelper::getClassReflection($this);
+        $options = [];
+        foreach ($class->getProperties() as $property) {
+            $name = $property->getName();
+            if (!in_array($name, $optionNames, true)) {
+                continue;
+            }
+            $defaultValue = $property->getValue($this);
+            $tags = ReflectionHelper::getPropertyDocTags($property);
+
+            // Display camelCase options in kebab-case
+            $name = Inflector::camel2id($name, '-', true);
+
+            if (isset($tags['var']) || isset($tags['property'])) {
+                $doc = isset($tags['var']) ? $tags['var'] : $tags['property'];
+                if (is_array($doc)) {
+                    $doc = reset($doc);
+                }
+                if (preg_match('/^(\S+)(.*)/s', $doc, $matches)) {
+                    $type = $matches[1];
+                    $comment = $matches[2];
+                } else {
+                    $type = null;
+                    $comment = $doc;
+                }
+                $options[$name] = [
+                    'type' => $type,
+                    'default' => $defaultValue,
+                    'comment' => $comment,
+                ];
+            } else {
+                $options[$name] = [
+                    'type' => null,
+                    'default' => $defaultValue,
+                    'comment' => '',
+                ];
+            }
+        }
+
+        return $options;
     }
 }
