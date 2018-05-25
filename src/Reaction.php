@@ -1,6 +1,7 @@
 <?php
 
 use Reaction\Exceptions\InvalidConfigException;
+use Reaction\StaticApplicationInterface;
 
 /**
  * Class Reaction. Base static class
@@ -14,7 +15,7 @@ class Reaction
     public static $composer;
     /** @var \Reaction\DI\Container */
     public static $di;
-    /** @var \Reaction\StaticApplicationInterface */
+    /** @var StaticApplicationInterface */
     public static $app;
     /** @var \Reaction\Base\ConfigReader */
     public static $config;
@@ -32,7 +33,7 @@ class Reaction
      * @param string                         $configsPath Path where to look for config files
      * @param string                         $appType Application type (web|console)
      */
-    public static function init(Composer\Autoload\ClassLoader $composer, $configsPath = null, $appType = 'web') {
+    public static function init(Composer\Autoload\ClassLoader $composer, $configsPath = null, $appType = StaticApplicationInterface::APP_TYPE_WEB) {
         static::$composer = $composer;
         if (!isset($configsPath)) {
             throw new \Reaction\Exceptions\InvalidArgumentException("Missing \$configsPath option");
@@ -136,7 +137,7 @@ class Reaction
      * @return bool
      */
     public static function isDev() {
-        return empty(Reaction::$app) || Reaction::$app->envType === \Reaction\StaticApplicationInterface::APP_ENV_DEV;
+        return empty(Reaction::$app) || Reaction::$app->envType === StaticApplicationInterface::APP_ENV_DEV;
     }
 
     /**
@@ -144,7 +145,7 @@ class Reaction
      * @return bool
      */
     public static function isProd() {
-        return Reaction::$app && Reaction::$app->envType === \Reaction\StaticApplicationInterface::APP_ENV_PROD;
+        return Reaction::$app && Reaction::$app->envType === StaticApplicationInterface::APP_ENV_PROD;
     }
 
     /**
@@ -243,7 +244,7 @@ class Reaction
      */
     protected static function initStaticApp() {
         $config = static::$config->get('appStatic');
-        $config['class'] = \Reaction\StaticApplicationInterface::class;
+        $config['class'] = StaticApplicationInterface::class;
         static::$app = static::create($config);
     }
 

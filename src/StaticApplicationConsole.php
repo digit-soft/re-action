@@ -3,8 +3,8 @@
 namespace Reaction;
 
 use React\Http\Io\ServerRequest;
-use function Reaction\Promise\resolve;
 use Reaction\Web\Response;
+use function Reaction\Promise\resolve;
 
 /**
  * Class StaticApplicationConsole
@@ -43,7 +43,7 @@ class StaticApplicationConsole extends StaticApplicationAbstract
             }
         )->done(function($result = null) {
             if (is_string($result)) {
-                $this->logger->debug($result);
+                $this->logger->logRaw($result);
             }
             $this->loop->stop();
         }, function($error) {

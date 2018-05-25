@@ -6,6 +6,7 @@ use Reaction\Helpers\ArrayHelper;
 use Reaction\Helpers\IgnoreArrayValue;
 use Reaction\Helpers\ReplaceArrayValue;
 use Reaction\Helpers\UnsetArrayValue;
+use Reaction\StaticApplicationInterface;
 
 /**
  * Class ConfigReader. Reads content of file configs and merges those into one array
@@ -16,7 +17,7 @@ class ConfigReader extends BaseObject
     /** @var string Config files dir path */
     public $path;
     /** @var string Application type (web|console) */
-    public $appType = 'web';
+    public $appType = StaticApplicationInterface::APP_TYPE_WEB;
     /** @var array Config files extensions */
     public $extensions = ['php'];
     /** @var array Config files possible names */

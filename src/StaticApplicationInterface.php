@@ -38,8 +38,11 @@ use Reaction\Web\Sessions\SessionHandlerInterface;
  */
 interface StaticApplicationInterface extends EventEmitterWildcardInterface
 {
-    const APP_ENV_PROD  = 'production';
-    const APP_ENV_DEV   = 'development';
+    const APP_ENV_PROD      = 'production';
+    const APP_ENV_DEV       = 'development';
+
+    const APP_TYPE_WEB      = 'web';
+    const APP_TYPE_CONSOLE  = 'console';
 
     /**
      * Run application
