@@ -454,6 +454,17 @@ class Console
     }
 
     /**
+     * Converts Markdown to be better readable in console environments by applying some ANSI format.
+     * @param string $markdown the markdown string.
+     * @return string the parsed result as ANSI formatted string.
+     */
+    public static function markdownToAnsi($markdown)
+    {
+        //$parser = new ConsoleMarkdown();
+        //return $parser->parse($markdown);
+    }
+
+    /**
      * Converts a string to ansi formatted by replacing patterns like %y (for yellow) with ansi control codes.
      *
      * Uses almost the same syntax as https://github.com/pear/Console_Color2/blob/master/Console/Color2.php

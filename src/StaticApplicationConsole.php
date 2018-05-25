@@ -26,6 +26,12 @@ class StaticApplicationConsole extends StaticApplicationAbstract
      */
     public function runConsoleRequest() {
         $promise = resolve(true);
+        //Delayed stop
+        $loopStop = function() {
+            $this->loop->addTimer(0.5, function() {
+                $this->loop->stop();
+            });
+        };
         $promise->then(
             function() {
                 return $this->router->resolveRequest($this->createRequest());
@@ -41,14 +47,14 @@ class StaticApplicationConsole extends StaticApplicationAbstract
                 }
                 return $response;
             }
-        )->done(function($result = null) {
+        )->done(function($result = null) use ($loopStop) {
             if (is_string($result)) {
                 $this->logger->logRaw($result);
             }
-            $this->loop->stop();
-        }, function($error) {
+            $loopStop();
+        }, function($error) use ($loopStop) {
             \Reaction::error($error);
-            $this->loop->stop();
+            $loopStop();
         });
     }
 

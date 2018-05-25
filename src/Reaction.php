@@ -133,6 +133,22 @@ class Reaction
     }
 
     /**
+     * Check that application type is web
+     * @return bool
+     */
+    public static function isWebApp() {
+        return static::$appType === StaticApplicationInterface::APP_TYPE_WEB;
+    }
+
+    /**
+     * Check that application type is console
+     * @return bool
+     */
+    public static function isConsoleApp() {
+        return static::$appType === StaticApplicationInterface::APP_TYPE_CONSOLE;
+    }
+
+    /**
      * Shortcut function to check that Application is using DEVELOPMENT environment
      * @return bool
      */
