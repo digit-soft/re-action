@@ -47,6 +47,87 @@ class ReflectionHelper
     }
 
     /**
+     * Get class PHPDoc full text
+     * @param string|object $objectOrName
+     * @return array|null|string
+     */
+    public static function getClassDocFull($objectOrName) {
+        return static::getClassDoc($objectOrName, 'parseDocCommentDetail');
+    }
+
+    /**
+     * Get class PHPDoc short text (first line)
+     * @param string|object $objectOrName
+     * @return array|null|string
+     */
+    public static function getClassDocSummary($objectOrName) {
+        return static::getClassDoc($objectOrName, 'parseDocCommentSummary');
+    }
+
+    /**
+     * Get class PHPDoc tags array
+     * @param string|object $objectOrName
+     * @return array|null|string
+     */
+    public static function getClassDocTags($objectOrName) {
+        return static::getClassDoc($objectOrName, 'parseDocCommentTags');
+    }
+
+    /**
+     * Get class method PHPDoc full text
+     * @param string|object $objectOrName
+     * @return array|null|string
+     */
+    public static function getMethodDocFull($objectOrName, $method) {
+        return static::getMethodPropertyDoc($objectOrName, $method, static::REFLECTION_METHOD,'parseDocCommentDetail');
+    }
+
+    /**
+     * Get class method PHPDoc short text (first line)
+     * @param string|object $objectOrName
+     * @return array|null|string
+     */
+    public static function getMethodDocSummary($objectOrName, $method) {
+        return static::getMethodPropertyDoc($objectOrName, $method, static::REFLECTION_METHOD, 'parseDocCommentSummary');
+    }
+
+    /**
+     * Get class method PHPDoc tags array
+     * @param string|object $objectOrName
+     * @return array|null|string
+     */
+    public static function getMethodDocTags($objectOrName, $method) {
+        return static::getMethodPropertyDoc($objectOrName, $method, static::REFLECTION_METHOD, 'parseDocCommentTags');
+    }
+
+    /**
+     * Get class property PHPDoc full text
+     * @param string|object $objectOrName
+     * @return array|null|string
+     */
+    public static function getPropertyDocFull($objectOrName, $method) {
+        return static::getMethodPropertyDoc($objectOrName, $method, static::REFLECTION_PROPERTY,'parseDocCommentDetail');
+    }
+
+    /**
+     * Get class property PHPDoc short text (first line)
+     * @param string|object $objectOrName
+     * @return array|null|string
+     */
+    public static function getPropertyDocSummary($objectOrName, $method) {
+        return static::getMethodPropertyDoc($objectOrName, $method, static::REFLECTION_PROPERTY, 'parseDocCommentSummary');
+    }
+
+    /**
+     * Get class property PHPDoc tags array
+     * @param string|object $objectOrName
+     * @return array|null|string
+     */
+    public static function getPropertyDocTags($objectOrName, $method) {
+        return static::getMethodPropertyDoc($objectOrName, $method, static::REFLECTION_PROPERTY, 'parseDocCommentTags');
+    }
+
+    /**
      * Get class method reflection
      * @param string|object $objectOrName
      * @param string $methodName
@@ -230,7 +311,7 @@ class ReflectionHelper
     /**
      * Returns full description from the docblock.
      *
-     * @param \Reflector $reflection
+     * @param \ReflectionClass|\ReflectionMethod|\ReflectionProperty $reflection
      * @return string
      */
     protected static function parseDocCommentDetail($reflection)
@@ -244,5 +325,41 @@ class ReflectionHelper
         }
 
         return '';
+    }
+
+    /**
+     * Get class PHPDoc parsed
+     * @param object $object
+     * @param string $parseMethod
+     * @return string|array|null
+     */
+    protected static function getClassDoc($object, $parseMethod = 'parseDocCommentSummary') {
+        try {
+            $reflection = new \ReflectionClass($object);
+            $docData = static::$parseMethod($reflection);
+        } catch (\ReflectionException $exception) {
+            $docData = null;
+        }
+        return $docData;
+    }
+
+    /**
+     * Get method or property PHPDoc parsed
+     * @param object $object
+     * @param string $method
+     * @param string $type
+     * @param string $parseMethod
+     * @return string|array|null
+     */
+    protected static function getMethodPropertyDoc($object, $method, $type = self::REFLECTION_METHOD, $parseMethod = 'parseDocCommentSummary') {
+        try {
+            $reflection = $type === static::REFLECTION_METHOD
+                ? new \ReflectionMethod($object, $method)
+                : new \ReflectionProperty($object, $method);
+            $docData = static::$parseMethod($reflection);
+        } catch (\ReflectionException $exception) {
+            $docData = null;
+        }
+        return $docData;
     }
 }
