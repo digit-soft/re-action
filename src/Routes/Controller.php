@@ -13,6 +13,7 @@ use Reaction\Exceptions\Http\NotFoundException;
 use Reaction\Exceptions\HttpException;
 use Reaction\Exceptions\HttpExceptionInterface;
 use Reaction\Helpers\ArrayHelper;
+use Reaction\Helpers\Inflector;
 use Reaction\Helpers\StringHelper;
 use Reaction\Promise\ExtendedPromiseInterface;
 use function Reaction\Promise\resolve;
@@ -396,5 +397,27 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
         }
         $all = \Reaction\Promise\all($promises);
         return $all;
+    }
+
+    /**
+     * Convert controller action method name to it's ID
+     * @param string $actionMethod
+     * @return string
+     */
+    public static function getActionId($actionMethod) {
+        if (strpos($actionMethod, 'action') === 0) {
+            $actionMethod = substr($actionMethod, 6);
+        }
+        return Inflector::camel2id($actionMethod, '-');
+    }
+
+    /**
+     * Convert controller action ID to method name
+     * @param string $actionId
+     * @return string
+     */
+    public static function getActionMethod($actionId) {
+        $actionMethod = Inflector::id2camel($actionId, '-');
+        return 'action' . $actionMethod;
     }
 }

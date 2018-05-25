@@ -43,4 +43,18 @@ interface ControllerInterface
      * @return null|string
      */
     public function getActionPath($action);
+
+    /**
+     * Convert controller action method name to it's ID
+     * @param string $actionMethod
+     * @return string
+     */
+    public static function getActionId($actionMethod);
+
+    /**
+     * Convert controller action ID to method name
+     * @param string $actionId
+     * @return string
+     */
+    public static function getActionMethod($actionId);
 }
