@@ -16,10 +16,13 @@ use Reaction\Exceptions\InvalidArgumentException;
  */
 class StdioLogger extends AbstractLogger implements LoggerInterface
 {
+    const LOG_LEVEL_RAW = 'raw';
+
     /**
      * Logging levels PSR-3 LogLevel enum.
      */
     const LOG_LEVELS = [
+        self::LOG_LEVEL_RAW => 'RAW',
         LogLevel::DEBUG     => 'DEBUG',
         LogLevel::INFO      => 'INFO',
         LogLevel::NOTICE    => 'NOTICE',
@@ -249,6 +252,19 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
     }
 
     /**
+     * Print raw message
+     *
+     * @param string|mixed $message
+     * @param array        $context
+     * @param int          $traceShift
+     * @return void
+     */
+    public function logRaw($message, array $context = array(), $traceShift = 0)
+    {
+        $this->log(static::LOG_LEVEL_RAW, $message, $context, $traceShift);
+    }
+
+    /**
      * Profiler
      * @param string $message
      * @param string $endId
@@ -312,12 +328,14 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
         $this->checkCorrectLogLevel($level);
         $message = $this->convertMessageToString($message);
         $message = $this->processPlaceHolders($message, $context);
-        if(strlen($message) > 0 && mb_substr($message, -1) !== "\n") {
+        if(strlen($message) > 0 && mb_substr($message, -1) !== "\n" && !$this->newLine) {
             $message .= self::NEW_LINE;
         }
         if ($this->hideLevel === false) {
             $logColors = isset(static::$LOG_COLORS[$level]) ? static::$LOG_COLORS[$level] : [];
-            $message = str_pad('[' .$level . ']', 10, ' ') . $message;
+            if ($level !== static::LOG_LEVEL_RAW) {
+                $message = str_pad('[' . $level . ']', 10, ' ') . $message;
+            }
             if (!empty($logColors)) {
                 $message = $this->colorizeText($message, $logColors);
             }
