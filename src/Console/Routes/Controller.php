@@ -232,10 +232,10 @@ class Controller extends \Reaction\Routes\Controller
      * Note that the values setting via options are not available
      * until [[beforeAction()]] is being called.
      *
-     * @param string $actionID the action id of the current request
+     * @param string $actionId the action id of the current request
      * @return string[] the names of the options valid for the action
      */
-    public function options($actionID = null)
+    public function options($actionId = null)
     {
         // $actionId might be used in subclasses to provide options specific to action id
         return ['color', 'interactive', 'help'];
@@ -301,6 +301,53 @@ class Controller extends \Reaction\Routes\Controller
     }
 
     /**
+     * Returns one-line short summary describing this controller.
+     *
+     * You may override this method to return customized summary.
+     * The default implementation returns first line from the PHPDoc comment.
+     *
+     * @return string
+     */
+    public function getHelpSummary()
+    {
+        return ReflectionHelper::getClassDocSummary($this);
+    }
+
+    /**
+     * Returns help information for this controller.
+     *
+     * You may override this method to return customized help.
+     * The default implementation returns help information retrieved from the PHPDoc comment.
+     * @return string
+     */
+    public function getHelp()
+    {
+        return ReflectionHelper::getClassDocFull($this);
+    }
+
+    /**
+     * Returns a one-line short summary describing the specified action.
+     * @param string $actionId action to get summary for
+     * @return string a one-line short summary describing the specified action.
+     */
+    public function getActionHelpSummary($actionId)
+    {
+        $method = static::getActionMethod($actionId);
+        return ReflectionHelper::getMethodDocSummary($method);
+    }
+
+    /**
+     * Returns the detailed help information for the specified action.
+     * @param string $actionId action to get help for
+     * @return string the detailed help information for the specified action.
+     */
+    public function getActionHelp($actionId)
+    {
+        $method = static::getActionMethod($actionId);
+        return ReflectionHelper::getMethodDocFull($method);
+    }
+
+    /**
      * Returns the help information for the anonymous arguments for the action.
      *
      * The returned value should be an array. The keys are the argument names, and the values are
@@ -314,13 +361,14 @@ class Controller extends \Reaction\Routes\Controller
      * The default implementation will return the help information extracted from the doc-comment of
      * the parameters corresponding to the action method.
      *
-     * @param Action $action
+     * @param string $actionId
      * @return array the help information of the action arguments
      */
-    public function getActionArgsHelp($action)
+    public function getActionArgsHelp($actionId)
     {
-        $method = $this->getActionMethodReflection($action);
-        $tags = $this->parseDocCommentTags($method);
+        $methodName = static::getActionMethod($actionId);
+        $method = ReflectionHelper::getMethodReflection($this, $methodName);
+        $tags = ReflectionHelper::getMethodDocTags($method);
         $params = isset($tags['param']) ? (array) $tags['param'] : [];
 
         $args = [];

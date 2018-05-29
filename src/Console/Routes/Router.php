@@ -3,8 +3,6 @@
 namespace Reaction\Console\Routes;
 
 use FastRoute\Dispatcher;
-use Psr\Http\Message\ServerRequestInterface;
-use React\Promise\PromiseInterface;
 use Reaction;
 use Reaction\Helpers\Inflector;
 use Reaction\RequestApplicationInterface;
@@ -46,8 +44,7 @@ class Router extends RouterAbstract implements RouterInterface
         list($controllerName, $actionName) = $this->getControllerFromPathInfo($path);
         list($controller, $actionName) = $this->searchController($controllerName, $actionName);
         if (null === $controller) {
-            list($controllerName, $actionName) = $this->getDefaultControllerAndAction();
-            $controller = Reaction::create($controllerName);
+            list($controller, $actionName) = $this->getDefaultControllerAndAction(true);
         }
         return [Dispatcher::FOUND, [$controller, $actionName]];
     }
@@ -111,10 +108,11 @@ class Router extends RouterAbstract implements RouterInterface
 
     /**
      * Get default action
+     * @param bool $instantiate
      * @return array
      */
-    protected function getDefaultControllerAndAction() {
-        $controller = $this->defaultController;
+    protected function getDefaultControllerAndAction($instantiate = false) {
+        $controller = $instantiate ? Reaction::create($this->defaultController) : $this->defaultController;
         $action = Controller::getActionMethod('');
         return [$controller, $action];
     }
