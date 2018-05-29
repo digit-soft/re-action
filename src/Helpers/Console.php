@@ -5,10 +5,10 @@ namespace Reaction\Helpers;
 use React\Stream\ReadableStreamInterface;
 use React\Stream\WritableStreamInterface;
 use Reaction\Base\Model;
+use Reaction\Console\Markdown as ConsoleMarkdown;
 use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\Promise\Promise;
 use function Reaction\Promise\reject;
-use cebe\markdown\Markdown as ConsoleMarkdown;
 
 /**
  * Console helper provides useful methods for command line related tasks such as getting input or formatting and coloring
