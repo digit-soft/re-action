@@ -13,6 +13,12 @@ class ReflectionHelper
     const REFLECTION_METHOD = 'method';
     const REFLECTION_PROPERTY = 'property';
 
+    const ARG_CHECK_RETURN_BOOL = 'bool';
+    const ARG_CHECK_RETURN_DATA = 'data';
+
+    const ARG_TYPE_MISMATCH     = 'arg_type_error';
+    const ARG_REQUIRED_MISSING  = 'arg_required_error';
+
     /**
      * @var array Reflections cache
      */
@@ -190,6 +196,44 @@ class ReflectionHelper
             $reflection = null;
         }
         return $reflection;
+    }
+
+    /**
+     * Check class method arguments for consistency
+     * @param array  $arguments
+     * @param string|\ReflectionMethod $method
+     * @param null   $objectOrName
+     * @param string $returnType
+     * @return array|bool|null
+     */
+    public static function checkMethodArguments($arguments = [], $method, $objectOrName = null, $returnType = self::ARG_CHECK_RETURN_DATA)
+    {
+        if ($method instanceof \ReflectionMethod) {
+            $reflection = $method;
+        } elseif ($objectOrName !== null) {
+            $reflection = static::getMethodReflection($objectOrName, $method);
+        } else {
+            return null;
+        }
+        if ($reflection->getNumberOfRequiredParameters() === 0) {
+            return $returnType === static::ARG_CHECK_RETURN_DATA ? [] : true;
+        }
+        $methodParams = $reflection->getParameters();
+        $data = [];
+        foreach ($methodParams as $param) {
+            if (!$param->isOptional() && empty($arguments)) {
+                $data[$param->name] = static::ARG_REQUIRED_MISSING;
+            } elseif(!empty($arguments) && ($type = $param->getType()) !== null) {
+                $arg = reset($arguments);
+                $typeName = $type->getName();
+                $stdTypes = ['bool', 'int', 'string', 'array', 'object', 'float', 'callable'];
+                if (!in_array($typeName, $stdTypes) && !$arg instanceof $typeName) {
+                    $data[$param->name] = static::ARG_TYPE_MISMATCH;
+                }
+            }
+            array_shift($arguments);
+        }
+        return $returnType === static::ARG_CHECK_RETURN_DATA ? $data : empty($data);
     }
 
     /**
