@@ -2,13 +2,11 @@
 
 namespace Reaction\Exceptions\Model;
 
-use Reaction\Exceptions\Exception;
-
 /**
  * Class Error
  * @package Reaction\Exceptions\Model
  */
-class Error extends Exception
+class Error extends \Reaction\Exceptions\Error
 {
     /**
      * Get Exception name
