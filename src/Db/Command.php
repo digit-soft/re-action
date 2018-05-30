@@ -242,7 +242,7 @@ class Command extends Component implements CommandInterface
      * @param array  $results
      * @param string $fetchMethod
      * @param string $fetchMode
-     * @return array|null|object
+     * @return array|null|object|ExtendedPromiseInterface
      * @internal
      */
     public function fetchResults($results, $fetchMethod = self::FETCH_ALL, $fetchMode = self::FETCH_MODE_ASSOC) {
@@ -251,7 +251,7 @@ class Command extends Component implements CommandInterface
             return new DataReader($this, $results);
         }
         if (empty($results)) {
-            return $fetchMethod === static::FETCH_FIELD ? null : [];
+            return $fetchMethod === static::FETCH_ALL ? [] : reject(null);
         } elseif (in_array($fetchMethod, [static::FETCH_FIELD, static::FETCH_ROW])) {
             $firstRow = reset($results);
             return $this->fetchResultsRow($firstRow, $fetchMethod, $fetchMode);
@@ -1101,11 +1101,11 @@ class Command extends Component implements CommandInterface
                 }
             )->then(
                 function($data) use ($profileId) {
-                    \Reaction::$app->logger->profileEnd($profileId);
+                    \Reaction::profileEnd($profileId);
                     return $data;
                 },
                 function($error = null) use ($profileId) {
-                    \Reaction::$app->logger->profileEnd($profileId);
+                    \Reaction::profileEnd($profileId);
                     return reject($error);
                 }
             );
