@@ -99,7 +99,7 @@ class RequestHelper extends Reaction\Web\RequestHelper
      * Get command line parameters
      * @return array
      */
-    protected function getConsoleParams() {
+    public function getConsoleParams() {
         if (!isset($this->_params)) {
             $data = $this->getConsoleRouteAndParams();
             $this->_params = $data[1];
