@@ -146,7 +146,6 @@ class Instance
      * If null, the method will first try `Application` then `Reaction::$di`.
      * @return object the actual object referenced by this Instance object.
      * @throws InvalidConfigException
-     * @throws \ReflectionException
      */
     public function get($container = null)
     {
