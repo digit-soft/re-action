@@ -5,7 +5,6 @@ namespace Reaction\Routes;
 use FastRoute\RouteParser;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Promise\PromiseInterface;
-use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\RequestApplicationInterface;
 
 /**
@@ -14,6 +13,7 @@ use Reaction\RequestApplicationInterface;
  * @property Controller  $errorController
  * @property RouteParser $routeParser
  * @property array       $routePaths
+ * @property array       $controllerNamespaces
  */
 interface RouterInterface
 {
@@ -129,4 +129,21 @@ interface RouterInterface
      * @return array
      */
     public function getDispatcherData(RequestApplicationInterface $app);
+
+    /**
+     * Get controller and action from path (Just parse path)
+     * @param string $path
+     * @param array  $config
+     * @param bool   $defaultOnFault
+     * @return array
+     */
+    public function createController($path, $config = [], $defaultOnFault = true);
+
+    /**
+     * Get controller namespace relative to $this::$controllerNamespaces
+     * @param string $namespace
+     * @return string
+     * @see Router::$controllerNamespaces
+     */
+    public function getRelativeControllerNamespace($namespace);
 }
