@@ -13,7 +13,9 @@ if (!empty($namespace)) {
 }
 ?>
 
+use Reaction\Db\ConnectionInterface;
 use Reaction\Db\Migration;
+use Reaction\Console\Exception;
 use function Reaction\Promise\reject;
 
 /**
@@ -24,7 +26,7 @@ class <?= $className ?> extends Migration
     /**
      * {@inheritdoc}
      */
-    public function safeUp()
+    public function safeUp(ConnectionInterface $connection)
     {
 
     }
@@ -32,11 +34,11 @@ class <?= $className ?> extends Migration
     /**
      * {@inheritdoc}
      */
-    public function safeDown()
+    public function safeDown(ConnectionInterface $connection)
     {
         echo "<?= $className ?> cannot be reverted.\n";
 
-        return reject(new \Exception("Can not revert migration"));
+        return reject(new Exception("Can not revert migration"));
     }
 
     /*
@@ -50,7 +52,7 @@ class <?= $className ?> extends Migration
     {
         echo "<?= $className ?> cannot be reverted.\n";
 
-        return false;
+        return reject(new Exception("Can not revert migration"));
     }
     */
 }
