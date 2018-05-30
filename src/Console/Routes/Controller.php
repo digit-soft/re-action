@@ -2,7 +2,10 @@
 
 namespace Reaction\Console\Routes;
 
+use Reaction\Console\Web\RequestHelper;
+use Reaction\Exceptions\Exception;
 use Reaction\Exceptions\HttpException;
+use Reaction\Helpers\ArrayHelper;
 use Reaction\Helpers\Console;
 use Reaction\Helpers\Inflector;
 use Reaction\Helpers\ReflectionHelper;
@@ -32,9 +35,13 @@ class Controller extends \Reaction\Routes\Controller
 
     /**
      * @var bool whether to display help information about current command.
-     * @since 2.0.10
      */
     public $help;
+
+    /**
+     * @var RequestApplicationInterface
+     */
+    public $app;
 
     /**
      * @var array the options passed during execution.
@@ -58,10 +65,15 @@ class Controller extends \Reaction\Routes\Controller
     protected function resolveErrorAsPlainText(RequestApplicationInterface $app, \Throwable $exception)
     {
         $data = $this->getErrorData($exception);
-        $body = $data['name'] . ' (' . $data['code'] . ')' .  "\n";
-        $body .= $data['message'] !== "" ? $data['message'] . "\n" : '';
-        $body .= $data['file'] !== "" ? $data['file'] : '';
-        $body .= $data['line'] !== "" ? " #" . $data['line'] . "\n" : '';
+        if ($exception instanceof \Reaction\Console\Exception) {
+            $this->stdout($data['message'] . "\n");
+            return null;
+        } else {
+            $body = $data['name'] . ' (' . $data['code'] . ')' .  "\n";
+            $body .= $data['message'] !== "" ? $data['message'] . "\n" : '';
+            $body .= $data['file'] !== "" ? $data['file'] : '';
+            $body .= $data['line'] !== "" ? " #" . $data['line'] . "\n" : '';
+        }
 
         if (!$exception instanceof HttpException && !empty($data['trace'])) {
             $body .= $data['trace'] . "\n";
@@ -73,10 +85,32 @@ class Controller extends \Reaction\Routes\Controller
         return $app->response;
     }
 
+    /**
+     * @inheritdoc
+     */
     public function resolveAction(RequestApplicationInterface $app, string $action, ...$params)
     {
-        \Reaction::warning($action);
-        return parent::resolveAction($app, $action, $params);
+        /** @var RequestHelper $req */
+        $req = $app->reqHelper;
+        $paramsConsole = $req->getConsoleParams();
+        $params = ArrayHelper::merge($params, $paramsConsole);
+        $this->processActionParams($action, $params);
+        return parent::resolveAction($app, $action, ...$params);
+    }
+
+    /**
+     * Get route group name, if empty no grouping
+     * @return string
+     */
+    public function group()
+    {
+        $namespace = \Reaction::$app->router->getRelativeControllerNamespace(static::class);
+        $namespace = substr($namespace, 0, -10);
+        $namespaceArray = explode('\\', $namespace);
+        array_walk($namespaceArray, function(&$value) {
+            $value = Inflector::camel2id($value, '-');
+        });
+        return implode('/', $namespaceArray);
     }
 
 
@@ -333,7 +367,7 @@ class Controller extends \Reaction\Routes\Controller
     public function getActionHelpSummary($actionId)
     {
         $method = static::getActionMethod($actionId);
-        return ReflectionHelper::getMethodDocSummary($method);
+        return ReflectionHelper::getMethodDocSummary($method, $this);
     }
 
     /**
@@ -344,7 +378,7 @@ class Controller extends \Reaction\Routes\Controller
     public function getActionHelp($actionId)
     {
         $method = static::getActionMethod($actionId);
-        return ReflectionHelper::getMethodDocFull($method);
+        return ReflectionHelper::getMethodDocFull($method, $this);
     }
 
     /**
@@ -368,7 +402,7 @@ class Controller extends \Reaction\Routes\Controller
     {
         $methodName = static::getActionMethod($actionId);
         $method = ReflectionHelper::getMethodReflection($this, $methodName);
-        $tags = ReflectionHelper::getMethodDocTags($method);
+        $tags = ReflectionHelper::getMethodDocTags($method, $this);
         $params = isset($tags['param']) ? (array) $tags['param'] : [];
 
         $args = [];
@@ -470,5 +504,66 @@ class Controller extends \Reaction\Routes\Controller
         }
 
         return $options;
+    }
+
+    /**
+     * Process action params array
+     * @param string $actionMethod
+     * @param array $params
+     * @throws Exception
+     */
+    protected function processActionParams(&$actionMethod, &$params = [])
+    {
+        $actionMethod = $this->normalizeActionName($actionMethod);
+        $actionId = static::getActionId($actionMethod);
+        if (!empty($params)) {
+            // populate options here so that they are available in beforeAction().
+            $options = $this->options($actionId);
+            if (isset($params['_aliases'])) {
+                $optionAliases = $this->optionAliases();
+                foreach ($params['_aliases'] as $name => $value) {
+                    if (array_key_exists($name, $optionAliases)) {
+                        $params[$optionAliases[$name]] = $value;
+                    } else {
+                        throw new Exception('Unknown alias: -{name}', ['name' => $name]);
+                    }
+                }
+                unset($params['_aliases']);
+            }
+            foreach ($params as $name => $value) {
+                // Allow camelCase options to be entered in kebab-case
+                if (!in_array($name, $options, true) && strpos($name, '-') !== false) {
+                    $kebabName = $name;
+                    $altName = lcfirst(Inflector::id2camel($kebabName));
+                    if (in_array($altName, $options, true)) {
+                        $name = $altName;
+                    }
+                }
+
+                if (in_array($name, $options, true)) {
+                    $default = $this->$name;
+                    if (is_array($default)) {
+                        $this->$name = preg_split('/\s*,\s*(?![^()]*\))/', $value);
+                    } elseif ($default !== null) {
+                        settype($value, gettype($default));
+                        $this->$name = $value;
+                    } else {
+                        $this->$name = $value;
+                    }
+                    $this->_passedOptions[] = $name;
+                    unset($params[$name]);
+                    if (isset($kebabName)) {
+                        unset($params[$kebabName]);
+                    }
+                } elseif (!is_int($name)) {
+                    throw new Exception('Unknown option: --{name}', ['name' => $name]);
+                }
+            }
+        }
+        if ($this->help) {
+            $actionMethod = static::getActionMethod('help');
+            //$route = $this->getUniqueId() . '/' . $id;
+            //return Yii::$app->runAction('help', [$route]);
+        }
     }
 }

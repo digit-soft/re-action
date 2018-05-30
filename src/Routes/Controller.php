@@ -14,6 +14,7 @@ use Reaction\Exceptions\HttpException;
 use Reaction\Exceptions\HttpExceptionInterface;
 use Reaction\Helpers\ArrayHelper;
 use Reaction\Helpers\Inflector;
+use Reaction\Helpers\ReflectionHelper;
 use Reaction\Helpers\StringHelper;
 use Reaction\Promise\ExtendedPromiseInterface;
 use function Reaction\Promise\resolve;
@@ -29,19 +30,30 @@ use Reaction\Web\ResponseBuilderInterface;
 class Controller extends Component implements ControllerInterface, ViewContextInterface
 {
     /**
-     * @var string
+     * @var string Base view files folder path
      */
     public $baseViewPath;
     /**
-     * @var string
+     * @var string Layout file path
      */
     public $layout;
     /**
+     * @var string Default controller action
+     */
+    public $defaultAction = 'index';
+    /**
      * @var string default controller action
      */
-    public static $defaultAction = 'index';
+    public static $_defaultAction = 'index';
 
+    /**
+     * @var string View files folder path without alias
+     */
     protected $_viewPath;
+    /**
+     * @var string[] Actions list
+     */
+    protected $_actions;
 
     /**
      * Routes description
@@ -57,7 +69,8 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
      *
      * @return array
      */
-    public function routes() {
+    public function routes()
+    {
         return [];
     }
 
@@ -65,15 +78,32 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
      * Get route group name, if empty no grouping
      * @return string
      */
-    public function group() {
+    public function group()
+    {
         return '';
+    }
+
+    /**
+     * Get controller ID
+     * @return string
+     */
+    public function getUniqueId()
+    {
+        $group = $this->group();
+        if ($group !== "") {
+            return $group;
+        }
+        $classNameArray = explode('\\', static::class);
+        $className = substr(array_pop($classNameArray), 0, -10);
+        return Inflector::camel2id($className);
     }
 
     /**
      * Register controller actions in router
      * @param Router $router
      */
-    public function registerInRouter(Router $router) {
+    public function registerInRouter(Router $router)
+    {
         $routes = $this->routes();
         $group = $this->group();
         if (empty($routes)) {
@@ -117,20 +147,30 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
      * @return mixed
      * @throws NotFoundException
      */
-    public function resolveAction(RequestApplicationInterface $app, string $action, ...$params) {
+    public function resolveAction(RequestApplicationInterface $app, string $action, ...$params)
+    {
         $action = $this->normalizeActionName($action);
+        $actionId = static::getActionId($action);
         array_unshift($params, $app);
         $self = $this;
         return $this->validateAction($action, $app)->then(
-            function () use (&$app, &$self, $action, $params) {
-                $app->view->context = $self;
-                return \Reaction::$di->invoke([$self, $action], $params);
+            function () use (&$app, &$self, $action, $actionId, $params) {
+                if ($this->beforeAction($actionId)) {
+                    $app->view->context = $self;
+                    return \Reaction::$di->invoke([$self, $action], $params);
+                } else {
+                    throw new Exception("Before action error");
+                }
             },
             function ($error) {
                 if (!$error instanceof \Throwable) {
                     $error = new ForbiddenException('You can not perform this action');
                 }
                 throw $error;
+            }
+        )->then(
+            function($result = null) use ($actionId) {
+                return $this->afterAction($actionId, $result);
             }
         );
     }
@@ -159,6 +199,70 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
     }
 
     /**
+     * This method is invoked right before an action is executed.
+     *
+     * The method will trigger the [[EVENT_BEFORE_ACTION]] event. The return value of the method
+     * will determine whether the action should continue to run.
+     *
+     * In case the action should not run, the request should be handled inside of the `beforeAction` code
+     * by either providing the necessary output or redirecting the request. Otherwise the response will be empty.
+     *
+     * If you override this method, your code should look like the following:
+     *
+     * ```php
+     * public function beforeAction($action)
+     * {
+     *     // your custom code here, if you want the code to run before action filters,
+     *     // which are triggered on the [[EVENT_BEFORE_ACTION]] event, e.g. PageCache or AccessControl
+     *
+     *     if (!parent::beforeAction($action)) {
+     *         return false;
+     *     }
+     *
+     *     // other custom code here
+     *
+     *     return true; // or false to not run the action
+     * }
+     * ```
+     *
+     * @param string $actionId the action to be executed.
+     * @return bool whether the action should continue to run.
+     */
+    public function beforeAction($actionId)
+    {
+        $isValid = true;
+        $this->emit(self::EVENT_BEFORE_ACTION, [&$this, $actionId, &$isValid]);
+        return $isValid;
+    }
+
+    /**
+     * This method is invoked right after an action is executed.
+     *
+     * The method will trigger the [[EVENT_AFTER_ACTION]] event. The return value of the method
+     * will be used as the action return value.
+     *
+     * If you override this method, your code should look like the following:
+     *
+     * ```php
+     * public function afterAction($action, $result)
+     * {
+     *     $result = parent::afterAction($action, $result);
+     *     // your custom code here
+     *     return $result;
+     * }
+     * ```
+     *
+     * @param string $actionId the action just executed.
+     * @param mixed  $result the action return result.
+     * @return mixed the processed action result.
+     */
+    public function afterAction($actionId, $result = null)
+    {
+        $this->emit(self::EVENT_AFTER_ACTION, [&$this, $actionId, &$result]);
+        return $result;
+    }
+
+    /**
      * Render view
      * @param RequestApplicationInterface $app
      * @param string                      $viewName
@@ -166,7 +270,8 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
      * @param bool                        $asString
      * @return \Reaction\Web\ResponseBuilderInterface|string
      */
-    public function render(RequestApplicationInterface $app, $viewName, $params = [], $asString = false) {
+    public function render(RequestApplicationInterface $app, $viewName, $params = [], $asString = false)
+    {
         return $this->renderInLayout($app, $viewName, $params, $asString);
     }
 
@@ -201,7 +306,8 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
      * @param string $action
      * @return null|string
      */
-    public function getActionPath($action) {
+    public function getActionPath($action)
+    {
         try {
             $action = $this->normalizeActionName($action);
         } catch (NotFoundException $e) {
@@ -219,6 +325,38 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
             }
         }
         return null;
+    }
+
+    /**
+     * Get actions list
+     * @return string[]
+     */
+    public function actions()
+    {
+        if (!isset($this->_actions)) {
+            $reflection = ReflectionHelper::getClassReflection($this);
+            $methods = $reflection->getMethods(\ReflectionMethod::IS_PUBLIC);
+            $actions = [];
+            foreach ($methods as $method) {
+                $name = $method->getName();
+                if ($name !== 'actions' && !$method->isStatic() && strncmp($name, 'action', 6) === 0) {
+                    $actions[] = static::getActionId($name);
+                }
+            }
+            $this->_actions = $actions;
+        }
+        return $this->_actions;
+    }
+
+    /**
+     * Check that controller has action with given ID
+     * @param string $actionId
+     * @return bool
+     */
+    public function hasAction($actionId)
+    {
+        $actions = $this->actions();
+        return in_array($actionId, $actions);
     }
 
     /**
@@ -255,7 +393,8 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
      * @param bool                        $asString
      * @return \Reaction\Web\ResponseBuilderInterface|string
      */
-    protected function renderInternal(RequestApplicationInterface $app, $viewName, $params = [], $ajax = false, $asString = false) {
+    protected function renderInternal(RequestApplicationInterface $app, $viewName, $params = [], $ajax = false, $asString = false)
+    {
         $view = $app->view;
         $rendered = $ajax ? $view->renderAjax($viewName, $params, $this) : $view->render($viewName, $params, $this);
         if ($asString) {
@@ -272,7 +411,8 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
      * @return string|null
      * @throws NotFoundException
      */
-    protected function normalizeActionName($action, $throwException = true) {
+    protected function normalizeActionName($action, $throwException = true)
+    {
         if (!StringHelper::startsWith($action, 'action')) {
             $action = 'action' . ucfirst($action);
         }
@@ -349,7 +489,8 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
      * @param \Throwable $exception
      * @return array
      */
-    protected function getErrorData(\Throwable $exception) {
+    protected function getErrorData(\Throwable $exception)
+    {
         $data = [
             'message' => $exception->getMessage(),
             'code' => $exception instanceof HttpExceptionInterface ? $exception->statusCode : $exception->getCode(),
@@ -368,7 +509,8 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
      * @param \Throwable $exception
      * @return string
      */
-    protected function getExceptionName($exception) {
+    protected function getExceptionName($exception)
+    {
         if ($exception instanceof Exception) {
             return $exception->getName();
         } else {
@@ -383,7 +525,8 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
      * @param RequestApplicationInterface $app
      * @return ExtendedPromiseInterface
      */
-    protected function validateAction($action, RequestApplicationInterface $app) {
+    protected function validateAction($action, RequestApplicationInterface $app)
+    {
         $annotationsCtrl = \Reaction::$annotations->getClass($this);
         $annotationsAction = \Reaction::$annotations->getMethod($this, $action);
         $annotations = ArrayHelper::merge(array_values($annotationsCtrl), array_values($annotationsAction));
@@ -414,7 +557,8 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
      * @param string $actionMethod
      * @return string
      */
-    public static function getActionId($actionMethod) {
+    public static function getActionId($actionMethod)
+    {
         if (strpos($actionMethod, 'action') === 0) {
             $actionMethod = substr($actionMethod, 6);
         }
@@ -426,9 +570,10 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
      * @param string $actionId
      * @return string
      */
-    public static function getActionMethod($actionId = '') {
+    public static function getActionMethod($actionId = '')
+    {
         if ($actionId === '') {
-            $actionId = static::$defaultAction;
+            $actionId = static::$_defaultAction;
         }
         $actionMethod = Inflector::id2camel($actionId, '-');
         return 'action' . $actionMethod;
