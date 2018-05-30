@@ -2,21 +2,16 @@
 
 namespace Reaction\Console\Controllers;
 
-use React\EventLoop\Timer\TimerInterface;
-use Reaction\Console\Routes\Controller;
 use Reaction\Db\DatabaseInterface;
 use Reaction\Db\Query;
 use Reaction\Db\TableSchema;
 use Reaction\DI\Instance;
 use Reaction\Helpers\ArrayHelper;
 use Reaction\Helpers\Console;
-use Reaction\Helpers\ReflectionHelper;
 use function Reaction\Promise\allInOrder;
 use Reaction\Promise\ExtendedPromiseInterface;
-use Reaction\Promise\Promise;
 use function Reaction\Promise\resolve;
 use Reaction\RequestApplicationInterface;
-use Reaction\Routes\ControllerInterface;
 
 /**
  * Manages application migrations.
@@ -44,13 +39,13 @@ use Reaction\Routes\ControllerInterface;
  *
  * ```
  * # creates a new migration named 'create_user_table'
- * yii migrate/create create_user_table
+ * console migrate/create create_user_table
  *
  * # applies ALL new migrations
- * yii migrate
+ * console migrate
  *
  * # reverts the last applied migration
- * yii migrate/down
+ * console migrate/down
  * ```
  *
  * You can use namespaced migrations. In order to enable this feature you should configure [[migrationNamespaces]]
@@ -421,7 +416,7 @@ class MigrateController extends BaseMigrateController
         foreach ($foreignKeys as $column => $foreignKey) {
             $relatedColumn = $foreignKey['column'];
             $relatedTable = $foreignKey['table'];
-            // Since 2.0.11 if related column name is not specified,
+            // If related column name is not specified,
             // we're trying to get it from table schema
             // @see https://github.com/yiisoft/yii2/issues/12748
             if ($relatedColumn === null) {
@@ -451,12 +446,12 @@ class MigrateController extends BaseMigrateController
             ];
         }
 
-        return $this->renderPartial($app, \Reaction::$app->getAlias($templateFile), array_merge($params, [
+        return $this->renderFile($app, \Reaction::$app->getAlias($templateFile), array_merge($params, [
             'table' => $this->generateTableName($table),
             'fields' => $fields,
             'foreignKeys' => $foreignKeys,
             'tableComment' => $this->comment,
-        ]), true);
+        ]));
     }
 
     /**

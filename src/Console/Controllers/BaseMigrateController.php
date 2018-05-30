@@ -43,7 +43,7 @@ abstract class BaseMigrateController extends Controller
      * If you have set up [[migrationNamespaces]], you may set this field to `null` in order
      * to disable usage of migrations that are not namespaced.
      *
-     * Since version 2.0.12 you may also specify an array of migration paths that should be searched for
+     * You may also specify an array of migration paths that should be searched for
      * migrations to load. This is mainly useful to support old extensions that provide migrations
      * without namespace and to adopt the new feature of namespaced migrations while keeping existing migrations.
      *
@@ -53,7 +53,7 @@ abstract class BaseMigrateController extends Controller
      *
      * @see $migrationNamespaces
      */
-    public $migrationPath = ['@app/migrations'];
+    public $migrationPath = ['@app/Console/Migrations'];
     /**
      * @var array list of namespaces containing the migration classes.
      *
@@ -148,8 +148,8 @@ abstract class BaseMigrateController extends Controller
      * For example,
      *
      * ```
-     * yii migrate     # apply all new migrations
-     * yii migrate 3   # apply the first 3 new migrations
+     * console migrate     # apply all new migrations
+     * console migrate 3   # apply the first 3 new migrations
      * ```
      *
      * @param RequestApplicationInterface $app
@@ -231,9 +231,9 @@ abstract class BaseMigrateController extends Controller
      * For example,
      *
      * ```
-     * yii migrate/down     # revert the last migration
-     * yii migrate/down 3   # revert the last 3 migrations
-     * yii migrate/down all # revert all migrations
+     * console migrate/down     # revert the last migration
+     * console migrate/down 3   # revert the last 3 migrations
+     * console migrate/down all # revert all migrations
      * ```
      *
      * @param RequestApplicationInterface $app
@@ -305,9 +305,9 @@ abstract class BaseMigrateController extends Controller
      * them again. For example,
      *
      * ```
-     * yii migrate/redo     # redo the last applied migration
-     * yii migrate/redo 3   # redo the last 3 applied migrations
-     * yii migrate/redo all # redo all migrations
+     * console migrate/redo     # redo the last applied migration
+     * console migrate/redo 3   # redo the last 3 applied migrations
+     * console migrate/redo all # redo all migrations
      * ```
      *
      * @param RequestApplicationInterface $app
@@ -536,43 +536,15 @@ abstract class BaseMigrateController extends Controller
     }
 
     /**
-     * Checks if given migration version specification matches namespaced migration name.
-     * @param string $rawVersion raw version specification received from user input.
-     * @return string|false actual migration version, `false` - if not match.
-     */
-    private function extractNamespaceMigrationVersion($rawVersion)
-    {
-        if (preg_match('/^\\\\?([\w_]+\\\\)+m(\d{6}_?\d{6})(\D.*)?$/is', $rawVersion, $matches)) {
-            return trim($rawVersion, '\\');
-        }
-
-        return false;
-    }
-
-    /**
-     * Checks if given migration version specification matches migration base name.
-     * @param string $rawVersion raw version specification received from user input.
-     * @return string|false actual migration version, `false` - if not match.
-     */
-    private function extractMigrationVersion($rawVersion)
-    {
-        if (preg_match('/^m?(\d{6}_?\d{6})(\D.*)?$/is', $rawVersion, $matches)) {
-            return 'm' . $matches[1];
-        }
-
-        return false;
-    }
-
-    /**
      * Displays the migration history.
      *
      * This command will show the list of migrations that have been applied
      * so far. For example,
      *
      * ```
-     * yii migrate/history     # showing the last 10 migrations
-     * yii migrate/history 5   # showing the last 5 migrations
-     * yii migrate/history all # showing the whole history
+     * console migrate/history     # showing the last 10 migrations
+     * console migrate/history 5   # showing the last 5 migrations
+     * console migrate/history all # showing the whole history
      * ```
      *
      * @param RequestApplicationInterface $app
@@ -619,9 +591,9 @@ abstract class BaseMigrateController extends Controller
      * For example,
      *
      * ```
-     * yii migrate/new     # showing the first 10 new migrations
-     * yii migrate/new 5   # showing the first 5 new migrations
-     * yii migrate/new all # showing all new migrations
+     * console migrate/new     # showing the first 10 new migrations
+     * console migrate/new 5   # showing the first 5 new migrations
+     * console migrate/new all # showing all new migrations
      * ```
      *
      * @param RequestApplicationInterface $app
@@ -671,7 +643,7 @@ abstract class BaseMigrateController extends Controller
      * skeleton by filling up the actual migration logic.
      *
      * ```
-     * yii migrate/create create_user_table
+     * console migrate/create create_user_table
      * ```
      *
      * In order to generate a namespaced migration, you should specify a namespace before the migration's name.
@@ -680,7 +652,7 @@ abstract class BaseMigrateController extends Controller
      * For example:
      *
      * ```
-     * yii migrate/create 'app\\migrations\\createUserTable'
+     * console migrate/create 'app\\migrations\\createUserTable'
      * ```
      *
      * In case [[migrationPath]] is not set and no namespace is provided, the first entry of [[migrationNamespaces]] will be used.
@@ -729,11 +701,39 @@ abstract class BaseMigrateController extends Controller
     }
 
     /**
+     * Checks if given migration version specification matches namespaced migration name.
+     * @param string $rawVersion raw version specification received from user input.
+     * @return string|false actual migration version, `false` - if not match.
+     */
+    protected function extractNamespaceMigrationVersion($rawVersion)
+    {
+        if (preg_match('/^\\\\?([\w_]+\\\\)+m(\d{6}_?\d{6})(\D.*)?$/is', $rawVersion, $matches)) {
+            return trim($rawVersion, '\\');
+        }
+
+        return false;
+    }
+
+    /**
+     * Checks if given migration version specification matches migration base name.
+     * @param string $rawVersion raw version specification received from user input.
+     * @return string|false actual migration version, `false` - if not match.
+     */
+    protected function extractMigrationVersion($rawVersion)
+    {
+        if (preg_match('/^m?(\d{6}_?\d{6})(\D.*)?$/is', $rawVersion, $matches)) {
+            return 'm' . $matches[1];
+        }
+
+        return false;
+    }
+
+    /**
      * Generates class base name and namespace from migration name from user input.
      * @param string $name migration name from user input.
      * @return array list of 2 elements: 'namespace' and 'class base name'
      */
-    private function generateClassName($name)
+    protected function generateClassName($name)
     {
         $namespace = null;
         $name = trim($name, '\\');
@@ -762,7 +762,7 @@ abstract class BaseMigrateController extends Controller
      * @return string migration file path.
      * @throws Exception on failure.
      */
-    private function findMigrationPath($namespace)
+    protected function findMigrationPath($namespace)
     {
         if (empty($namespace)) {
             return is_array($this->migrationPath) ? reset($this->migrationPath) : $this->migrationPath;
@@ -780,7 +780,7 @@ abstract class BaseMigrateController extends Controller
      * @param string $namespace namespace.
      * @return string file path.
      */
-    private function getNamespacePath($namespace)
+    protected function getNamespacePath($namespace)
     {
         return str_replace('/', DIRECTORY_SEPARATOR, \Reaction::$app->getAlias('@' . str_replace('\\', '/', $namespace)));
     }
@@ -1028,7 +1028,7 @@ abstract class BaseMigrateController extends Controller
      */
     protected function generateMigrationSourceCode($params, RequestApplicationInterface $app)
     {
-        return $this->renderPartial($app, \Reaction::$app->getAlias($this->templateFile), $params);
+        return $this->renderFile($app, \Reaction::$app->getAlias($this->templateFile), $params);
     }
 
     /**
