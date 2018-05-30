@@ -9,6 +9,8 @@ use Reaction\Promise\ExtendedPromiseInterface;
  *
  * Each migration class should provide the [[up()]] method containing the logic for "upgrading" the database
  * and the [[down()]] method for the "downgrading" logic.
+ * @property DatabaseInterface|string $db
+ * @property bool                     $compact
  */
 interface MigrationInterface
 {
