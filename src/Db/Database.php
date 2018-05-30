@@ -243,7 +243,10 @@ class Database extends Component implements DatabaseInterface, DbConnectionGette
         $schema = $this->getSchema();
         $promises[] = $schema->initComponent();
         return all($promises)->always(function() {
-            \Reaction::info('{class} initialized', ['class' => get_called_class()]);
+            $this->_initialized = true;
+            if (!\Reaction::isConsoleApp()) {
+                \Reaction::info('{class} initialized', ['class' => get_called_class()]);
+            }
             return true;
         });
     }

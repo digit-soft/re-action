@@ -67,10 +67,14 @@ abstract class StaticApplicationAbstract extends ServiceLocator implements Stati
      */
     public function run()
     {
-        echo "Running server on $this->hostname:$this->port\n";
+        if (!\Reaction::isConsoleApp()) {
+            echo "Running server on $this->hostname:$this->port\n";
+        }
         $this->initPromise = $this->loadComponents()->always(
             function() {
-                \Reaction::info('StaticApplication initialized');
+                if (!\Reaction::isConsoleApp()) {
+                    \Reaction::info('StaticApplication initialized');
+                }
                 $this->initialized = true;
                 return true;
             }
