@@ -17,7 +17,7 @@ return [
             '@app' => getcwd(),
             '@runtime' => '@root/Runtime',
             '@views' => '@root/Views',
-            '@reaction' => dirname(__FILE__),
+            '@reaction' => dirname(__DIR__),
             '@web' => '',
             '@webroot' => '@root/Web',
             '@vendor' => '@root/vendor',
