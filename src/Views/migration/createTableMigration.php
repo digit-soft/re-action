@@ -1,6 +1,6 @@
 <?php
 /**
- * This view is used by console/controllers/MigrateController.php.
+ * This view is used by Console/Controllers/MigrateController.php.
  *
  * The following variables are available in this view:
  */
@@ -17,7 +17,8 @@ if (!empty($namespace)) {
 }
 ?>
 
-use yii\db\Migration;
+use Reaction\Db\ConnectionInterface;
+use Reaction\Db\Migration;
 
 /**
  * Handles the creation of table `<?= $table ?>`.
@@ -30,7 +31,7 @@ class <?= $className ?> extends Migration
     /**
      * {@inheritdoc}
      */
-    public function safeUp()
+    public function safeUp(ConnectionInterface $connection)
     {
 <?= $this->render('_createTable', [
     'table' => $table,
@@ -50,7 +51,7 @@ class <?= $className ?> extends Migration
     /**
      * {@inheritdoc}
      */
-    public function safeDown()
+    public function safeDown(ConnectionInterface $connection)
     {
 <?= $this->render('_dropTable', [
     'table' => $table,

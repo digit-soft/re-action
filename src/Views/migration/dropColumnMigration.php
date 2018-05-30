@@ -1,6 +1,6 @@
 <?php
 /**
- * This view is used by console/controllers/MigrateController.php.
+ * This view is used by Console/Controllers/MigrateController.php.
  *
  * The following variables are available in this view:
  */
@@ -8,6 +8,7 @@
 /* @var $namespace string the new migration class namespace */
 /* @var $table string the name table */
 /* @var $fields array the fields */
+/* @var $foreignKeys array the foreign keys */
 preg_match('/^drop_(.+)_columns?_from_(.+)_table$/', $name, $matches);
 $columns = $matches[1];
 
@@ -17,7 +18,8 @@ if (!empty($namespace)) {
 }
 ?>
 
-use yii\db\Migration;
+use Reaction\Db\ConnectionInterface;
+use Reaction\Db\Migration;
 
 /**
  * Handles dropping <?= $columns ?> from table `<?= $table ?>`.
@@ -30,7 +32,7 @@ class <?= $className ?> extends Migration
     /**
      * {@inheritdoc}
      */
-    public function safeUp()
+    public function safeUp(ConnectionInterface $connection)
     {
 <?= $this->render('_dropColumns', [
     'table' => $table,
@@ -43,7 +45,7 @@ class <?= $className ?> extends Migration
     /**
      * {@inheritdoc}
      */
-    public function safeDown()
+    public function safeDown(ConnectionInterface $connection)
     {
 <?= $this->render('_addColumns', [
     'table' => $table,
