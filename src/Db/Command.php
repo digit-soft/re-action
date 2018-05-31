@@ -251,7 +251,7 @@ class Command extends Component implements CommandInterface
             return new DataReader($this, $results);
         }
         if (empty($results)) {
-            return $fetchMethod === static::FETCH_ALL ? [] : reject(null);
+            return in_array($fetchMethod, [static::FETCH_ALL, static::FETCH_COLUMN]) ? [] : reject(null);
         } elseif (in_array($fetchMethod, [static::FETCH_FIELD, static::FETCH_ROW])) {
             $firstRow = reset($results);
             return $this->fetchResultsRow($firstRow, $fetchMethod, $fetchMode);
