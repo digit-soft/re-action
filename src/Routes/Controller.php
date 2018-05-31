@@ -156,7 +156,7 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
         }
         $self = $this;
         return $this->validateAction($action, $app)->then(
-            function () use (&$app, &$self, $action, $actionId, $params) {
+            function() use (&$app, &$self, $action, $actionId, $params) {
                 if ($this->beforeAction($actionId)) {
                     $app->view->context = $self;
                     return \Reaction::$di->invoke([$self, $action], $params);
@@ -164,7 +164,7 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
                     throw new Exception("Before action error");
                 }
             },
-            function ($error) {
+            function($error) {
                 if (!$error instanceof \Throwable) {
                     $error = new ForbiddenException('You can not perform this action');
                 }

@@ -428,7 +428,7 @@ class PhpManager extends BaseManager
                         return [];
                     })
                     ->then(function($_roles) use ($roles, &$result) {
-                        $roles += array_filter($_roles, function (Role $roleItem) use ($result) {
+                        $roles += array_filter($_roles, function(Role $roleItem) use ($result) {
                             return array_key_exists($roleItem->name, $result);
                         });
                         return $roles;
@@ -820,7 +820,7 @@ class PhpManager extends BaseManager
         $fileContent = "<?php\nreturn " . VarDumper::export($data) . ";\n";
         $self = $this;
         return Reaction\Helpers\FileHelperAsc::putContents($filePath, $fileContent, 'cwt')->then(
-            function () use ($self, $filePath) {
+            function() use ($self, $filePath) {
                 $self->invalidateScriptCache($filePath);
             }
         );

@@ -51,7 +51,7 @@ class Definition
         $this->config = $config;
         if (isset($config['class'])) {
             $this->className = $config['class'];
-        } elseif(isset($this->className)) {
+        } elseif (isset($this->className)) {
             $this->config['class'] = $this->className;
         }
         return $this;

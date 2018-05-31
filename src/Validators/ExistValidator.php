@@ -246,7 +246,7 @@ class ExistValidator extends Validator
         $exists = false;
 
         if ($this->forceMasterDb && method_exists($db, 'useMaster')) {
-            $db->useMaster(function ($db) use ($query, $value, &$exists) {
+            $db->useMaster(function($db) use ($query, $value, &$exists) {
                 $exists = $this->queryValueExists($query, $value);
             });
         } else {
@@ -267,7 +267,7 @@ class ExistValidator extends Validator
     private function queryValueExists($query, $value)
     {
         if (is_array($value)) {
-            return $query->count("DISTINCT [[$this->targetAttribute]]") == count($value) ;
+            return $query->count("DISTINCT [[$this->targetAttribute]]") == count($value);
         }
         return $query->exists();
     }

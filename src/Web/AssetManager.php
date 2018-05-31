@@ -537,7 +537,7 @@ class AssetManager extends Reaction\Base\RequestAppComponent
                 if ($this->beforeCopy !== null) {
                     $opts['beforeCopy'] = $this->beforeCopy;
                 } else {
-                    $opts['beforeCopy'] = function ($from, $to) {
+                    $opts['beforeCopy'] = function($from, $to) {
                         return strncmp(basename($from), '.', 1) !== 0;
                     };
                 }

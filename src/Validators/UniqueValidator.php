@@ -76,7 +76,7 @@ class UniqueValidator extends Validator
     /**
      * @var bool whether this validator is forced to always use master DB
      */
-    public $forceMasterDb =  true;
+    public $forceMasterDb = true;
 
 
     /**
@@ -119,7 +119,7 @@ class UniqueValidator extends Validator
         $modelExists = false;
 
         if ($this->forceMasterDb && method_exists($db, 'useMaster')) {
-            $db->useMaster(function () use ($targetClass, $conditions, $model, &$modelExists) {
+            $db->useMaster(function() use ($targetClass, $conditions, $model, &$modelExists) {
                 $modelExists = $this->modelExists($targetClass, $conditions, $model);
             });
         } else {

@@ -69,7 +69,7 @@ class Controller extends \Reaction\Routes\Controller
             $this->stdout($this->ansiFormat($data['message'], Console::FG_RED) . "\n");
             return null;
         } else {
-            $body = $data['name'] . ' (' . $data['code'] . ')' .  "\n";
+            $body = $data['name'] . ' (' . $data['code'] . ')' . "\n";
             $body .= $data['message'] !== "" ? $data['message'] . "\n" : '';
             $body .= $data['file'] !== "" ? $data['file'] : '';
             $body .= $data['line'] !== "" ? " #" . $data['line'] . "\n" : '';

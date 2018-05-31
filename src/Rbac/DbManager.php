@@ -519,7 +519,7 @@ class DbManager extends BaseManager
 
                 $rolesResult = [$roleName => $role];
 
-                $rolesResult += array_filter($roles, function (Role $roleItem) use ($result) {
+                $rolesResult += array_filter($roles, function(Role $roleItem) use ($result) {
                     return array_key_exists($roleItem->name, $result);
                 });
 
