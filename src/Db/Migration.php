@@ -84,14 +84,13 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
 
 
     /**
-     * TODO: make async init
      * Initializes the migration.
      * This method will set [[db]] to be the 'db' application component, if it is `null`.
      */
     public function init()
     {
         parent::init();
-        $this->db = Instance::ensure($this->db, DatabaseInterface::className());
+        $this->db = Instance::ensure($this->db, DatabaseInterface::class);
     }
 
     /**
