@@ -1,15 +1,16 @@
 <?php
-//TODO: Come back later after ActiveRecord development
 
 namespace Reaction\Validators;
 
 use Reaction;
 use Reaction\Base\Model;
-use yii\db\ActiveQuery;
-use yii\db\ActiveQueryInterface;
-use yii\db\ActiveRecord;
-use yii\db\ActiveRecordInterface;
+use Reaction\Db\Orm\ActiveQuery;
+use Reaction\Db\Orm\ActiveQueryInterface;
+use Reaction\Db\Orm\ActiveRecord;
+use Reaction\Db\Orm\ActiveRecordInterface;
 use Reaction\Helpers\Inflector;
+use Reaction\Promise\ExtendedPromiseInterface;
+use function Reaction\Promise\resolve;
 
 /**
  * UniqueValidator validates that the attribute value is unique in the specified database table.
@@ -108,31 +109,23 @@ class UniqueValidator extends Validator
 
         foreach ($rawConditions as $key => $value) {
             if (is_array($value)) {
-                $this->addError($model, $attribute, Yii::t('yii', '{attribute} is invalid.'));
-                return;
+                $this->addError($model, $attribute, Reaction::t('yii', '{attribute} is invalid.'));
+                return resolve(false);
             }
             $conditions[] = [$key => $value];
         }
 
-        $db = $targetClass::getDb();
-
-        $modelExists = false;
-
-        if ($this->forceMasterDb && method_exists($db, 'useMaster')) {
-            $db->useMaster(function() use ($targetClass, $conditions, $model, &$modelExists) {
-                $modelExists = $this->modelExists($targetClass, $conditions, $model);
+        return $this->modelExists($targetClass, $conditions, $model)
+            ->then(function() use ($targetAttribute, $attribute, $model) {
+                if (is_array($targetAttribute) && count($targetAttribute) > 1) {
+                    $this->addComboNotUniqueError($model, $attribute);
+                } else {
+                    $this->addError($model, $attribute, $this->message);
+                }
+                return true;
+            }, function() {
+                return true;
             });
-        } else {
-            $modelExists = $this->modelExists($targetClass, $conditions, $model);
-        }
-
-        if ($modelExists) {
-            if (is_array($targetAttribute) && count($targetAttribute) > 1) {
-                $this->addComboNotUniqueError($model, $attribute);
-            } else {
-                $this->addError($model, $attribute, $this->message);
-            }
-        }
     }
 
     /**
@@ -152,20 +145,20 @@ class UniqueValidator extends Validator
      * @param array $conditions conditions, compatible with [[\yii\db\Query::where()|Query::where()]] key-value format.
      * @param Model $model the data model to be validated
      *
-     * @return bool whether the model already exists
+     * @return ExtendedPromiseInterface with bool whether the model already exists
      */
     private function modelExists($targetClass, $conditions, $model)
     {
         /** @var ActiveRecordInterface $targetClass $query */
         $query = $this->prepareQuery($targetClass, $conditions);
 
-        if (!$model instanceof ActiveRecordInterface || $model->getIsNewRecord() || $model->className() !== $targetClass::className()) {
+        if (!$model instanceof ActiveRecordInterface || $model->getIsNewRecord() || get_class($model) !== $targetClass) {
             // if current $model isn't in the database yet then it's OK just to call exists()
             // also there's no need to run check based on primary keys, when $targetClass is not the same as $model's class
-            $exists = $query->exists();
+            return $query->exists();
         } else {
             // if current $model is in the database already we can't use exists()
-            if ($query instanceof \yii\db\ActiveQuery) {
+            if ($query instanceof \Reaction\Db\Orm\ActiveQuery) {
                 // only select primary key to optimize query
                 $columnsCondition = array_flip($targetClass::primaryKey());
                 $query->select(array_flip($this->applyTableAlias($query, $columnsCondition)));
@@ -173,24 +166,25 @@ class UniqueValidator extends Validator
                 // any with relation can't be loaded because related fields are not selected
                 $query->with = null;
             }
-            $models = $query->limit(2)->asArray()->all();
-            $n = count($models);
-            if ($n === 1) {
-                // if there is one record, check if it is the currently validated model
-                $dbModel = reset($models);
-                $pks = $targetClass::primaryKey();
-                $pk = [];
-                foreach ($pks as $pkAttribute) {
-                    $pk[$pkAttribute] = $dbModel[$pkAttribute];
-                }
-                $exists = ($pk != $model->getOldPrimaryKey(true));
-            } else {
-                // if there is more than one record, the value is not unique
-                $exists = $n > 1;
-            }
+            return $query->limit(2)->asArray()->all()
+                ->then(function($models) use ($targetClass, $model) {
+                    $n = count($models);
+                    if ($n === 1) {
+                        // if there is one record, check if it is the currently validated model
+                        $dbModel = reset($models);
+                        $pks = $targetClass::primaryKey();
+                        $pk = [];
+                        foreach ($pks as $pkAttribute) {
+                            $pk[$pkAttribute] = $dbModel[$pkAttribute];
+                        }
+                        $exists = ($pk != $model->getOldPrimaryKey(true));
+                    } else {
+                        // if there is more than one record, the value is not unique
+                        $exists = $n > 1;
+                    }
+                    return $exists;
+                });
         }
-
-        return $exists;
     }
 
     /**
@@ -242,7 +236,7 @@ class UniqueValidator extends Validator
         }
 
         $targetModelClass = $this->getTargetClass($model);
-        if (!is_subclass_of($targetModelClass, 'yii\db\ActiveRecord')) {
+        if (!is_subclass_of($targetModelClass, 'Reaction\Db\Orm\ActiveRecord')) {
             return $conditions;
         }
 
