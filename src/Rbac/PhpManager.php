@@ -2,10 +2,16 @@
 
 namespace Reaction\Rbac;
 
+use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction;
+use Reaction\Exceptions\Error;
 use Reaction\Exceptions\InvalidArgumentException;
 use Reaction\Exceptions\InvalidCallException;
 use Reaction\Helpers\VarDumper;
+use function Reaction\Promise\resolve;
+use function Reaction\Promise\reject;
+use function Reaction\Promise\all;
+use function Reaction\Promise\any;
 
 /**
  * PhpManager represents an authorization manager that stores authorization
@@ -87,13 +93,14 @@ class PhpManager extends BaseManager
      */
     public function checkAccess($userId, $permissionName, $params = [])
     {
-        $assignments = $this->getAssignments($userId);
+        return $this->getAssignments($userId)
+            ->then(function($assignments) use ($userId, $permissionName, $params) {
+                if ($this->hasNoAssignments($assignments)) {
+                    return reject(new Error("No assignments for '$userId'"));
+                }
 
-        if ($this->hasNoAssignments($assignments)) {
-            return false;
-        }
-
-        return $this->checkAccessRecursive($userId, $permissionName, $params, $assignments);
+                return $this->checkAccessRecursive($userId, $permissionName, $params, $assignments);
+            });
     }
 
     /**
@@ -101,7 +108,9 @@ class PhpManager extends BaseManager
      */
     public function getAssignments($userId)
     {
-        return isset($this->assignments[$userId]) ? $this->assignments[$userId] : [];
+        return isset($this->assignments[$userId])
+            ? resolve($this->assignments[$userId])
+            : reject(new Error("No assignments for '$userId'"));
     }
 
     /**
@@ -115,33 +124,32 @@ class PhpManager extends BaseManager
      * with the tasks and roles assigned to the user. A param with name 'user' is added to this array,
      * which holds the value of `$userId`.
      * @param Assignment[] $assignments the assignments to the specified user
-     * @return bool whether the operations can be performed by the user.
+     * @return ExtendedPromiseInterface with bool whether the operations can be performed by the user.
      */
     protected function checkAccessRecursive($user, $itemName, $params, $assignments)
     {
         if (!isset($this->items[$itemName])) {
-            return false;
+            return reject(new Error("Check access recursive - denied"));
         }
 
         /* @var $item Item */
         $item = $this->items[$itemName];
         Reaction::debug($item instanceof Role ? "Checking role: $itemName" : "Checking permission : $itemName");
 
-        if (!$this->executeRule($user, $item, $params)) {
-            return false;
-        }
+        return $this->executeRule($user, $item, $params)
+            ->then(function() use ($assignments, $itemName, $user, $params) {
+                if (isset($assignments[$itemName]) || in_array($itemName, $this->defaultRoles)) {
+                    return true;
+                }
 
-        if (isset($assignments[$itemName]) || in_array($itemName, $this->defaultRoles)) {
-            return true;
-        }
-
-        foreach ($this->children as $parentName => $children) {
-            if (isset($children[$itemName]) && $this->checkAccessRecursive($user, $parentName, $params, $assignments)) {
-                return true;
-            }
-        }
-
-        return false;
+                $promises = [];
+                foreach ($this->children as $parentName => $children) {
+                    if (isset($children[$itemName])) {
+                        $promises[] = $this->checkAccessRecursive($user, $parentName, $params, $assignments);
+                    }
+                }
+                return !empty($promises) ? any($promises) : reject(new Error("Check access recursive - denied"));
+            });
     }
 
     /**
@@ -149,7 +157,7 @@ class PhpManager extends BaseManager
      */
     public function canAddChild($parent, $child)
     {
-        return !$this->detectLoop($parent, $child);
+        return !$this->detectLoop($parent, $child) ? resolve(true) : reject(false);
     }
 
     /**
@@ -175,9 +183,7 @@ class PhpManager extends BaseManager
             throw new InvalidCallException("The item '{$parent->name}' already has a child '{$child->name}'.");
         }
         $this->children[$parent->name][$child->name] = $this->items[$child->name];
-        $this->saveItems();
-
-        return true;
+        return $this->saveItems();
     }
 
     /**
@@ -212,11 +218,10 @@ class PhpManager extends BaseManager
     {
         if (isset($this->children[$parent->name][$child->name])) {
             unset($this->children[$parent->name][$child->name]);
-            $this->saveItems();
-            return true;
+            return $this->saveItems();
         }
 
-        return false;
+        return reject(new Error("'{$parent->name}' has no child '{$child->name}'"));
     }
 
     /**
@@ -226,11 +231,10 @@ class PhpManager extends BaseManager
     {
         if (isset($this->children[$parent->name])) {
             unset($this->children[$parent->name]);
-            $this->saveItems();
-            return true;
+            return $this->saveItems();
         }
 
-        return false;
+        return reject(new Error("'{$parent->name}' has no children"));
     }
 
     /**
@@ -238,7 +242,9 @@ class PhpManager extends BaseManager
      */
     public function hasChild($parent, $child)
     {
-        return isset($this->children[$parent->name][$child->name]);
+        return isset($this->children[$parent->name][$child->name])
+            ? resolve(true)
+            : reject(false);
     }
 
     /**
@@ -257,9 +263,10 @@ class PhpManager extends BaseManager
             'roleName' => $role->name,
             'createdAt' => time(),
         ]);
-        $this->saveAssignments();
-
-        return $this->assignments[$userId][$role->name];
+        return $this->saveAssignments()
+            ->then(function() use ($userId, $role) {
+                return $this->assignments[$userId][$role->name];
+            });
     }
 
     /**
@@ -269,11 +276,10 @@ class PhpManager extends BaseManager
     {
         if (isset($this->assignments[$userId][$role->name])) {
             unset($this->assignments[$userId][$role->name]);
-            $this->saveAssignments();
-            return true;
+            return $this->saveAssignments();
         }
 
-        return false;
+        return reject(new Error("User '$userId' has no role '$role->name'"));
     }
 
     /**
@@ -285,11 +291,10 @@ class PhpManager extends BaseManager
             foreach ($this->assignments[$userId] as $itemName => $value) {
                 unset($this->assignments[$userId][$itemName]);
             }
-            $this->saveAssignments();
-            return true;
+            return $this->saveAssignments();
         }
 
-        return false;
+        return reject(new Error("No assignments for user '$userId'"));
     }
 
     /**
@@ -297,7 +302,9 @@ class PhpManager extends BaseManager
      */
     public function getAssignment($roleName, $userId)
     {
-        return isset($this->assignments[$userId][$roleName]) ? $this->assignments[$userId][$roleName] : null;
+        return isset($this->assignments[$userId][$roleName])
+            ? resolve($this->assignments[$userId][$roleName])
+            : reject(new Error("Assignment for user '$userId' with role '$roleName' not found"));
     }
 
     /**
@@ -314,7 +321,7 @@ class PhpManager extends BaseManager
             }
         }
 
-        return $items;
+        return resolve($items);
     }
 
 
@@ -331,12 +338,14 @@ class PhpManager extends BaseManager
                 unset($assignments[$item->name]);
             }
             unset($this->items[$item->name]);
-            $this->saveItems();
-            $this->saveAssignments();
-            return true;
+            $promises = [
+                $this->saveItems(),
+                $this->saveAssignments(),
+            ];
+            return all($promises);
         }
 
-        return false;
+        return reject(new Error("Item '{$item->name}' not found"));
     }
 
     /**
@@ -344,7 +353,7 @@ class PhpManager extends BaseManager
      */
     public function getItem($name)
     {
-        return isset($this->items[$name]) ? $this->items[$name] : null;
+        return isset($this->items[$name]) ? resolve($this->items[$name]) : reject(new Error("Item '$name' not found"));
     }
 
     /**
@@ -356,8 +365,7 @@ class PhpManager extends BaseManager
             unset($this->rules[$name]);
         }
         $this->rules[$rule->name] = $rule;
-        $this->saveRules();
-        return true;
+        return $this->saveRules();
     }
 
     /**
@@ -365,7 +373,7 @@ class PhpManager extends BaseManager
      */
     public function getRule($name)
     {
-        return isset($this->rules[$name]) ? $this->rules[$name] : null;
+        return isset($this->rules[$name]) ? resolve($this->rules[$name]) : reject(new Error("Rule '$name' not found"));
     }
 
     /**
@@ -373,7 +381,7 @@ class PhpManager extends BaseManager
      */
     public function getRules()
     {
-        return $this->rules;
+        return resolve($this->rules);
     }
 
     /**
@@ -383,14 +391,20 @@ class PhpManager extends BaseManager
     public function getRolesByUser($userId)
     {
         $roles = $this->getDefaultRoleInstances();
-        foreach ($this->getAssignments($userId) as $name => $assignment) {
-            $role = $this->items[$assignment->roleName];
-            if ($role->type === Item::TYPE_ROLE) {
-                $roles[$name] = $role;
-            }
-        }
+        return $this->getAssignments($userId)
+            ->otherwise(function() {
+                return [];
+            })
+            ->then(function($assignments) use ($roles) {
+                foreach ($assignments as $name => $assignment) {
+                    $role = $this->items[$assignment->roleName];
+                    if ($role->type === Item::TYPE_ROLE) {
+                        $roles[$name] = $role;
+                    }
+                }
 
-        return $roles;
+                return $roles;
+            });
     }
 
     /**
@@ -398,22 +412,28 @@ class PhpManager extends BaseManager
      */
     public function getChildRoles($roleName)
     {
-        $role = $this->getRole($roleName);
+        return $this->getRole($roleName)
+            ->then(function($role) use ($roleName) {
+                if ($role === null) {
+                    throw new InvalidArgumentException("Role \"$roleName\" not found.");
+                }
 
-        if ($role === null) {
-            throw new InvalidArgumentException("Role \"$roleName\" not found.");
-        }
+                $result = [];
+                $this->getChildrenRecursive($roleName, $result);
 
-        $result = [];
-        $this->getChildrenRecursive($roleName, $result);
+                $roles = [$roleName => $role];
 
-        $roles = [$roleName => $role];
-
-        $roles += array_filter($this->getRoles(), function (Role $roleItem) use ($result) {
-            return array_key_exists($roleItem->name, $result);
-        });
-
-        return $roles;
+                return $this->getRoles()
+                    ->otherwise(function() {
+                        return [];
+                    })
+                    ->then(function($_roles) use ($roles, &$result) {
+                        $roles += array_filter($_roles, function (Role $roleItem) use ($result) {
+                            return array_key_exists($roleItem->name, $result);
+                        });
+                        return $roles;
+                    });
+            });
     }
 
     /**
@@ -424,7 +444,7 @@ class PhpManager extends BaseManager
         $result = [];
         $this->getChildrenRecursive($roleName, $result);
         if (empty($result)) {
-            return [];
+            return resolve([]);
         }
         $permissions = [];
         foreach (array_keys($result) as $itemName) {
@@ -433,7 +453,7 @@ class PhpManager extends BaseManager
             }
         }
 
-        return $permissions;
+        return resolve($permissions);
     }
 
     /**
@@ -457,55 +477,65 @@ class PhpManager extends BaseManager
      */
     public function getPermissionsByUser($userId)
     {
-        $directPermission = $this->getDirectPermissionsByUser($userId);
-        $inheritedPermission = $this->getInheritedPermissionsByUser($userId);
+        $promises = [
+            $this->getDirectPermissionsByUser($userId)->otherwise(function() { return []; }),
+            $this->getInheritedPermissionsByUser($userId)->otherwise(function() { return []; }),
+        ];
 
-        return array_merge($directPermission, $inheritedPermission);
+        return all($promises)
+            ->then(function($results = []) {
+                return array_merge(...$results);
+            });
     }
 
     /**
      * Returns all permissions that are directly assigned to user.
-     * @param string|int $userId the user ID (see [[\yii\web\User::id]])
-     * @return Permission[] all direct permissions that the user has. The array is indexed by the permission names.
+     * @param string|int $userId the user ID (see [[\Reaction\Web\User::id]])
+     * @return ExtendedPromiseInterface with Permission[] all direct permissions that the user has. The array is indexed by the permission names.
      */
     protected function getDirectPermissionsByUser($userId)
     {
-        $permissions = [];
-        foreach ($this->getAssignments($userId) as $name => $assignment) {
-            $permission = $this->items[$assignment->roleName];
-            if ($permission->type === Item::TYPE_PERMISSION) {
-                $permissions[$name] = $permission;
-            }
-        }
+        return $this->getAssignments($userId)
+            ->then(function($assignments) {
+                $permissions = [];
+                foreach ($assignments as $name => $assignment) {
+                    $permission = $this->items[$assignment->roleName];
+                    if ($permission->type === Item::TYPE_PERMISSION) {
+                        $permissions[$name] = $permission;
+                    }
+                }
 
-        return $permissions;
+                return $permissions;
+            });
     }
 
     /**
      * Returns all permissions that the user inherits from the roles assigned to him.
      * @param string|int $userId the user ID (see [[\yii\web\User::id]])
-     * @return Permission[] all inherited permissions that the user has. The array is indexed by the permission names.
+     * @return ExtendedPromiseInterface with Permission[] all inherited permissions that the user has. The array is indexed by the permission names.
      */
     protected function getInheritedPermissionsByUser($userId)
     {
-        $assignments = $this->getAssignments($userId);
-        $result = [];
-        foreach (array_keys($assignments) as $roleName) {
-            $this->getChildrenRecursive($roleName, $result);
-        }
+        return $this->getAssignments($userId)
+            ->then(function($assignments = []) {
+                $result = [];
+                foreach (array_keys($assignments) as $roleName) {
+                    $this->getChildrenRecursive($roleName, $result);
+                }
 
-        if (empty($result)) {
-            return [];
-        }
+                if (empty($result)) {
+                    return [];
+                }
 
-        $permissions = [];
-        foreach (array_keys($result) as $itemName) {
-            if (isset($this->items[$itemName]) && $this->items[$itemName] instanceof Permission) {
-                $permissions[$itemName] = $this->items[$itemName];
-            }
-        }
+                $permissions = [];
+                foreach (array_keys($result) as $itemName) {
+                    if (isset($this->items[$itemName]) && $this->items[$itemName] instanceof Permission) {
+                        $permissions[$itemName] = $this->items[$itemName];
+                    }
+                }
 
-        return $permissions;
+                return $permissions;
+            });
     }
 
     /**
@@ -513,7 +543,7 @@ class PhpManager extends BaseManager
      */
     public function getChildren($name)
     {
-        return isset($this->children[$name]) ? $this->children[$name] : [];
+        return isset($this->children[$name]) ? resolve($this->children[$name]) : resolve([]);
     }
 
     /**
@@ -525,7 +555,7 @@ class PhpManager extends BaseManager
         $this->items = [];
         $this->assignments = [];
         $this->rules = [];
-        $this->save();
+        return $this->save();
     }
 
     /**
@@ -533,7 +563,7 @@ class PhpManager extends BaseManager
      */
     public function removeAllPermissions()
     {
-        $this->removeAllItems(Item::TYPE_PERMISSION);
+        return $this->removeAllItems(Item::TYPE_PERMISSION);
     }
 
     /**
@@ -541,12 +571,13 @@ class PhpManager extends BaseManager
      */
     public function removeAllRoles()
     {
-        $this->removeAllItems(Item::TYPE_ROLE);
+        return $this->removeAllItems(Item::TYPE_ROLE);
     }
 
     /**
      * Removes all auth items of the specified type.
      * @param int $type the auth item type (either Item::TYPE_PERMISSION or Item::TYPE_ROLE)
+     * @return ExtendedPromiseInterface
      */
     protected function removeAllItems($type)
     {
@@ -558,7 +589,7 @@ class PhpManager extends BaseManager
             }
         }
         if (empty($names)) {
-            return;
+            return resolve(true);
         }
 
         foreach ($this->assignments as $i => $assignments) {
@@ -581,7 +612,7 @@ class PhpManager extends BaseManager
             }
         }
 
-        $this->saveItems();
+        return $this->saveItems();
     }
 
     /**
@@ -593,7 +624,7 @@ class PhpManager extends BaseManager
             $item->ruleName = null;
         }
         $this->rules = [];
-        $this->saveRules();
+        return $this->saveRules();
     }
 
     /**
@@ -602,7 +633,7 @@ class PhpManager extends BaseManager
     public function removeAllAssignments()
     {
         $this->assignments = [];
-        $this->saveAssignments();
+        return $this->saveAssignments();
     }
 
     /**
@@ -617,11 +648,10 @@ class PhpManager extends BaseManager
                     $item->ruleName = null;
                 }
             }
-            $this->saveRules();
-            return true;
+            return $this->saveRules();
         }
 
-        return false;
+        return reject(new Error("Rule '{$rule->name}' not found"));
     }
 
     /**
@@ -630,8 +660,7 @@ class PhpManager extends BaseManager
     protected function addRule($rule)
     {
         $this->rules[$rule->name] = $rule;
-        $this->saveRules();
-        return true;
+        return $this->saveRules();
     }
 
     /**
@@ -641,7 +670,7 @@ class PhpManager extends BaseManager
     {
         if ($name !== $item->name) {
             if (isset($this->items[$item->name])) {
-                throw new InvalidArgumentException("Unable to change the item name. The name '{$item->name}' is already used by another item.");
+                reject(new InvalidArgumentException("Unable to change the item name. The name '{$item->name}' is already used by another item."));
             }
 
             // Remove old item in case of renaming
@@ -664,13 +693,16 @@ class PhpManager extends BaseManager
                     unset($assignments[$name]);
                 }
             }
-            $this->saveAssignments();
+            $basePromise = $this->saveAssignments();
+        } else {
+            $basePromise = resolve(true);
         }
 
         $this->items[$item->name] = $item;
 
-        $this->saveItems();
-        return true;
+        return $basePromise->then(function() {
+            return $this->saveItems();
+        });
     }
 
     /**
@@ -688,9 +720,7 @@ class PhpManager extends BaseManager
 
         $this->items[$item->name] = $item;
 
-        $this->saveItems();
-
-        return true;
+        return $this->saveItems();
     }
 
     /**
@@ -749,12 +779,16 @@ class PhpManager extends BaseManager
 
     /**
      * Saves authorization data into persistent storage.
+     * @return ExtendedPromiseInterface when finished
      */
     protected function save()
     {
-        $this->saveItems();
-        $this->saveAssignments();
-        $this->saveRules();
+        $promises = [
+            $this->saveItems(),
+            $this->saveAssignments(),
+            $this->saveRules(),
+        ];
+        return all($promises);
     }
 
     /**
@@ -779,7 +813,7 @@ class PhpManager extends BaseManager
      * @param array  $data the authorization data
      * @param string $filePath the file path.
      * @see loadFromFile()
-     * @return \React\Promise\PromiseInterface
+     * @return ExtendedPromiseInterface
      */
     protected function saveToFile($data, $filePath)
     {
@@ -808,6 +842,7 @@ class PhpManager extends BaseManager
 
     /**
      * Saves items data into persistent storage.
+     * @return ExtendedPromiseInterface
      */
     protected function saveItems()
     {
@@ -829,11 +864,12 @@ class PhpManager extends BaseManager
                 }
             }
         }
-        $this->saveToFile($items, $this->itemFile);
+        return $this->saveToFile($items, $this->itemFile);
     }
 
     /**
      * Saves assignments data into persistent storage.
+     * @return ExtendedPromiseInterface
      */
     protected function saveAssignments()
     {
@@ -844,11 +880,12 @@ class PhpManager extends BaseManager
                 $assignmentData[$userId][] = $assignment->roleName;
             }
         }
-        $this->saveToFile($assignmentData, $this->assignmentFile);
+        return $this->saveToFile($assignmentData, $this->assignmentFile);
     }
 
     /**
      * Saves rules data into persistent storage.
+     * @return ExtendedPromiseInterface
      */
     protected function saveRules()
     {
@@ -856,7 +893,7 @@ class PhpManager extends BaseManager
         foreach ($this->rules as $name => $rule) {
             $rules[$name] = serialize($rule);
         }
-        $this->saveToFile($rules, $this->ruleFile);
+        return $this->saveToFile($rules, $this->ruleFile);
     }
 
     /**
@@ -873,6 +910,6 @@ class PhpManager extends BaseManager
             }
         }
 
-        return $result;
+        return resolve($result);
     }
 }

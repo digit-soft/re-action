@@ -1,6 +1,7 @@
 <?php
 
 namespace Reaction\Rbac;
+use Reaction\Promise\ExtendedPromiseInterface;
 
 /**
  * For more details and usage information on ManagerInterface, see the [guide article on security authorization](guide:security-authorization).
@@ -52,13 +53,13 @@ interface ManagerInterface extends CheckAccessInterface
     /**
      * Returns the named role.
      * @param string $name the role name.
-     * @return null|Role the role corresponding to the specified name. Null is returned if no such role.
+     * @return ExtendedPromiseInterface with Role the role corresponding to the specified name. Null is returned if no such role.
      */
     public function getRole($name);
 
     /**
      * Returns all roles in the system.
-     * @return Role[] all roles in the system. The array is indexed by the role names.
+     * @return ExtendedPromiseInterface with Role[] all roles in the system. The array is indexed by the role names.
      */
     public function getRoles();
 
@@ -66,14 +67,14 @@ interface ManagerInterface extends CheckAccessInterface
      * Returns the roles that are assigned to the user via [[assign()]].
      * Note that child roles that are not assigned directly to the user will not be returned.
      * @param string|int $userId the user ID (see [[\yii\web\User::id]])
-     * @return Role[] all roles directly assigned to the user. The array is indexed by the role names.
+     * @return ExtendedPromiseInterface with Role[] all roles directly assigned to the user. The array is indexed by the role names.
      */
     public function getRolesByUser($userId);
 
     /**
      * Returns child roles of the role specified. Depth isn't limited.
      * @param string $roleName name of the role to file child roles for
-     * @return Role[] Child roles. The array is indexed by the role names.
+     * @return ExtendedPromiseInterface with Role[] Child roles. The array is indexed by the role names.
      * First element is an instance of the parent Role itself.
      * @throws \Reaction\Exceptions\InvalidParamException if Role was not found that are getting by $roleName
      */
@@ -82,40 +83,40 @@ interface ManagerInterface extends CheckAccessInterface
     /**
      * Returns the named permission.
      * @param string $name the permission name.
-     * @return null|Permission the permission corresponding to the specified name. Null is returned if no such permission.
+     * @return ExtendedPromiseInterface with Permission the permission corresponding to the specified name. Null is returned if no such permission.
      */
     public function getPermission($name);
 
     /**
      * Returns all permissions in the system.
-     * @return Permission[] all permissions in the system. The array is indexed by the permission names.
+     * @return ExtendedPromiseInterface with Permission[] all permissions in the system. The array is indexed by the permission names.
      */
     public function getPermissions();
 
     /**
      * Returns all permissions that the specified role represents.
      * @param string $roleName the role name
-     * @return Permission[] all permissions that the role represents. The array is indexed by the permission names.
+     * @return ExtendedPromiseInterface with Permission[] all permissions that the role represents. The array is indexed by the permission names.
      */
     public function getPermissionsByRole($roleName);
 
     /**
      * Returns all permissions that the user has.
      * @param string|int $userId the user ID (see [[\yii\web\User::id]])
-     * @return Permission[] all permissions that the user has. The array is indexed by the permission names.
+     * @return ExtendedPromiseInterface with Permission[] all permissions that the user has. The array is indexed by the permission names.
      */
     public function getPermissionsByUser($userId);
 
     /**
      * Returns the rule of the specified name.
      * @param string $name the rule name
-     * @return null|Rule the rule object, or null if the specified name does not correspond to a rule.
+     * @return ExtendedPromiseInterface with Rule the rule object, or null if the specified name does not correspond to a rule.
      */
     public function getRule($name);
 
     /**
      * Returns all rules available in the system.
-     * @return Rule[] the rules indexed by the rule names
+     * @return ExtendedPromiseInterface with Rule[] the rules indexed by the rule names
      */
     public function getRules();
 
@@ -123,9 +124,7 @@ interface ManagerInterface extends CheckAccessInterface
      * Checks the possibility of adding a child to parent.
      * @param Item $parent the parent item
      * @param Item $child the child item to be added to the hierarchy
-     * @return bool possibility of adding
-     *
-     * @since 2.0.8
+     * @return ExtendedPromiseInterface with bool possibility of adding
      */
     public function canAddChild($parent, $child);
 
@@ -133,7 +132,7 @@ interface ManagerInterface extends CheckAccessInterface
      * Adds an item as a child of another item.
      * @param Item $parent
      * @param Item $child
-     * @return bool whether the child successfully added
+     * @return ExtendedPromiseInterface with bool whether the child successfully added
      * @throws \Reaction\Exceptions\Exception if the parent-child relationship already exists or if a loop has been detected.
      */
     public function addChild($parent, $child);
@@ -143,7 +142,7 @@ interface ManagerInterface extends CheckAccessInterface
      * Note, the child item is not deleted. Only the parent-child relationship is removed.
      * @param Item $parent
      * @param Item $child
-     * @return bool whether the removal is successful
+     * @return ExtendedPromiseInterface with bool whether the removal is successful
      */
     public function removeChild($parent, $child);
 
@@ -151,7 +150,7 @@ interface ManagerInterface extends CheckAccessInterface
      * Removed all children form their parent.
      * Note, the children items are not deleted. Only the parent-child relationships are removed.
      * @param Item $parent
-     * @return bool whether the removal is successful
+     * @return ExtendedPromiseInterface with bool whether the removal is successful
      */
     public function removeChildren($parent);
 
@@ -159,14 +158,14 @@ interface ManagerInterface extends CheckAccessInterface
      * Returns a value indicating whether the child already exists for the parent.
      * @param Item $parent
      * @param Item $child
-     * @return bool whether `$child` is already a child of `$parent`
+     * @return ExtendedPromiseInterface with bool whether `$child` is already a child of `$parent`
      */
     public function hasChild($parent, $child);
 
     /**
      * Returns the child permissions and/or roles.
      * @param string $name the parent name
-     * @return Item[] the child permissions and/or roles
+     * @return ExtendedPromiseInterface with Item[] the child permissions and/or roles
      */
     public function getChildren($name);
 
@@ -175,7 +174,7 @@ interface ManagerInterface extends CheckAccessInterface
      *
      * @param Role|Permission $role
      * @param string|int $userId the user ID (see [[\yii\web\User::id]])
-     * @return Assignment the role assignment information.
+     * @return ExtendedPromiseInterface with Assignment the role assignment information.
      * @throws \Exception if the role has already been assigned to the user
      */
     public function assign($role, $userId);
@@ -184,14 +183,14 @@ interface ManagerInterface extends CheckAccessInterface
      * Revokes a role from a user.
      * @param Role|Permission $role
      * @param string|int $userId the user ID (see [[\yii\web\User::id]])
-     * @return bool whether the revoking is successful
+     * @return ExtendedPromiseInterface with bool whether the revoking is successful
      */
     public function revoke($role, $userId);
 
     /**
      * Revokes all roles from a user.
      * @param mixed $userId the user ID (see [[\yii\web\User::id]])
-     * @return bool whether the revoking is successful
+     * @return ExtendedPromiseInterface with bool whether the revoking is successful
      */
     public function revokeAll($userId);
 
@@ -199,7 +198,7 @@ interface ManagerInterface extends CheckAccessInterface
      * Returns the assignment information regarding a role and a user.
      * @param string $roleName the role name
      * @param string|int $userId the user ID (see [[\yii\web\User::id]])
-     * @return null|Assignment the assignment information. Null is returned if
+     * @return ExtendedPromiseInterface with Assignment the assignment information. Null is returned if
      * the role is not assigned to the user.
      */
     public function getAssignment($roleName, $userId);
@@ -207,7 +206,7 @@ interface ManagerInterface extends CheckAccessInterface
     /**
      * Returns all role assignment information for the specified user.
      * @param string|int $userId the user ID (see [[\yii\web\User::id]])
-     * @return Assignment[] the assignments indexed by role names. An empty array will be
+     * @return ExtendedPromiseInterface with Assignment[] the assignments indexed by role names. An empty array will be
      * returned if there is no role assigned to the user.
      */
     public function getAssignments($userId);
@@ -215,35 +214,40 @@ interface ManagerInterface extends CheckAccessInterface
     /**
      * Returns all user IDs assigned to the role specified.
      * @param string $roleName
-     * @return array array of user ID strings
+     * @return ExtendedPromiseInterface with array of user ID strings
      */
     public function getUserIdsByRole($roleName);
 
     /**
      * Removes all authorization data, including roles, permissions, rules, and assignments.
+     * @return ExtendedPromiseInterface when finished
      */
     public function removeAll();
 
     /**
      * Removes all permissions.
      * All parent child relations will be adjusted accordingly.
+     * @return ExtendedPromiseInterface when finished
      */
     public function removeAllPermissions();
 
     /**
      * Removes all roles.
      * All parent child relations will be adjusted accordingly.
+     * @return ExtendedPromiseInterface when finished
      */
     public function removeAllRoles();
 
     /**
      * Removes all rules.
      * All roles and permissions which have rules will be adjusted accordingly.
+     * @return ExtendedPromiseInterface when finished
      */
     public function removeAllRules();
 
     /**
      * Removes all role assignments.
+     * @return ExtendedPromiseInterface when finished
      */
     public function removeAllAssignments();
 }
