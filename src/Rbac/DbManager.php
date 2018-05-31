@@ -940,7 +940,7 @@ class DbManager extends BaseManager
             ])
             ->execute()
             ->then(
-                function() use ($assignment) {
+                function() use ($assignment, $userId) {
                     unset($this->_checkAccessAssignments[(string) $userId]);
                     return $assignment;
                 }

@@ -3,10 +3,14 @@
 namespace Reaction\Web;
 
 use Reaction;
+use Reaction\Exceptions\Error;
 use Reaction\Exceptions\Http\ForbiddenException;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Exceptions\InvalidValueException;
+use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\Rbac\CheckAccessInterface;
+use function Reaction\Promise\reject;
+use function Reaction\Promise\resolve;
 
 /**
  * User is the class for the `user` application component that manages the user authentication status.
@@ -706,22 +710,28 @@ class User extends Reaction\Base\RequestAppServiceLocator implements UserInterfa
      * operation. If this parameter is false, this method will always call
      * [[\Reaction\Rbac\CheckAccessInterface::checkAccess()]] to obtain the up-to-date access result. Note that this
      * caching is effective only within the same request and only works when `$params = []`.
-     * @return bool whether the user can perform the operation as specified by the given permission.
+     * @return ExtendedPromiseInterface with bool whether the user can perform the operation as specified by the given permission.
      */
     public function can($permissionName, $params = [], $allowCaching = true)
     {
         if ($allowCaching && empty($params) && isset($this->_access[$permissionName])) {
-            return $this->_access[$permissionName];
+            return $this->_access[$permissionName]
+                ? resolve(true)
+                : reject(new Error("Uses::can() - denied"));
         }
         if (($accessChecker = $this->getAccessChecker()) === null) {
-            return false;
+            return reject(new Error("Uses::can() - denied (no access checker)"));
         }
-        $access = $accessChecker->checkAccess($this->getId(), $permissionName, $params);
-        if ($allowCaching && empty($params)) {
-            $this->_access[$permissionName] = $access;
-        }
-
-        return $access;
+        return $accessChecker->checkAccess($this->getId(), $permissionName, $params)
+            ->otherwise(function() {
+                return false;
+            })
+            ->then(function($access) use ($allowCaching, $permissionName) {
+                if ($allowCaching && empty($params)) {
+                    $this->_access[$permissionName] = $access;
+                }
+                return $access ? resolve(true) : reject(new Error("Uses::can() - denied"));
+            });
     }
 
     /**
