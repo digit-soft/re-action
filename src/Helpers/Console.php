@@ -5,6 +5,7 @@ namespace Reaction\Helpers;
 use React\Stream\ReadableStreamInterface;
 use React\Stream\WritableStreamInterface;
 use Reaction\Base\Model;
+use Reaction\Console\Exception;
 use Reaction\Console\Markdown as ConsoleMarkdown;
 use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\Promise\Promise;
@@ -864,7 +865,8 @@ class Console
      * ```
      *
      * @param string $message to print out before waiting for user input
-     * @param bool $default this value is returned if no selection is made.
+     * @param bool   $default this value is returned if no selection is made.
+     * @param bool   $rejectIfNo
      * @return ExtendedPromiseInterface with bool whether user confirmed
      */
     public static function confirm($message, $default = false, $rejectIfNo = true)
@@ -892,10 +894,10 @@ class Console
             }
 
             if (!strcasecmp($input, 'n') || !strcasecmp($input, 'no')) {
-                return $rejectIfNo ? reject(new \Error("User canceled")) : false;
+                return $rejectIfNo ? reject(new Exception("User canceled")) : false;
             }
 
-            return $default ? $default : ($rejectIfNo ? reject(new \Error("User canceled")) : false);
+            return $default ? $default : ($rejectIfNo ? reject(new Exception("User canceled")) : false);
         });
     }
 
