@@ -151,7 +151,9 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
     {
         $action = $this->normalizeActionName($action);
         $actionId = static::getActionId($action);
-        array_unshift($params, $app);
+        if (!in_array($app, $params)) {
+            array_unshift($params, $app);
+        }
         $self = $this;
         return $this->validateAction($action, $app)->then(
             function () use (&$app, &$self, $action, $actionId, $params) {
@@ -376,7 +378,7 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
             $layoutFile = $view->findViewFile($view->layout, $this);
         }
         $content = $this->renderInternal($app, $viewName, $params, false, true);
-        $rendered = $view->renderFile($layoutFile, ['content' => $content], $this);
+        $rendered = $this->renderFile($app, $layoutFile, ['content' => $content]);
         if ($asString) {
             return $rendered;
         }
@@ -405,6 +407,18 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
     }
 
     /**
+     * Render file
+     * @param RequestApplicationInterface $app
+     * @param string                      $file
+     * @param array                       $params
+     * @return string
+     */
+    protected function renderFile(RequestApplicationInterface $app, $file, $params = [])
+    {
+        return $app->view->renderFile($file, $params, $this);
+    }
+
+    /**
      * Normalize action name
      * @param string $action
      * @param bool   $throwException
@@ -414,6 +428,7 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
     protected function normalizeActionName($action, $throwException = true)
     {
         if (!StringHelper::startsWith($action, 'action')) {
+            $action = strpos($action, '-') ? Inflector::id2camel($action) : $action;
             $action = 'action' . ucfirst($action);
         }
 

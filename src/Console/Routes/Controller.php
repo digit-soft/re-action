@@ -66,7 +66,7 @@ class Controller extends \Reaction\Routes\Controller
     {
         $data = $this->getErrorData($exception);
         if ($exception instanceof \Reaction\Console\Exception) {
-            $this->stdout($data['message'] . "\n");
+            $this->stdout($this->ansiFormat($data['message'], Console::FG_RED) . "\n");
             return null;
         } else {
             $body = $data['name'] . ' (' . $data['code'] . ')' .  "\n";
@@ -94,6 +94,7 @@ class Controller extends \Reaction\Routes\Controller
         $req = $app->reqHelper;
         $paramsConsole = $req->getConsoleParams();
         $params = ArrayHelper::merge($params, $paramsConsole);
+        array_unshift($params, $app);
         $this->processActionParams($action, $params);
         return parent::resolveAction($app, $action, ...$params);
     }
@@ -508,14 +509,13 @@ class Controller extends \Reaction\Routes\Controller
 
     /**
      * Process action params array
-     * @param string $actionMethod
-     * @param array $params
+     * @param string $actionId
+     * @param array  $params
      * @throws Exception
      */
-    protected function processActionParams(&$actionMethod, &$params = [])
+    protected function processActionParams(&$actionId, &$params = [])
     {
-        $actionMethod = $this->normalizeActionName($actionMethod);
-        $actionId = static::getActionId($actionMethod);
+        $actionMethod = $this->normalizeActionName($actionId);
         if (!empty($params)) {
             // populate options here so that they are available in beforeAction().
             $options = $this->options($actionId);
@@ -560,8 +560,22 @@ class Controller extends \Reaction\Routes\Controller
                 }
             }
         }
+        $argsData = ReflectionHelper::checkMethodArguments($params, $actionMethod, $this);
+        if (!empty($argsData)) {
+            $errorMessage = $this->ansiFormat("Controller action arguments error\n", Console::FG_RED, Console::BOLD);
+            foreach ($argsData as $argName => $error) {
+                $argError = $error === ReflectionHelper::ARG_REQUIRED_MISSING
+                    ? "Missing required argument"
+                    : "Argument type mismatch";
+                $errorMessage .= "\t - "
+                    . $this->ansiFormat($argName, Console::FG_GREEN, Console::BOLD)
+                    . " - " . $this->ansiFormat($argError, Console::FG_RED)
+                    . "\n";
+            }
+            throw new \Reaction\Console\Exception($errorMessage);
+        }
         if ($this->help) {
-            $actionMethod = static::getActionMethod('help');
+            $actionId = 'help';
             //$route = $this->getUniqueId() . '/' . $id;
             //return Yii::$app->runAction('help', [$route]);
         }
