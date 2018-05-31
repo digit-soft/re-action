@@ -11,6 +11,7 @@ use React\Filesystem\Node\FileInterface;
 use React\Filesystem\Node\GenericOperationInterface;
 use React\Stream\WritableStreamInterface;
 use Reaction\Promise\Deferred;
+use Reaction\Promise\ExtendedPromiseInterface;
 use function Reaction\Promise\resolve;
 
 /**
@@ -86,7 +87,7 @@ class FileHelperAsc
      * @param string      $contents
      * @param string      $openFlags
      * @param bool|int    $lock Lock file for operation and check for a lock OR lock timeout
-     * @return \React\Promise\PromiseInterface
+     * @return ExtendedPromiseInterface
      */
     public static function putContents($filePath, $contents, $openFlags = 'cwt', $lock = true)
     {
@@ -121,7 +122,7 @@ class FileHelperAsc
      * Get file contents
      * @param string|File $filePath
      * @param bool|int    $lock Lock file for operation OR lock timeout
-     * @return \React\Promise\PromiseInterface
+     * @return ExtendedPromiseInterface
      */
     public static function getContents($filePath, $lock = true)
     {
@@ -246,7 +247,7 @@ class FileHelperAsc
     /**
      * Get promise of unlocking file
      * @param string $filePath
-     * @return \Reaction\Promise\ExtendedPromiseInterface
+     * @return ExtendedPromiseInterface
      */
     public static function onUnlock($filePath) {
         $filePath = FileHelper::normalizePath($filePath);
