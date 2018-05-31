@@ -2,6 +2,7 @@
 
 namespace Reaction\Db;
 
+use React\Promise\PromiseInterface;
 use Reaction\Base\BaseObject;
 use Reaction\Db\Constraints\CheckConstraint;
 use Reaction\Db\Constraints\Constraint;
@@ -156,8 +157,15 @@ class Schema extends BaseObject implements SchemaInterface
         return $this->getTableMetadata($name, 'schema', $refresh);
     }
 
+
+    /**
+     * Obtains the metadata for the named table.
+     * @param string $name table name. The table name may contain schema name if any. Do not quote the table name.
+     * @param bool $refresh whether to reload the table schema even if it is found in the cache.
+     * @return ExtendedPromiseInterface with TableSchema table metadata. `null` if the named table does not exist.
+     */
     public function getTableSchemaAsync($name, $refresh = false) {
-        return $this->getTableMetadata($name, 'schema', $refresh);
+        return $this->getTableMetadataRaw($name, 'schema', $refresh);
     }
 
     /**
@@ -545,6 +553,9 @@ class Schema extends BaseObject implements SchemaInterface
                 $metadata = [];
                 $metaPromises = [];
                 $methodName = 'getTable' . ucfirst($type);
+                if (method_exists($this, $methodName . 'Async')) {
+                    $methodName .= 'Async';
+                }
                 foreach ($names as $name) {
                     if ($schema !== '') {
                         $name = $schema . '.' . $name;
@@ -561,7 +572,10 @@ class Schema extends BaseObject implements SchemaInterface
                     );
                     $metaPromises[] = $metaPromise;
                 }
-                return all($metaPromises);
+                return all($metaPromises)
+                    ->then(function() use (&$metadata) {
+                        return $metadata;
+                    });
             }
         );
     }
