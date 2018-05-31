@@ -2,6 +2,7 @@
 
 namespace Reaction\Console\Controllers;
 
+use Reaction\Base\ComponentInitBlockingInterface;
 use Reaction\Db\DatabaseInterface;
 use Reaction\Db\Query;
 use Reaction\Db\TableSchema;
@@ -179,17 +180,26 @@ class MigrateController extends BaseMigrateController
     /**
      * Creates a new migration instance.
      * @param string $class the migration class name
-     * @return \Reaction\Db\Migration the migration instance
+     * @return ExtendedPromiseInterface with \Reaction\Db\Migration the migration instance
      */
     protected function createMigration($class)
     {
         $this->includeMigrationFile($class);
 
-        return \Reaction::create([
+        $migration = \Reaction::create([
             'class' => $class,
             'db' => $this->db,
             'compact' => $this->compact,
         ]);
+
+        if ($migration instanceof ComponentInitBlockingInterface) {
+            return $migration->initComponent()
+                ->then(function() use ($migration) {
+                    return $migration;
+                });
+        }
+
+        return resolve($migration);
     }
 
     /**

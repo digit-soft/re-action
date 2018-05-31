@@ -3,6 +3,7 @@
 namespace Reaction\Console\Controllers;
 
 use Reaction\Base\BaseObject;
+use Reaction\Base\ComponentInitBlockingInterface;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Exceptions\NotSupportedException;
 use Reaction\Console\Routes\Controller;
@@ -798,22 +799,23 @@ abstract class BaseMigrateController extends Controller
 
         $this->stdout("*** applying $class\n", Console::FG_YELLOW);
         $start = microtime(true);
-        $migration = $this->createMigration($class);
-        $promise = new LazyPromise(function() use (&$migration, $class, $start) {
-            return $migration->up()->then(
-                function() use ($class, $start) {
+        $promise = new LazyPromise(function() use ($class, $start) {
+            return $this->createMigration($class)
+                ->then(function($migration) {
+                    /** @var MigrationInterface $migration */
+                    return $migration->up();
+                })
+                ->then(function() use ($class, $start) {
                     $time = microtime(true) - $start;
                     $this->stdout("*** applied $class (time: " . sprintf('%.3f', $time) . "s)\n\n", Console::FG_GREEN);
                     return $this->addMigrationHistory($class);
-                },
-                function($error = null) use ($class, $start) {
+                }, function($error = null) use ($class, $start) {
                     $time = microtime(true) - $start;
                     $this->stdout("*** failed to apply $class (time: " . sprintf('%.3f', $time) . "s)\n\n", Console::FG_RED);
                     $prevException = $error instanceof \Throwable ? $error : null;
                     $exception = new Exception("Failed to apply $class (time: " . sprintf('%.3f', $time) . "s)", 0, $prevException);
                     throw new $exception;
-                }
-            );
+                });
         });
         return $promise;
     }
@@ -831,22 +833,22 @@ abstract class BaseMigrateController extends Controller
 
         $this->stdout("*** reverting $class\n", Console::FG_YELLOW);
         $start = microtime(true);
-        $migration = $this->createMigration($class);
         $promise = new LazyPromise(function() use (&$migration, $class, $start) {
-            return $migration->down()->then(
-                function() use ($class, $start) {
+            return $this->createMigration($class)
+                ->then(function($migration) {
+                    /** @var MigrationInterface $migration */
+                    return $migration->down();
+                })->then(function() use ($class, $start) {
                     $time = microtime(true) - $start;
                     $this->stdout("*** reverted $class (time: " . sprintf('%.3f', $time) . "s)\n\n", Console::FG_GREEN);
                     return $this->removeMigrationHistory($class);
-                },
-                function($error = null) use ($class, $start) {
+                }, function($error = null) use ($class, $start) {
                     $time = microtime(true) - $start;
                     $this->stdout("*** failed to revert $class (time: " . sprintf('%.3f', $time) . "s)\n\n", Console::FG_RED);
                     $prevException = $error instanceof \Throwable ? $error : null;
                     $exception = new Exception("Failed to revert $class (time: " . sprintf('%.3f', $time) . "s)", 0, $prevException);
                     throw new $exception;
-                }
-            );
+                });
         });
         return $promise;
     }
@@ -854,7 +856,7 @@ abstract class BaseMigrateController extends Controller
     /**
      * Creates a new migration instance.
      * @param string $class the migration class name
-     * @return \Reaction\Db\MigrationInterface the migration instance
+     * @return ExtendedPromiseInterface with \Reaction\Db\MigrationInterface the migration instance
      */
     protected function createMigration($class)
     {
@@ -865,8 +867,14 @@ abstract class BaseMigrateController extends Controller
         if ($migration instanceof BaseObject && $migration->canSetProperty('compact')) {
             $migration->compact = $this->compact;
         }
+        if ($migration instanceof ComponentInitBlockingInterface) {
+            return $migration->initComponent()
+                ->then(function() use ($migration) {
+                    return $migration;
+                });
+        }
 
-        return $migration;
+        return resolve($migration);
     }
 
     /**
