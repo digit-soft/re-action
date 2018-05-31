@@ -2,7 +2,7 @@
 
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Rbac\DbManager;
-use yii\db\Migration;
+use Reaction\Db\Migration;
 
 /**
  * Adds index on `user_id` column in `auth_assignment` table for performance reasons.
@@ -20,7 +20,7 @@ class m170907_052038_rbac_add_index_on_auth_assignment_user_id extends Migration
      */
     protected function getAuthManager()
     {
-        $authManager = Yii::$app->getAuthManager();
+        $authManager = Reaction::$app->getAuthManager();
         if (!$authManager instanceof DbManager) {
             throw new InvalidConfigException('You should configure "authManager" component to use database before executing this migration.');
         }
@@ -34,7 +34,7 @@ class m170907_052038_rbac_add_index_on_auth_assignment_user_id extends Migration
     public function up()
     {
         $authManager = $this->getAuthManager();
-        $this->createIndex($this->index, $authManager->assignmentTable, $this->column);
+        return $this->createIndex($this->index, $authManager->assignmentTable, $this->column);
     }
 
     /**
@@ -43,6 +43,6 @@ class m170907_052038_rbac_add_index_on_auth_assignment_user_id extends Migration
     public function down()
     {
         $authManager = $this->getAuthManager();
-        $this->dropIndex($this->index, $authManager->assignmentTable);
+        return $this->dropIndex($this->index, $authManager->assignmentTable);
     }
 }

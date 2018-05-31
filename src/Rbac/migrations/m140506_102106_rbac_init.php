@@ -2,11 +2,12 @@
 
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Rbac\DbManager;
+use function Reaction\Promise\allInOrder;
 
 /**
  * Initializes RBAC tables.
  */
-class m140506_102106_rbac_init extends \yii\db\Migration
+class m140506_102106_rbac_init extends \Reaction\Db\Migration
 {
     /**
      * @throws Reaction\Exceptions\InvalidConfigException
@@ -14,7 +15,7 @@ class m140506_102106_rbac_init extends \yii\db\Migration
      */
     protected function getAuthManager()
     {
-        $authManager = Yii::$app->getAuthManager();
+        $authManager = Reaction::$app->getAuthManager();
         if (!$authManager instanceof DbManager) {
             throw new InvalidConfigException('You should configure "authManager" component to use database before executing this migration.');
         }
@@ -27,12 +28,13 @@ class m140506_102106_rbac_init extends \yii\db\Migration
      */
     protected function isMSSQL()
     {
-        return $this->db->driverName === 'mssql' || $this->db->driverName === 'sqlsrv' || $this->db->driverName === 'dblib';
+        $driver = $this->db->getDriverName();
+        return $driver === 'mssql' || $driver === 'sqlsrv' || $driver === 'dblib';
     }
 
     protected function isOracle()
     {
-        return $this->db->driverName === 'oci';
+        return $this->db->getDriverName() === 'oci';
     }
 
     /**
@@ -44,12 +46,14 @@ class m140506_102106_rbac_init extends \yii\db\Migration
         $this->db = $authManager->db;
 
         $tableOptions = null;
-        if ($this->db->driverName === 'mysql') {
+        if ($this->db->getDriverName() === 'mysql') {
             // http://stackoverflow.com/questions/766809/whats-the-difference-between-utf8-general-ci-and-utf8-unicode-ci
             $tableOptions = 'CHARACTER SET utf8 COLLATE utf8_unicode_ci ENGINE=InnoDB';
         }
 
-        $this->createTable($authManager->ruleTable, [
+        $promises = [];
+
+        $promises[] = $this->createTable($authManager->ruleTable, [
             'name' => $this->string(64)->notNull(),
             'data' => $this->binary(),
             'created_at' => $this->integer(),
@@ -57,7 +61,7 @@ class m140506_102106_rbac_init extends \yii\db\Migration
             'PRIMARY KEY ([[name]])',
         ], $tableOptions);
 
-        $this->createTable($authManager->itemTable, [
+        $promises[] = $this->createTable($authManager->itemTable, [
             'name' => $this->string(64)->notNull(),
             'type' => $this->smallInteger()->notNull(),
             'description' => $this->text(),
@@ -69,9 +73,9 @@ class m140506_102106_rbac_init extends \yii\db\Migration
             'FOREIGN KEY ([[rule_name]]) REFERENCES ' . $authManager->ruleTable . ' ([[name]])' .
                 $this->buildFkClause('ON DELETE SET NULL', 'ON UPDATE CASCADE'),
         ], $tableOptions);
-        $this->createIndex('idx-auth_item-type', $authManager->itemTable, 'type');
+        $promises[] = $this->createIndex('idx-auth_item-type', $authManager->itemTable, 'type');
 
-        $this->createTable($authManager->itemChildTable, [
+        $promises[] = $this->createTable($authManager->itemChildTable, [
             'parent' => $this->string(64)->notNull(),
             'child' => $this->string(64)->notNull(),
             'PRIMARY KEY ([[parent]], [[child]])',
@@ -81,7 +85,7 @@ class m140506_102106_rbac_init extends \yii\db\Migration
                 $this->buildFkClause('ON DELETE CASCADE', 'ON UPDATE CASCADE'),
         ], $tableOptions);
 
-        $this->createTable($authManager->assignmentTable, [
+        $promises[] = $this->createTable($authManager->assignmentTable, [
             'item_name' => $this->string(64)->notNull(),
             'user_id' => $this->string(64)->notNull(),
             'created_at' => $this->integer(),
@@ -91,7 +95,7 @@ class m140506_102106_rbac_init extends \yii\db\Migration
         ], $tableOptions);
 
         if ($this->isMSSQL()) {
-            $this->execute("CREATE TRIGGER dbo.trigger_auth_item_child
+            $promises[] = $this->execute("CREATE TRIGGER dbo.trigger_auth_item_child
             ON dbo.{$authManager->itemTable}
             INSTEAD OF DELETE, UPDATE
             AS
@@ -126,6 +130,7 @@ class m140506_102106_rbac_init extends \yii\db\Migration
                     END
             END;");
         }
+        return allInOrder($promises);
     }
 
     /**
@@ -136,14 +141,16 @@ class m140506_102106_rbac_init extends \yii\db\Migration
         $authManager = $this->getAuthManager();
         $this->db = $authManager->db;
 
+        $promises = [];
         if ($this->isMSSQL()) {
-            $this->execute('DROP TRIGGER dbo.trigger_auth_item_child;');
+            $promises[] = $this->execute('DROP TRIGGER dbo.trigger_auth_item_child;');
         }
 
-        $this->dropTable($authManager->assignmentTable);
-        $this->dropTable($authManager->itemChildTable);
-        $this->dropTable($authManager->itemTable);
-        $this->dropTable($authManager->ruleTable);
+        $promises[] = $this->dropTable($authManager->assignmentTable);
+        $promises[] = $this->dropTable($authManager->itemChildTable);
+        $promises[] = $this->dropTable($authManager->itemTable);
+        $promises[] = $this->dropTable($authManager->ruleTable);
+        return allInOrder($promises);
     }
 
     protected function buildFkClause($delete = '', $update = '')
