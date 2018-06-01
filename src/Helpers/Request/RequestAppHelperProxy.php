@@ -83,7 +83,7 @@ class RequestAppHelperProxy extends RequestAppComponent
         if ($position < 0) {
             $position = $argsCount - $position;
         }
-        if (!isset($arguments[$position]) && $position >= 0 && $position < $argsCount) {
+        if (!isset($arguments[$position]) && $position >= 0 && $position <= $argsCount) {
            $arguments[$position] = $variable;
         }
     }

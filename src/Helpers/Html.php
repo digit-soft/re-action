@@ -1,6 +1,4 @@
 <?php
-//TODO: Come back later after ActiveRecord development
-//TODO: Come back later after \Reaction\Request development
 
 namespace Reaction\Helpers;
 
@@ -8,7 +6,7 @@ use Reaction;
 use Reaction\Exceptions\InvalidArgumentException;
 use Reaction\Base\Model;
 use Reaction\RequestApplicationInterface;
-use yii\db\ActiveRecordInterface;
+use Reaction\Db\Orm\ActiveRecordInterface;
 use Reaction\Validators\StringValidator;
 
 /**
@@ -223,8 +221,8 @@ class Html
 
     /**
      * Generates a link tag that refers to an external CSS file.
-     * @param array|string $url the URL of the external CSS file. This parameter will be processed by [[Url::to()]].
-     * @param array $options the tag options in terms of name-value pairs. The following options are specially handled:
+     * @param array|string                     $url the URL of the external CSS file. This parameter will be processed by [[Url::to()]].
+     * @param array                            $options the tag options in terms of name-value pairs. The following options are specially handled:
      *
      * - condition: specifies the conditional comments for IE, e.g., `lt IE 9`. When this is specified,
      *   the generated `link` tag will be enclosed within the conditional comments. This is mainly useful
@@ -234,16 +232,17 @@ class Html
      * The rest of the options will be rendered as the attributes of the resulting link tag. The values will
      * be HTML-encoded using [[encode()]]. If a value is null, the corresponding attribute will not be rendered.
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
-     * @param string $encoding
+     * @param string                           $encoding
+     * @param RequestApplicationInterface|null $app
      * @return string the generated link tag
      * @see Url::to()
      */
-    public static function cssFile($url, $options = [], $encoding = null)
+    public static function cssFile($url, $options = [], $encoding = null, RequestApplicationInterface $app = null)
     {
         if (!isset($options['rel'])) {
             $options['rel'] = 'stylesheet';
         }
-        $options['href'] = Url::to($url);
+        $options['href'] = Url::to($url, false, $app);
 
         if (isset($options['condition'])) {
             $condition = $options['condition'];
@@ -259,8 +258,8 @@ class Html
 
     /**
      * Generates a script tag that refers to an external JavaScript file.
-     * @param string $url the URL of the external JavaScript file. This parameter will be processed by [[Url::to()]].
-     * @param array $options the tag options in terms of name-value pairs. The following option is specially handled:
+     * @param string                           $url the URL of the external JavaScript file. This parameter will be processed by [[Url::to()]].
+     * @param array                            $options the tag options in terms of name-value pairs. The following option is specially handled:
      *
      * - condition: specifies the conditional comments for IE, e.g., `lt IE 9`. When this is specified,
      *   the generated `script` tag will be enclosed within the conditional comments. This is mainly useful
@@ -269,13 +268,14 @@ class Html
      * The rest of the options will be rendered as the attributes of the resulting script tag. The values will
      * be HTML-encoded using [[encode()]]. If a value is null, the corresponding attribute will not be rendered.
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
-     * @param string $encoding
+     * @param string                           $encoding
+     * @param RequestApplicationInterface|null $app
      * @return string the generated script tag
      * @see Url::to()
      */
-    public static function jsFile($url, $options = [], $encoding = null)
+    public static function jsFile($url, $options = [], $encoding = null, RequestApplicationInterface $app = null)
     {
-        $options['src'] = Url::to($url);
+        $options['src'] = Url::to($url, false, $app);
         if (isset($options['condition'])) {
             $condition = $options['condition'];
             unset($options['condition']);
@@ -323,7 +323,7 @@ class Html
      * @param string       $method the form submission method, such as "post", "get", "put", "delete" (case-insensitive).
      * Since most browsers only support "post" and "get", if other methods are given, they will
      * be simulated using "post", and a hidden input will be added which contains the actual method type.
-     * See [[\yii\web\Request::methodParam]] for more details.
+     * See [[\Reaction\Web\RequestHelper::methodParam]] for more details.
      * @param array                       $options the tag options in terms of name-value pairs. These will be rendered as
      * the attributes of the resulting tag. The values will be HTML-encoded using [[encode()]].
      * If a value is null, the corresponding attribute will not be rendered.
@@ -397,10 +397,10 @@ class Html
 
     /**
      * Generates a hyperlink tag.
-     * @param string            $text link body. It will NOT be HTML-encoded. Therefore you can pass in HTML code
+     * @param string                           $text link body. It will NOT be HTML-encoded. Therefore you can pass in HTML code
      * such as an image tag. If this is coming from end users, you should consider [[encode()]]
      * it to prevent XSS attacks.
-     * @param array|string|null $url the URL for the hyperlink tag. This parameter will be processed by [[Url::to()]]
+     * @param array|string|null                $url the URL for the hyperlink tag. This parameter will be processed by [[Url::to()]]
      * and will be used for the "href" attribute of the tag. If this parameter is null, the "href" attribute
      * will not be generated.
      *
@@ -411,18 +411,19 @@ class Html
      * Html::a('link text', Url::to($url, true))
      * ```
      *
-     * @param array             $options the tag options in terms of name-value pairs. These will be rendered as
+     * @param array                            $options the tag options in terms of name-value pairs. These will be rendered as
      * the attributes of the resulting tag. The values will be HTML-encoded using [[encode()]].
      * If a value is null, the corresponding attribute will not be rendered.
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
-     * @param string            $encoding
+     * @param string                           $encoding
+     * @param RequestApplicationInterface|null $app
      * @return string the generated hyperlink
      * @see \Reaction\Helpers\Url::to()
      */
-    public static function a($text, $url = null, $options = [], $encoding = null)
+    public static function a($text, $url = null, $options = [], $encoding = null, RequestApplicationInterface $app = null)
     {
         if ($url !== null) {
-            $options['href'] = Url::to($url);
+            $options['href'] = Url::to($url, false, $app);
         }
 
         return static::tag('a', $text, $options, $encoding);
@@ -450,25 +451,26 @@ class Html
 
     /**
      * Generates an image tag.
-     * @param array|string $src the image URL. This parameter will be processed by [[Url::to()]].
-     * @param array        $options the tag options in terms of name-value pairs. These will be rendered as
+     * @param array|string                     $src the image URL. This parameter will be processed by [[Url::to()]].
+     * @param array                            $options the tag options in terms of name-value pairs. These will be rendered as
      * the attributes of the resulting tag. The values will be HTML-encoded using [[encode()]].
      * If a value is null, the corresponding attribute will not be rendered.
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
      *
      * It is possible to pass the `srcset` option as an array which keys are
      * descriptors and values are URLs. All URLs will be processed by [[Url::to()]].
-     * @param string       $encoding
+     * @param string                           $encoding
+     * @param RequestApplicationInterface|null $app
      * @return string the generated image tag.
      */
-    public static function img($src, $options = [], $encoding = null)
+    public static function img($src, $options = [], $encoding = null, RequestApplicationInterface $app = null)
     {
-        $options['src'] = Url::to($src);
+        $options['src'] = Url::to($src, false, $app);
 
         if (isset($options['srcset']) && is_array($options['srcset'])) {
             $srcset = [];
             foreach ($options['srcset'] as $descriptor => $url) {
-                $srcset[] = Url::to($url) . ' ' . $descriptor;
+                $srcset[] = Url::to($url, false, $app) . ' ' . $descriptor;
             }
             $options['srcset'] = implode(',', $srcset);
         }

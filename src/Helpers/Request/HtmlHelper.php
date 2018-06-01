@@ -155,7 +155,10 @@ class HtmlHelper extends RequestAppHelperProxy
      */
     public function cssFile($url, $options = [], $encoding = null)
     {
-        return $this->proxyWithCharset(__FUNCTION__, func_get_args());
+        $arguments = func_get_args();
+        $this->injectVariableToArguments($this->app->charset, $arguments, -1);
+        $arguments[] = $this->app;
+        return $this->proxy(__FUNCTION__, $arguments);
     }
 
     /**
@@ -177,7 +180,10 @@ class HtmlHelper extends RequestAppHelperProxy
      */
     public function jsFile($url, $options = [], $encoding = null)
     {
-        return $this->proxyWithCharset(__FUNCTION__, func_get_args());
+        $arguments = func_get_args();
+        $this->injectVariableToArguments($this->app->charset, $arguments, -1);
+        $arguments[] = $this->app;
+        return $this->proxy(__FUNCTION__, $arguments);
     }
 
     /**
@@ -253,7 +259,10 @@ class HtmlHelper extends RequestAppHelperProxy
      */
     public function a($text, $url = null, $options = [], $encoding = null)
     {
-        return $this->proxyWithCharset(__FUNCTION__, func_get_args());
+        $arguments = func_get_args();
+        $this->injectVariableToArguments($this->app->charset, $arguments, -1);
+        $arguments[] = $this->app;
+        return $this->proxy(__FUNCTION__, $arguments);
     }
 
     /**
@@ -292,7 +301,10 @@ class HtmlHelper extends RequestAppHelperProxy
      */
     public function img($src, $options = [], $encoding = null)
     {
-        return $this->proxyWithCharset(__FUNCTION__, func_get_args());
+        $arguments = func_get_args();
+        $this->injectVariableToArguments($this->app->charset, $arguments, -1);
+        $arguments[] = $this->app;
+        return $this->proxy(__FUNCTION__, $arguments);
     }
 
     /**
