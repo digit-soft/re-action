@@ -2,7 +2,10 @@
 
 namespace Reaction\Web;
 
+use React\Promise\PromiseInterface;
 use Reaction;
+use Reaction\Base\ComponentAutoloadInterface;
+use Reaction\Base\ComponentInitBlockingInterface;
 use Reaction\Exceptions\Error;
 use Reaction\Exceptions\Http\ForbiddenException;
 use Reaction\Exceptions\InvalidConfigException;
@@ -54,7 +57,7 @@ use function Reaction\Promise\resolve;
  * of this property differs in getter and setter. See [[getReturnUrl()]] and [[setReturnUrl()]] for details.
  * @property RequestHelper $request
  */
-class User extends Reaction\Base\RequestAppServiceLocator implements UserInterface
+class User extends Reaction\Base\RequestAppServiceLocator implements UserInterface, ComponentAutoloadInterface, ComponentInitBlockingInterface
 {
     const EVENT_BEFORE_LOGIN = 'beforeLogin';
     const EVENT_AFTER_LOGIN = 'afterLogin';
@@ -146,7 +149,11 @@ class User extends Reaction\Base\RequestAppServiceLocator implements UserInterfa
     /**
      * @var array
      */
-    private $_access = [];
+    protected $_access = [];
+    /**
+     * @var bool Initialization flag
+     */
+    protected $_initialized = false;
 
 
     /**
@@ -168,7 +175,40 @@ class User extends Reaction\Base\RequestAppServiceLocator implements UserInterfa
         }
     }
 
+    /**
+     * Init callback. Called by parent container/service/component on init and must return a fulfilled Promise
+     * @return PromiseInterface
+     */
+    public function initComponent()
+    {
+        return $this->getIdentityAsync()
+            ->then(function() {
+                return true;
+            })
+            ->otherwise(function() {
+                return false;
+            });
+    }
+
     protected $_identity = false;
+
+    /**
+     * Returns the identity object associated with the currently logged-in user.
+     * This is only useful when [[enableSession]] is true.
+     * @return IdentityInterface|null|false the identity object associated with the currently logged-in user.
+     * `null` is returned if the user is not logged in (not authenticated).
+     * @see login()
+     * @see logout()
+     * @see getIdentityAsync()
+     */
+    public function getIdentity()
+    {
+        if ($this->_identity === false || $this->_identity === null) {
+            return null;
+        }
+
+        return $this->_identity;
+    }
 
     /**
      * Returns the identity object associated with the currently logged-in user.
@@ -176,32 +216,30 @@ class User extends Reaction\Base\RequestAppServiceLocator implements UserInterfa
      * stored in session and reconstruct the corresponding identity object, if it has not done so before.
      * @param bool $autoRenew whether to automatically renew authentication status if it has not been done so before.
      * This is only useful when [[enableSession]] is true.
-     * @return IdentityInterface|null|false the identity object associated with the currently logged-in user.
+     * @return ExtendedPromiseInterface with IdentityInterface|null|false the identity object associated with the currently logged-in user.
      * `null` is returned if the user is not logged in (not authenticated).
      * @see login()
      * @see logout()
-     * @throws \Throwable
+     * @see getIdentity()
      */
-    public function getIdentity($autoRenew = true)
+    public function getIdentityAsync($autoRenew = true)
     {
         if ($this->_identity === false) {
             if ($this->enableSession && $autoRenew) {
-                try {
-                    $this->_identity = null;
-                    $this->renewAuthStatus();
-                } catch (\Exception $e) {
-                    $this->_identity = false;
-                    throw $e;
-                } catch (\Throwable $e) {
-                    $this->_identity = false;
-                    throw $e;
-                }
+                $this->_identity = null;
+                return $this->renewAuthStatus()
+                    ->then(null, function($e) {
+                        $this->_identity = false;
+                        return reject($e);
+                    })->then(function() {
+                        return $this->_identity;
+                    });
             } else {
-                return null;
+                return reject(null);
             }
+        } else {
+            return resolve($this->_identity);
         }
-
-        return $this->_identity;
     }
 
     /**
@@ -243,27 +281,31 @@ class User extends Reaction\Base\RequestAppServiceLocator implements UserInterfa
      *
      * @param IdentityInterface $identity the user identity (which should already be authenticated)
      * @param int $duration number of seconds that the user can remain in logged-in status, defaults to `0`
-     * @return bool whether the user is logged in
+     * @return ExtendedPromiseInterface with bool whether the user is logged in
      */
     public function login(IdentityInterface $identity, $duration = 0)
     {
-        if ($this->beforeLogin($identity, false, $duration)) {
-            $this->switchIdentity($identity, $duration);
-            $id = $identity->getId();
-            $ip = $this->request->getUserIP();
-            if ($this->enableSession) {
-                $log = "User '$id' logged in from $ip with duration $duration.";
-            } else {
-                $log = "User '$id' logged in from $ip. Session not enabled.";
-            }
+        //Using root resolve function for promise conversion
+        return resolve(true)
+            ->then(function() use (&$identity, $duration) {
+                return $this->beforeLogin($identity, false, $duration);
+            })->then(function() use (&$identity, $duration) {
+                $this->switchIdentity($identity, $duration);
+                $id = $identity->getId();
+                $ip = $this->request->getUserIP();
+                if ($this->enableSession) {
+                    $log = "User '$id' logged in from $ip with duration $duration.";
+                } else {
+                    $log = "User '$id' logged in from $ip. Session not enabled.";
+                }
 
-            $this->regenerateCsrfToken();
+                $this->regenerateCsrfToken();
 
-            Reaction::info($log);
-            $this->afterLogin($identity, false, $duration);
-        }
-
-        return !$this->getIsGuest();
+                if (Reaction::isDebug()) {
+                    Reaction::info($log);
+                }
+                return $this->afterLogin($identity, false, $duration);
+            });
     }
 
     /**
@@ -285,20 +327,20 @@ class User extends Reaction\Base\RequestAppServiceLocator implements UserInterfa
      * @param string $token the access token
      * @param mixed $type the type of the token. The value of this parameter depends on the implementation.
      * For example, [[\yii\filters\auth\HttpBearerAuth]] will set this parameter to be `yii\filters\auth\HttpBearerAuth`.
-     * @return IdentityInterface|null the identity associated with the given access token. Null is returned if
+     * @return ExtendedPromiseInterface with IdentityInterface|null the identity associated with the given access token. Null is returned if
      * the access token is invalid or [[login()]] is unsuccessful.
      */
     public function loginByAccessToken($token, $type = null)
     {
         /* @var $class IdentityInterface */
         $class = $this->identityClass;
-        //TODO: Promise
-        $identity = $class::findIdentityByAccessToken($token, $type);
-        if ($identity && $this->login($identity)) {
-            return $identity;
-        }
-
-        return null;
+        return $class::findIdentityByAccessToken($token, $type)
+            ->then(function($identity) {
+                return $this->login($identity)
+                    ->then(function() use (&$identity) {
+                        return $identity;
+                    });
+            });
     }
 
     /**
@@ -306,21 +348,28 @@ class User extends Reaction\Base\RequestAppServiceLocator implements UserInterfa
      *
      * This method attempts to log in a user using the ID and authKey information
      * provided by the [[identityCookie|identity cookie]].
+     * @return ExtendedPromiseInterface
      */
     protected function loginByCookie()
     {
-        $data = $this->getIdentityAndDurationFromCookie();
-        if (isset($data['identity'], $data['duration'])) {
-            $identity = $data['identity'];
-            $duration = $data['duration'];
-            if ($this->beforeLogin($identity, true, $duration)) {
-                $this->switchIdentity($identity, $this->autoRenewCookie ? $duration : 0);
-                $id = $identity->getId();
-                $ip = $this->request->getUserIP();
-                Reaction::info("User '$id' logged in from $ip via cookie.");
-                $this->afterLogin($identity, true, $duration);
-            }
-        }
+        return $this->getIdentityAndDurationFromCookie()
+            ->then(function($data) {
+                if (isset($data['identity'], $data['duration'])) {
+                    /** @var IdentityInterface $identity */
+                    $identity = $data['identity'];
+                    $duration = $data['duration'];
+                    return $this->beforeLogin($identity, true, $duration)
+                        ->then(function() use (&$identity, $duration) {
+                            $this->switchIdentity($identity, $this->autoRenewCookie ? $duration : 0);
+                            $id = $identity->getId();
+                            $ip = $this->request->getUserIP();
+                            Reaction::info("User '$id' logged in from $ip via cookie.");
+                            return $this->afterLogin($identity, true, $duration);
+                        });
+                } else {
+                    return reject(new Error("Invalid cookie value or user identity"));
+                }
+            });
     }
 
     /**
@@ -329,25 +378,34 @@ class User extends Reaction\Base\RequestAppServiceLocator implements UserInterfa
      * If `$destroySession` is true, all session data will be removed.
      * @param bool $destroySession whether to destroy the whole session. Defaults to true.
      * This parameter is ignored if [[enableSession]] is false.
-     * @return bool whether the user is logged out
+     * @return ExtendedPromiseInterface with bool whether the user is logged out
      * @throws \Throwable
      */
     public function logout($destroySession = true)
     {
         $identity = $this->getIdentity();
-        if ($identity !== null && $this->beforeLogout($identity)) {
-            $this->switchIdentity(null);
-            $id = $identity->getId();
-            $ip = $this->request->getUserIP();
-            Reaction::info("User '$id' logged out from $ip.");
-            if ($destroySession && $this->enableSession) {
-                $this->app->session->destroy();
-            }
-            //TODO: Promise
-            $this->afterLogout($identity);
+        if ($identity === null) {
+            return $this->getIsGuest() ? resolve(true) : reject(false);
         }
 
-        return $this->getIsGuest();
+        //Using root resolve function for promise conversion
+        return resolve(true)
+            ->then(function() use (&$identity) { return $this->beforeLogout($identity); })
+            ->then(function() use (&$identity, $destroySession) {
+                $this->switchIdentity(null);
+                $id = $identity->getId();
+                $ip = $this->request->getUserIP();
+                Reaction::info("User '$id' logged out from $ip.");
+                if ($destroySession && $this->enableSession) {
+                    return $this->app->session->destroy();
+                } else {
+                    return true;
+                }
+            })->always(function() use (&$identity) {
+                return $this->afterLogout($identity);
+            })->then(function() use (&$identity) {
+                return $this->getIsGuest() ? true : reject("User logout failed");
+            });
     }
 
     /**
@@ -561,34 +619,37 @@ class User extends Reaction\Base\RequestAppServiceLocator implements UserInterfa
      * Determines if an identity cookie has a valid format and contains a valid auth key.
      * This method is used when [[enableAutoLogin]] is true.
      * This method attempts to authenticate a user using the information in the identity cookie.
-     * @return array|null Returns an array of 'identity' and 'duration' if valid, otherwise null.
+     * @return ExtendedPromiseInterface with array|null Returns an array of 'identity' and 'duration' if valid, otherwise null.
      * @see loginByCookie()
      */
     protected function getIdentityAndDurationFromCookie()
     {
         $value = $this->request->getCookies()->getValue($this->identityCookie['name']);
         if ($value === null) {
-            return null;
+            return reject(null);
         }
         $data = json_decode($value, true);
         if (is_array($data) && count($data) == 3) {
             list($id, $authKey, $duration) = $data;
             /* @var $class IdentityInterface */
             $class = $this->identityClass;
-            //TODO: Promise
-            $identity = $class::findIdentity($id);
-            if ($identity !== null) {
-                if (!$identity instanceof IdentityInterface) {
-                    throw new InvalidValueException("$class::findIdentity() must return an object implementing IdentityInterface.");
-                } elseif (!$identity->validateAuthKey($authKey)) {
-                    Reaction::warning("Invalid auth key attempted for user '$id': $authKey");
-                } else {
-                    return ['identity' => $identity, 'duration' => $duration];
-                }
-            }
+            return $class::findIdentity($id)
+                ->then(null, function($error) {
+                    $this->removeIdentityCookie();
+                    return reject($error);
+                })->then(function($identity) use ($id, $authKey, $class, $duration) {
+                    if (!$identity instanceof IdentityInterface) {
+                        throw new InvalidValueException("$class::findIdentity() must return an object implementing IdentityInterface.");
+                    } elseif (!$identity->validateAuthKey($authKey)) {
+                        Reaction::warning("Invalid auth key attempted for user '$id': $authKey");
+                        throw new InvalidValueException("Invalid auth key attempted for user '$id': $authKey");
+                    } else {
+                        return ['identity' => $identity, 'duration' => $duration];
+                    }
+                });
         }
         $this->removeIdentityCookie();
-        return null;
+        return reject(null);
     }
 
     /**
@@ -659,6 +720,7 @@ class User extends Reaction\Base\RequestAppServiceLocator implements UserInterfa
      *
      * If the user identity cannot be determined by session, this method will try to [[loginByCookie()|login by cookie]]
      * if [[enableAutoLogin]] is true.
+     * @return ExtendedPromiseInterface
      */
     protected function renewAuthStatus()
     {
@@ -666,33 +728,40 @@ class User extends Reaction\Base\RequestAppServiceLocator implements UserInterfa
         $id = $session->getHasSessionId() || $session->getIsActive() ? $session->get($this->idParam) : null;
 
         if ($id === null) {
-            $identity = null;
+            $identityPromise = resolve(null);
         } else {
             /* @var $class IdentityInterface */
             $class = $this->identityClass;
-            //TODO: Promise
-            $identity = $class::findIdentity($id);
+            $identityPromise = $class::findIdentity($id);
         }
 
-        $this->setIdentity($identity);
+        return $identityPromise
+            ->then(function($identity) use ($session) {
+                /** @var IdentityInterface $identity */
+                $this->setIdentity($identity);
 
-        if ($identity !== null && ($this->authTimeout !== null || $this->absoluteAuthTimeout !== null)) {
-            $expire = $this->authTimeout !== null ? $session->get($this->authTimeoutParam) : null;
-            $expireAbsolute = $this->absoluteAuthTimeout !== null ? $session->get($this->absoluteAuthTimeoutParam) : null;
-            if ($expire !== null && $expire < time() || $expireAbsolute !== null && $expireAbsolute < time()) {
-                $this->logout(false);
-            } elseif ($this->authTimeout !== null) {
-                $session->set($this->authTimeoutParam, time() + $this->authTimeout);
-            }
-        }
+                $logoutPromise = resolve(true);
+                if ($identity !== null && ($this->authTimeout !== null || $this->absoluteAuthTimeout !== null)) {
+                    $expire = $this->authTimeout !== null ? $session->get($this->authTimeoutParam) : null;
+                    $expireAbsolute = $this->absoluteAuthTimeout !== null ? $session->get($this->absoluteAuthTimeoutParam) : null;
+                    if ($expire !== null && $expire < time() || $expireAbsolute !== null && $expireAbsolute < time()) {
+                        $logoutPromise = $this->logout(false);
+                    } elseif ($this->authTimeout !== null) {
+                        $session->set($this->authTimeoutParam, time() + $this->authTimeout);
+                    }
+                }
 
-        if ($this->enableAutoLogin) {
-            if ($this->getIsGuest()) {
-                $this->loginByCookie();
-            } elseif ($this->autoRenewCookie) {
-                $this->renewIdentityCookie();
-            }
-        }
+                return $logoutPromise->then(function() {
+                    if ($this->enableAutoLogin) {
+                        if ($this->getIsGuest()) {
+                            return $this->loginByCookie();
+                        } elseif ($this->autoRenewCookie) {
+                            $this->renewIdentityCookie();
+                        }
+                    }
+                    return true;
+                });
+            });
     }
 
     /**
@@ -732,6 +801,15 @@ class User extends Reaction\Base\RequestAppServiceLocator implements UserInterfa
                 }
                 return $access ? resolve(true) : reject(new Error("Uses::can() - denied"));
             });
+    }
+
+    /**
+     * Check that component was initialized earlier
+     * @return bool
+     */
+    public function isInitialized()
+    {
+        return $this->_initialized;
     }
 
     /**
