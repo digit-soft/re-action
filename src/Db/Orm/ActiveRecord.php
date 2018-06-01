@@ -15,6 +15,7 @@ use Reaction\Helpers\ArrayHelper;
 use Reaction\Helpers\Inflector;
 use Reaction\Helpers\StringHelper;
 use Reaction\Promise\ExtendedPromiseInterface;
+use Reaction\Promise\LazyPromise;
 use Reaction\Promise\LazyPromiseInterface;
 use function Reaction\Promise\reject;
 use function Reaction\Promise\rejectLazy;
@@ -34,13 +35,13 @@ use function Reaction\Promise\rejectLazy;
  * In this example, Active Record is providing an object-oriented interface for accessing data stored in the database.
  * But Active Record provides much more functionality than this.
  *
- * To declare an ActiveRecord class you need to extend [[\yii\db\ActiveRecord]] and
+ * To declare an ActiveRecord class you need to extend [[\Reaction\Db\Orm\ActiveRecord]] and
  * implement the `tableName` method:
  *
  * ```php
  * <?php
  *
- * class Customer extends \yii\db\ActiveRecord
+ * class Customer extends \Reaction\Db\Orm\ActiveRecord
  * {
  *     public static function tableName()
  *     {
@@ -105,7 +106,7 @@ class ActiveRecord extends BaseActiveRecord
      * You may call this method to load default values after creating a new instance:
      *
      * ```php
-     * // class Customer extends \yii\db\ActiveRecord
+     * // class Customer extends \Reaction\Db\Orm\ActiveRecord
      * $customer = new Customer();
      * $customer->loadDefaultValues();
      * ```
@@ -518,35 +519,41 @@ class ActiveRecord extends BaseActiveRecord
      */
     public function insert($runValidation = true, $attributes = null)
     {
-        if ($runValidation && !$this->validate($attributes)) {
-            Reaction::info('Model not inserted due to validation error in {method}.', ['method' => __METHOD__]);
-            return rejectLazy(new ValidationError("Model validation error"));
-        }
+        $validationPromise = $runValidation
+            ? new LazyPromise(function() use ($attributes) {
+                return $this->validate($attributes);
+            })
+            : Reaction\Promise\resolveLazy(true);
+        return $validationPromise
+            ->otherwiseLazy(function() {
+                Reaction::info('Model not inserted due to validation error in {method}.', ['method' => __METHOD__]);
+                return reject(new ValidationError("Model validation error"));
+            })->thenLazy(function() use ($attributes) {
+                if (!$this->isTransactional(self::OP_INSERT)) {
+                    return new LazyPromise(function() use ($attributes) {
+                        return $this->insertInternal($attributes);
+                    });
+                }
 
-        if (!$this->isTransactional(self::OP_INSERT)) {
-            return new Reaction\Promise\LazyPromise(function() use ($attributes) {
-                return $this->insertInternal($attributes);
-            });
-        }
-
-        $transaction = static::getDb()->createTransaction();
-        return $transaction->begin()->thenLazy(
-            function(ConnectionInterface $connection) use ($attributes) {
-                return $this->insertInternal($attributes, $connection);
-            }
-        )->thenLazy(
-            function($result) use ($transaction) {
-                return $transaction->commit()->then(function() use ($result) {
-                    return $result;
-                });
-            },
-            function($exception) use ($transaction) {
-                return $transaction->rollBack()->then(
-                    function() use ($exception) { throw $exception; },
-                    function($e) use ($exception) { throw $exception; }
+                $transaction = static::getDb()->createTransaction();
+                return $transaction->begin()->then(
+                    function(ConnectionInterface $connection) use ($attributes) {
+                        return $this->insertInternal($attributes, $connection);
+                    }
+                )->then(
+                    function($result) use ($transaction) {
+                        return $transaction->commit()->then(function() use ($result) {
+                            return $result;
+                        });
+                    },
+                    function($exception) use ($transaction) {
+                        return $transaction->rollBack()->then(
+                            function() use ($exception) { throw $exception; },
+                            function($e) use ($exception) { throw $exception; }
+                        );
+                    }
                 );
-            }
-        );
+            });
     }
 
     /**
@@ -634,33 +641,39 @@ class ActiveRecord extends BaseActiveRecord
      */
     public function update($runValidation = true, $attributeNames = null)
     {
-        if ($runValidation && !$this->validate($attributeNames)) {
-            Reaction::info('Model not inserted due to validation error in {method}.', ['method' => __METHOD__]);
-            return rejectLazy(new ValidationError("Model validation error"));
-        }
+        $validationPromise = $runValidation
+            ? new LazyPromise(function() use ($attributeNames) {
+                return $this->validate($attributeNames);
+            })
+            : Reaction\Promise\resolveLazy(true);
+        return $validationPromise
+            ->otherwiseLazy(function() {
+                Reaction::info('Model not updated due to validation error in {method}.', ['method' => __METHOD__]);
+                return reject(new ValidationError("Model validation error"));
+            })->thenLazy(function() use ($attributeNames) {
+                if (!$this->isTransactional(self::OP_UPDATE)) {
+                    return $this->updateInternal($attributeNames);
+                }
 
-        if (!$this->isTransactional(self::OP_UPDATE)) {
-            return $this->updateInternal($attributeNames);
-        }
-
-        $transaction = static::getDb()->createTransaction();
-        return $transaction->begin()->thenLazy(
-            function(ConnectionInterface $connection) use ($attributeNames) {
-                return $this->updateInternal($attributeNames, $connection);
-            }
-        )->thenLazy(
-            function($result) use ($transaction) {
-                return $transaction->commit()->then(function() use ($result) {
-                    return $result;
-                });
-            },
-            function($exception) use ($transaction) {
-                return $transaction->rollBack()->then(
-                    function() use ($exception) { throw $exception; },
-                    function($e) use ($exception) { throw $exception; }
+                $transaction = static::getDb()->createTransaction();
+                return $transaction->begin()->then(
+                    function(ConnectionInterface $connection) use ($attributeNames) {
+                        return $this->updateInternal($attributeNames, $connection);
+                    }
+                )->then(
+                    function($result) use ($transaction) {
+                        return $transaction->commit()->then(function() use ($result) {
+                            return $result;
+                        });
+                    },
+                    function($exception) use ($transaction) {
+                        return $transaction->rollBack()->then(
+                            function() use ($exception) { throw $exception; },
+                            function($e) use ($exception) { throw $exception; }
+                        );
+                    }
                 );
-            }
-        );
+            });
     }
 
     /**

@@ -2,6 +2,8 @@
 
 namespace Reaction\Validators;
 
+use function Reaction\Promise\resolve;
+
 /**
  * SafeValidator serves as a dummy validator whose main purpose is to mark the attributes to be safe for massive assignment.
  *
@@ -22,6 +24,7 @@ class SafeValidator extends Validator
      */
     public function validateAttributes($model, $attributes = null)
     {
+        return resolve(true);
     }
 
     /**

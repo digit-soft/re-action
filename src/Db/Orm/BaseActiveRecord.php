@@ -18,6 +18,7 @@ use Reaction\Base\Model;
 use Reaction\Exceptions\NotSupportedException;
 use Reaction\Exceptions\UnknownMethodException;
 use Reaction\Helpers\ArrayHelper;
+use Reaction\Promise\LazyPromise;
 use Reaction\Promise\LazyPromiseInterface;
 use function Reaction\Promise\reject;
 use function Reaction\Promise\rejectLazy;
@@ -735,11 +736,15 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
      */
     public function update($runValidation = true, $attributeNames = null)
     {
-        if ($runValidation && !$this->validate($attributeNames)) {
-            return reject(new ValidationError("Model is not valid"));
-        }
-
-        return $this->updateInternal($attributeNames);
+        $basePromise = $runValidation
+            ? new LazyPromise(function() use ($attributeNames) { return $this->validate($attributeNames); })
+            : resolveLazy(true);
+        return $basePromise
+            ->otherwiseLazy(function() {
+                return reject(new ValidationError("Model is not valid"));
+            })->thenLazy(function() use ($attributeNames) {
+                return $this->updateInternal($attributeNames);
+            });
     }
 
     /**

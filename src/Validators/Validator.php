@@ -4,6 +4,7 @@ namespace Reaction\Validators;
 
 use Reaction\Base\Component;
 use Reaction\Exceptions\NotSupportedException;
+use function Reaction\Promise\allInOrder;
 use Reaction\Promise\ExtendedPromiseInterface;
 
 /**
@@ -234,9 +235,10 @@ class Validator extends Component
     /**
      * Validates the specified object.
      * @param \Reaction\Base\Model $model the data model being validated
-     * @param array|null $attributes the list of attributes to be validated.
+     * @param array|null           $attributes the list of attributes to be validated.
      * Note that if an attribute is not associated with the validator - it will be
      * ignored. If this parameter is null, every attribute listed in [[attributes]] will be validated.
+     * @return ExtendedPromiseInterface
      */
     public function validateAttributes($model, $attributes = null)
     {
@@ -253,15 +255,21 @@ class Validator extends Component
             $attributes = $this->getAttributeNames();
         }
 
+        $promises = [];
         foreach ($attributes as $attribute) {
             $skip = $this->skipOnError && $model->hasErrors($attribute)
                 || $this->skipOnEmpty && $this->isEmpty($model->$attribute);
             if (!$skip) {
                 if ($this->when === null || call_user_func($this->when, $model, $attribute)) {
-                    $this->validateAttribute($model, $attribute);
+                    $promise = $this->validateAttribute($model, $attribute);
+                    if ($promise !== null) {
+                        $promises[] = $promise;
+                    }
                 }
             }
         }
+
+        return allInOrder($promises)->then(function() { return true; });
     }
 
     /**

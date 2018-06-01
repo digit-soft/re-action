@@ -1,20 +1,21 @@
 <?php
 
 namespace Reaction\Base;
-/** TODO: VALIDATORS, EXCEPTIONS!!! */
 
-use Reaction\StaticApplicationInterface;
-use Reaction\Exceptions\InvalidArgumentException;
-use Reaction\Exceptions\InvalidConfigException;
 use ArrayAccess;
 use ArrayIterator;
 use ArrayObject;
 use IteratorAggregate;
-use ReflectionClass;
+use React\Promise\ExtendedPromiseInterface;
 use Reaction;
+use Reaction\Exceptions\Model\ValidationError;
+use Reaction\Exceptions\InvalidArgumentException;
+use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Helpers\Inflector;
 use Reaction\Validators\RequiredValidator;
 use Reaction\Validators\Validator;
+use function Reaction\Promise\reject;
+use ReflectionClass;
 
 /**
  * Model is the base class for data models.
@@ -249,7 +250,7 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
     /**
      * Returns the form name that this model class should use.
      *
-     * The form name is mainly used by [[\yii\widgets\ActiveForm]] to determine how to name
+     * The form name is mainly used by [[\Reaction\Widgets\ActiveForm]] to determine how to name
      * the input fields for the attributes in a model. If the form name is "A" and an attribute
      * name is "b", then the corresponding input name would be "A[b]". If the form name is
      * an empty string, then the input name would be "b".
@@ -364,7 +365,7 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
      * If this parameter is empty, it means any attribute listed in the applicable
      * validation rules should be validated.
      * @param bool $clearErrors whether to call [[clearErrors()]] before performing validation
-     * @return bool whether the validation is successful without any error.
+     * @return ExtendedPromiseInterface with bool whether the validation is successful without any error.
      * @throws InvalidArgumentException if the current scenario is unknown.
      */
     public function validate($attributeNames = null, $clearErrors = true)
@@ -374,7 +375,7 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
         }
 
         if (!$this->beforeValidate()) {
-            return false;
+            return reject(new ValidationError("Before validate error"));
         }
 
         $scenarios = $this->scenarios();
@@ -389,12 +390,16 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
 
         $attributeNames = (array)$attributeNames;
 
+        $validationPromises = [];
         foreach ($this->getActiveValidators() as $validator) {
-            $validator->validateAttributes($this, $attributeNames);
+            $validationPromises[] = $validator->validateAttributes($this, $attributeNames);
         }
-        $this->afterValidate();
-
-        return !$this->hasErrors();
+        return Reaction\Promise\allInOrder($validationPromises)
+            ->always(function() {
+                $this->afterValidate();
+            })->then(function() {
+                return !$this->hasErrors() ? true : reject(new ValidationError("Validation error"));
+            });
     }
 
     /**
@@ -504,11 +509,11 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
     /**
      * Returns a value indicating whether the attribute is required.
      * This is determined by checking if the attribute is associated with a
-     * [[\yii\validators\RequiredValidator|required]] validation rule in the
+     * [[\Reaction\Validators\RequiredValidator|required]] validation rule in the
      * current [[scenario]].
      *
      * Note that when the validator has a conditional validation applied using
-     * [[\yii\validators\RequiredValidator::$when|$when]] this method will return
+     * [[\Reaction\Validators\RequiredValidator::$when|$when]] this method will return
      * `false` regardless of the `when` condition because it may be called be
      * before the model is loaded with data.
      *
@@ -772,15 +777,15 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
 
     /**
      * This method is invoked when an unsafe attribute is being massively assigned.
-     * The default implementation will log a warning message if YII_DEBUG is on.
+     * The default implementation will log a warning message if Reaction::isDebug() is TRUE.
      * It does nothing otherwise.
      * @param string $name the unsafe attribute name
      * @param mixed $value the attribute value
      */
     public function onUnsafeAttribute($name, $value)
     {
-        if (\Reaction::$app->envType !== StaticApplicationInterface::APP_ENV_PROD) {
-            \Reaction::debug("Failed to set unsafe attribute '$name' in '".get_class($this)."'.");
+        if (Reaction::isDebug()) {
+            Reaction::debug("Failed to set unsafe attribute '$name' in '".get_class($this)."'.");
         }
     }
 
@@ -948,18 +953,20 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
      * @param array $attributeNames list of attribute names that should be validated.
      * If this parameter is empty, it means any attribute listed in the applicable
      * validation rules should be validated.
-     * @return bool whether all models are valid. False will be returned if one
+     * @return ExtendedPromiseInterface with bool whether all models are valid. RejectedPromise will be returned if one
      * or multiple models have validation error.
      */
     public static function validateMultiple($models, $attributeNames = null)
     {
-        $valid = true;
+        $promises = [];
         /* @var $model Model */
         foreach ($models as $model) {
-            $valid = $model->validate($attributeNames) && $valid;
+            $promises[] = new Reaction\Promise\LazyPromise(function() use(&$model, $attributeNames) {
+                return $model->validate($attributeNames);
+            });
         }
 
-        return $valid;
+        return Reaction\Promise\allInOrder($promises);
     }
 
     /**
