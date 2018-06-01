@@ -4,6 +4,7 @@ namespace Reaction\Validators;
 
 use Reaction\Base\Component;
 use Reaction\Exceptions\NotSupportedException;
+use Reaction\Promise\ExtendedPromiseInterface;
 
 /**
  * Validator is the base class for all validators.
@@ -267,14 +268,23 @@ class Validator extends Component
      * Validates a single attribute.
      * Child classes must implement this method to provide the actual validation logic.
      * @param \Reaction\Base\Model $model the data model to be validated
-     * @param string $attribute the name of the attribute to be validated.
+     * @param string               $attribute the name of the attribute to be validated.
+     * @return ExtendedPromiseInterface|null Some validators may return a promise if DB or other async components used
      */
     public function validateAttribute($model, $attribute)
     {
         $result = $this->validateValue($model->$attribute);
+        if ($result instanceof ExtendedPromiseInterface) {
+            return $result->then(function($_result) use ($model, $attribute) {
+                if (!empty($_result)) {
+                    $this->addError($model, $attribute, $_result[0], $_result[1]);
+                }
+            });
+        }
         if (!empty($result)) {
             $this->addError($model, $attribute, $result[0], $result[1]);
         }
+        return null;
     }
 
     /**
@@ -309,7 +319,7 @@ class Validator extends Component
      * Validates a value.
      * A validator class can implement this method to support data validation out of the context of a data model.
      * @param mixed $value the data value to be validated.
-     * @return array|null the error message and the array of parameters to be inserted into the error message.
+     * @return array|null|ExtendedPromiseInterface the error message and the array of parameters to be inserted into the error message.
      * ```php
      * if (!$valid) {
      *     return [$this->message, [
@@ -321,6 +331,7 @@ class Validator extends Component
      * }
      *
      * return null;
+     * Some validators may return a promise if DB or other async components used
      * ```
      * for this example `message` template can contain `{param1}`, `{formattedLimit}`, `{mimeTypes}`, `{param4}`
      *

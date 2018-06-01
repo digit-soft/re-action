@@ -122,9 +122,9 @@ class UniqueValidator extends Validator
                 } else {
                     $this->addError($model, $attribute, $this->message);
                 }
-                return true;
+                return null;
             }, function() {
-                return true;
+                return null;
             });
     }
 
