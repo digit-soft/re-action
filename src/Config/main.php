@@ -93,9 +93,6 @@ return [
             'session' => [
                 'class' => 'Reaction\Web\Sessions\Session',
             ],
-            'user' => [
-                'class' => 'Reaction\Web\UserInterface', //TODO: User
-            ],
         ],
     ],
     //DI definitions
