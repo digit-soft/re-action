@@ -30,7 +30,8 @@
         "voryx/pgasync": "~2.0",
         "bower-asset/jquery": "~3.2",
         "bower-asset/bootstrap": "~4.1",
-        "bower-asset/popper.js": "~1.14"
+        "bower-asset/popper.js": "~1.14",
+        "bower-asset/punycode": "~2.1"
     },
     "require-dev": {},
     "autoload": {

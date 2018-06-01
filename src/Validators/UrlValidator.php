@@ -3,6 +3,7 @@
 namespace Reaction\Validators;
 
 use Reaction;
+use Reaction\Assets\PunycodeAsset;
 use Reaction\Assets\ValidationAsset;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Helpers\Json;
@@ -52,7 +53,7 @@ class UrlValidator extends Validator
             throw new InvalidConfigException('In order to use IDN validation intl extension must be installed and enabled.');
         }
         if ($this->message === null) {
-            $this->message = Yii::t('yii', '{attribute} is not a valid URL.');
+            $this->message = Reaction::t('yii', '{attribute} is not a valid URL.');
         }
     }
 
@@ -103,11 +104,6 @@ class UrlValidator extends Validator
 
     private function idnToAscii($idn)
     {
-        if (PHP_VERSION_ID < 50600) {
-            // TODO: drop old PHP versions support
-            return idn_to_ascii($idn);
-        }
-
         return idn_to_ascii($idn, 0, INTL_IDNA_VARIANT_UTS46);
     }
 
@@ -117,9 +113,9 @@ class UrlValidator extends Validator
     public function clientValidateAttribute($model, $attribute, $view)
     {
         ValidationAsset::register($view);
-        //if ($this->enableIDN) {
-        //    PunycodeAsset::register($view);
-        //}
+        if ($this->enableIDN) {
+            PunycodeAsset::register($view);
+        }
         $options = $this->getClientOptions($model, $attribute);
 
         return 'reaction.validation.url(value, messages, ' . Json::htmlEncode($options) . ');';

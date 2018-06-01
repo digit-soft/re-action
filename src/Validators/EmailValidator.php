@@ -2,6 +2,7 @@
 
 namespace Reaction\Validators;
 
+use Reaction\Assets\PunycodeAsset;
 use Reaction\Assets\ValidationAsset;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Helpers\Json;
@@ -113,6 +114,9 @@ class EmailValidator extends Validator
     public function clientValidateAttribute($model, $attribute, $view)
     {
         ValidationAsset::register($view);
+        if ($this->enableIDN) {
+            PunycodeAsset::register($view);
+        }
         $options = $this->getClientOptions($model, $attribute);
 
         return 'reaction.validation.email(value, messages, ' . Json::htmlEncode($options) . ');';

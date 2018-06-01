@@ -1,6 +1,6 @@
 <?php
 
-namespace Reaction\Validators;
+namespace Reaction\Assets;
 
 use Reaction\Web\AssetBundle;
 
