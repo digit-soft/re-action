@@ -3,6 +3,7 @@
 namespace Reaction\Validators;
 
 use Reaction;
+use Reaction\Assets\ValidationAsset;
 
 /**
  * RequiredValidator validates that the specified attribute does not have null or empty value.
@@ -82,11 +83,10 @@ class RequiredValidator extends Validator
      */
     public function clientValidateAttribute($model, $attribute, $view)
     {
-        // TODO: Make ValidationAsset
-        //ValidationAsset::register($view);
+        ValidationAsset::register($view);
         $options = $this->getClientOptions($model, $attribute);
 
-        return 'yii.validation.required(value, messages, ' . json_encode($options, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ');';
+        return 'reaction.validation.required(value, messages, ' . json_encode($options, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ');';
     }
 
     /**

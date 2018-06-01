@@ -1,9 +1,9 @@
 <?php
-// TODO: Add formatter
 namespace Reaction\Validators;
 
 use DateTime;
 use IntlDateFormatter;
+use Reaction;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Helpers\FormatConverter;
 
@@ -40,6 +40,11 @@ class DateValidator extends Validator
      */
     const TYPE_TIME = 'time';
 
+    /**
+     * Formatter used for validation
+     * @var Reaction\I18n\Formatter|Reaction\I18n\Request\Formatter
+     */
+    public $formatter;
     /**
      * @var string the type of the validator. Indicates, whether a date, time or datetime value should be validated.
      * This property influences the default value of [[format]] and also sets the correct behavior when [[format]] is one of the intl
@@ -190,30 +195,30 @@ class DateValidator extends Validator
     {
         parent::init();
         if ($this->message === null) {
-            $this->message = \Reaction::t('yii', 'The format of {attribute} is invalid.');
+            $this->message = Reaction::t('yii', 'The format of {attribute} is invalid.');
         }
         if ($this->format === null) {
             if ($this->type === self::TYPE_DATE) {
-                $this->format = Yii::$app->formatter->dateFormat;
+                $this->format = $this->getFormatter()->dateFormat;
             } elseif ($this->type === self::TYPE_DATETIME) {
-                $this->format = Yii::$app->formatter->datetimeFormat;
+                $this->format = $this->getFormatter()->datetimeFormat;
             } elseif ($this->type === self::TYPE_TIME) {
-                $this->format = Yii::$app->formatter->timeFormat;
+                $this->format = $this->getFormatter()->timeFormat;
             } else {
                 throw new InvalidConfigException('Unknown validation type set for DateValidator::$type: ' . $this->type);
             }
         }
         if ($this->locale === null) {
-            $this->locale = \Reaction::$app->language;
+            $this->locale = Reaction::$app->language;
         }
         if ($this->timeZone === null) {
-            $this->timeZone = Yii::$app->timeZone;
+            $this->timeZone = Reaction::$app->timeZone;
         }
         if ($this->min !== null && $this->tooSmall === null) {
-            $this->tooSmall = \Reaction::t('yii', '{attribute} must be no less than {min}.');
+            $this->tooSmall = Reaction::t('yii', '{attribute} must be no less than {min}.');
         }
         if ($this->max !== null && $this->tooBig === null) {
-            $this->tooBig = \Reaction::t('yii', '{attribute} must be no greater than {max}.');
+            $this->tooBig = Reaction::t('yii', '{attribute} must be no greater than {max}.');
         }
         if ($this->maxString === null) {
             $this->maxString = (string) $this->max;
@@ -351,7 +356,7 @@ class DateValidator extends Validator
         // See https://github.com/yiisoft/yii2/issues/5962 and https://bugs.php.net/bug.php?id=68528
         $parsePos = 0;
         $parsedDate = @$formatter->parse($value, $parsePos);
-        if ($parsedDate === false || $parsePos !== mb_strlen($value, \Reaction::$app ? \Reaction::$app->charset : 'UTF-8')) {
+        if ($parsedDate === false || $parsePos !== mb_strlen($value, Reaction::$app ? Reaction::$app->charset : 'UTF-8')) {
             return false;
         }
 
@@ -400,5 +405,17 @@ class DateValidator extends Validator
         $date->setTimestamp($timestamp);
         $date->setTimezone(new \DateTimeZone($this->timestampAttributeTimeZone));
         return $date->format($format);
+    }
+
+    /**
+     * Get formatter
+     * @return Reaction\I18n\Formatter|Reaction\I18n\Request\Formatter
+     */
+    protected function getFormatter()
+    {
+        if ($this->formatter === null) {
+            $this->formatter = Reaction::$app->formatter;
+        }
+        return $this->formatter;
     }
 }

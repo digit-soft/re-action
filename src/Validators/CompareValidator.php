@@ -2,6 +2,8 @@
 
 namespace Reaction\Validators;
 
+use Reaction;
+use Reaction\Assets\ValidationAsset;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Helpers\Html;
 
@@ -26,13 +28,11 @@ class CompareValidator extends Validator
 {
     /**
      * Constant for specifying the comparison [[type]] by numeric values.
-     * @since 2.0.11
      * @see type
      */
     const TYPE_STRING = 'string';
     /**
      * Constant for specifying the comparison [[type]] by numeric values.
-     * @since 2.0.11
      * @see type
      */
     const TYPE_NUMBER = 'number';
@@ -96,28 +96,28 @@ class CompareValidator extends Validator
         if ($this->message === null) {
             switch ($this->operator) {
                 case '==':
-                    $this->message = \Reaction::t('yii', '{attribute} must be equal to "{compareValueOrAttribute}".');
+                    $this->message = Reaction::t('yii', '{attribute} must be equal to "{compareValueOrAttribute}".');
                     break;
                 case '===':
-                    $this->message = \Reaction::t('yii', '{attribute} must be equal to "{compareValueOrAttribute}".');
+                    $this->message = Reaction::t('yii', '{attribute} must be equal to "{compareValueOrAttribute}".');
                     break;
                 case '!=':
-                    $this->message = \Reaction::t('yii', '{attribute} must not be equal to "{compareValueOrAttribute}".');
+                    $this->message = Reaction::t('yii', '{attribute} must not be equal to "{compareValueOrAttribute}".');
                     break;
                 case '!==':
-                    $this->message = \Reaction::t('yii', '{attribute} must not be equal to "{compareValueOrAttribute}".');
+                    $this->message = Reaction::t('yii', '{attribute} must not be equal to "{compareValueOrAttribute}".');
                     break;
                 case '>':
-                    $this->message = \Reaction::t('yii', '{attribute} must be greater than "{compareValueOrAttribute}".');
+                    $this->message = Reaction::t('yii', '{attribute} must be greater than "{compareValueOrAttribute}".');
                     break;
                 case '>=':
-                    $this->message = \Reaction::t('yii', '{attribute} must be greater than or equal to "{compareValueOrAttribute}".');
+                    $this->message = Reaction::t('yii', '{attribute} must be greater than or equal to "{compareValueOrAttribute}".');
                     break;
                 case '<':
-                    $this->message = \Reaction::t('yii', '{attribute} must be less than "{compareValueOrAttribute}".');
+                    $this->message = Reaction::t('yii', '{attribute} must be less than "{compareValueOrAttribute}".');
                     break;
                 case '<=':
-                    $this->message = \Reaction::t('yii', '{attribute} must be less than or equal to "{compareValueOrAttribute}".');
+                    $this->message = Reaction::t('yii', '{attribute} must be less than or equal to "{compareValueOrAttribute}".');
                     break;
                 default:
                     throw new InvalidConfigException("Unknown operator: {$this->operator}");
@@ -132,7 +132,7 @@ class CompareValidator extends Validator
     {
         $value = $model->$attribute;
         if (is_array($value)) {
-            $this->addError($model, $attribute, \Reaction::t('yii', '{attribute} is invalid.'));
+            $this->addError($model, $attribute, Reaction::t('yii', '{attribute} is invalid.'));
 
             return;
         }
@@ -216,11 +216,10 @@ class CompareValidator extends Validator
      */
     public function clientValidateAttribute($model, $attribute, $view)
     {
-        //TODO: Make a Validation Asset
-        //ValidationAsset::register($view);
+        ValidationAsset::register($view);
         $options = $this->getClientOptions($model, $attribute);
 
-        return 'yii.validation.compare(value, messages, ' . json_encode($options, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ', $form);';
+        return 'reaction.validation.compare(value, messages, ' . json_encode($options, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ', $form);';
     }
 
     /**

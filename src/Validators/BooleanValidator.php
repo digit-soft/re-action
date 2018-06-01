@@ -2,6 +2,9 @@
 
 namespace Reaction\Validators;
 
+use Reaction;
+use Reaction\Assets\ValidationAsset;
+
 /**
  * BooleanValidator checks if the attribute value is a boolean value.
  *
@@ -33,7 +36,7 @@ class BooleanValidator extends Validator
     {
         parent::init();
         if ($this->message === null) {
-            $this->message = \Reaction::t('yii', '{attribute} must be either "{true}" or "{false}".');
+            $this->message = Reaction::t('yii', '{attribute} must be either "{true}" or "{false}".');
         }
     }
 
@@ -63,11 +66,10 @@ class BooleanValidator extends Validator
      */
     public function clientValidateAttribute($model, $attribute, $view)
     {
-        //TODO: Make a Validation Asset
-        //ValidationAsset::register($view);
+        ValidationAsset::register($view);
         $options = $this->getClientOptions($model, $attribute);
 
-        return 'yii.validation.boolean(value, messages, ' . json_encode($options, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ');';
+        return 'reaction.validation.boolean(value, messages, ' . json_encode($options, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ');';
     }
 
     /**

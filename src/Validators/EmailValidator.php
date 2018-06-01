@@ -2,6 +2,7 @@
 
 namespace Reaction\Validators;
 
+use Reaction\Assets\ValidationAsset;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Helpers\Json;
 use Reaction\Base\JsExpression;
@@ -111,11 +112,10 @@ class EmailValidator extends Validator
      */
     public function clientValidateAttribute($model, $attribute, $view)
     {
-        //TODO: Make a Validation Asset
-        //ValidationAsset::register($view);
+        ValidationAsset::register($view);
         $options = $this->getClientOptions($model, $attribute);
 
-        return 'yii.validation.email(value, messages, ' . Json::htmlEncode($options) . ');';
+        return 'reaction.validation.email(value, messages, ' . Json::htmlEncode($options) . ');';
     }
 
     /**

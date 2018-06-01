@@ -3,6 +3,7 @@
 namespace Reaction\Validators;
 
 use Reaction;
+use Reaction\Assets\ValidationAsset;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Helpers\Html;
 use Reaction\Helpers\IpHelper;
@@ -529,11 +530,10 @@ class IpValidator extends Validator
      */
     public function clientValidateAttribute($model, $attribute, $view)
     {
-        //TODO: Make a Validation asset
-        //ValidationAsset::register($view);
+        ValidationAsset::register($view);
         $options = $this->getClientOptions($model, $attribute);
 
-        return 'yii.validation.ip(value, messages, ' . Json::htmlEncode($options) . ');';
+        return 'reaction.validation.ip(value, messages, ' . Json::htmlEncode($options) . ');';
     }
 
     /**

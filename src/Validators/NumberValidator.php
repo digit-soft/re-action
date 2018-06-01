@@ -3,6 +3,7 @@
 namespace Reaction\Validators;
 
 use Reaction;
+use Reaction\Assets\ValidationAsset;
 use Reaction\Helpers\Json;
 use Reaction\Helpers\StringHelper;
 use Reaction\Base\JsExpression;
@@ -125,11 +126,10 @@ class NumberValidator extends Validator
      */
     public function clientValidateAttribute($model, $attribute, $view)
     {
-        //TODO: Make a Validation asset
-        //ValidationAsset::register($view);
+        ValidationAsset::register($view);
         $options = $this->getClientOptions($model, $attribute);
 
-        return 'yii.validation.number(value, messages, ' . Json::htmlEncode($options) . ');';
+        return 'reaction.validation.number(value, messages, ' . Json::htmlEncode($options) . ');';
     }
 
     /**

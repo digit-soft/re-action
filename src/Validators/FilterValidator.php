@@ -2,6 +2,7 @@
 
 namespace Reaction\Validators;
 
+use Reaction\Assets\ValidationAsset;
 use Reaction\Exceptions\InvalidConfigException;
 
 /**
@@ -79,11 +80,10 @@ class FilterValidator extends Validator
         if ($this->filter !== 'trim') {
             return null;
         }
-        //TODO: Make a validation asset
-        //ValidationAsset::register($view);
+        ValidationAsset::register($view);
         $options = $this->getClientOptions($model, $attribute);
 
-        return 'value = yii.validation.trim($form, attribute, ' . json_encode($options, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ');';
+        return 'value = reaction.validation.trim($form, attribute, ' . json_encode($options, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ');';
     }
 
     /**

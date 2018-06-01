@@ -3,6 +3,7 @@
 namespace Reaction\Validators;
 
 use Reaction;
+use Reaction\Assets\ValidationAsset;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Helpers\Html;
 use Reaction\Helpers\Json;
@@ -57,11 +58,10 @@ class RegularExpressionValidator extends Validator
      */
     public function clientValidateAttribute($model, $attribute, $view)
     {
-        //TODO: Make a Validation asset
-        //ValidationAsset::register($view);
+        ValidationAsset::register($view);
         $options = $this->getClientOptions($model, $attribute);
 
-        return 'yii.validation.regularExpression(value, messages, ' . Json::htmlEncode($options) . ');';
+        return 'reaction.validation.regularExpression(value, messages, ' . Json::htmlEncode($options) . ');';
     }
 
     /**

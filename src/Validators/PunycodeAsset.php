@@ -1,9 +1,8 @@
 <?php
-//TODO: Come back later after AssetBundle development
 
 namespace Reaction\Validators;
 
-use yii\web\AssetBundle;
+use Reaction\Web\AssetBundle;
 
 /**
  * This asset bundle provides the javascript files needed for the [[EmailValidator]]s client validation.

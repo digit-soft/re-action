@@ -4,6 +4,7 @@
 namespace Reaction\Validators;
 
 use Reaction;
+use Reaction\Assets\ValidationAsset;
 use Reaction\Helpers\FileHelper;
 use Reaction\Helpers\Html;
 use Reaction\Helpers\Json;
@@ -417,10 +418,9 @@ class FileValidator extends Validator
      */
     public function clientValidateAttribute($model, $attribute, $view)
     {
-        //TODO: Make a Validation Asset
-        //ValidationAsset::register($view);
+        ValidationAsset::register($view);
         $options = $this->getClientOptions($model, $attribute);
-        return 'yii.validation.file(attribute, messages, ' . Json::encode($options) . ');';
+        return 'reaction.validation.file(attribute, messages, ' . Json::encode($options) . ');';
     }
 
     /**

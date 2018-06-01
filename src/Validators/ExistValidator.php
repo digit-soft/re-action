@@ -3,11 +3,15 @@
 
 namespace Reaction\Validators;
 
+use Reaction;
+use Reaction\Exceptions\Error;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Base\Model;
-use yii\db\ActiveQuery;
-use yii\db\ActiveRecord;
-use yii\db\QueryInterface;
+use Reaction\Db\Orm\ActiveQuery;
+use Reaction\Db\Orm\ActiveRecord;
+use Reaction\Db\QueryInterface;
+use Reaction\Promise\ExtendedPromiseInterface;
+use function Reaction\Promise\reject;
 
 /**
  * ExistValidator validates that the attribute value exists in a table.
@@ -52,7 +56,6 @@ class ExistValidator extends Validator
     /**
      * @var string the name of the relation that should be used to validate the existence of the current attribute value
      * This param overwrites $targetClass and $targetAttribute
-     * @since 2.0.14
      */
     public $targetRelation;
     /**
@@ -68,12 +71,10 @@ class ExistValidator extends Validator
     public $allowArray = false;
     /**
      * @var string and|or define how target attributes are related
-     * @since 2.0.11
      */
     public $targetAttributeJunction = 'and';
     /**
      * @var bool whether this validator is forced to always use master DB
-     * @since 2.0.14
      */
     public $forceMasterDb = true;
 
@@ -85,7 +86,7 @@ class ExistValidator extends Validator
     {
         parent::init();
         if ($this->message === null) {
-            $this->message = \Reaction::t('yii', '{attribute} is invalid.');
+            $this->message = Reaction::t('yii', '{attribute} is invalid.');
         }
     }
 
@@ -95,20 +96,20 @@ class ExistValidator extends Validator
     public function validateAttribute($model, $attribute)
     {
         if (!empty($this->targetRelation)) {
-            $this->checkTargetRelationExistence($model, $attribute);
+            return $this->checkTargetRelationExistence($model, $attribute);
         } else {
-            $this->checkTargetAttributeExistence($model, $attribute);
+            return $this->checkTargetAttributeExistence($model, $attribute);
         }
     }
 
     /**
      * Validates existence of the current attribute based on relation name
-     * @param \yii\db\ActiveRecord $model the data model to be validated
-     * @param string $attribute the name of the attribute to be validated.
+     * @param \Reaction\Db\Orm\ActiveRecord $model the data model to be validated
+     * @param string                        $attribute the name of the attribute to be validated.
+     * @return ExtendedPromiseInterface
      */
     private function checkTargetRelationExistence($model, $attribute)
     {
-        $exists = false;
         /** @var ActiveQuery $relationQuery */
         $relationQuery = $model->{'get' . ucfirst($this->targetRelation)}();
 
@@ -118,18 +119,11 @@ class ExistValidator extends Validator
             $relationQuery->andWhere($this->filter);
         }
 
-        if ($this->forceMasterDb && method_exists($model::getDb(), 'useMaster')) {
-            $model::getDb()->useMaster(function() use ($relationQuery, &$exists) {
-                $exists = $relationQuery->exists();
+        return $relationQuery->exists()
+            ->then(null, function() use ($model, $attribute) {
+                $this->addError($model, $attribute, $this->message);
+                return null;
             });
-        } else {
-            $exists = $relationQuery->exists();
-        }
-
-
-        if (!$exists) {
-            $this->addError($model, $attribute, $this->message);
-        }
     }
 
     /**
@@ -146,9 +140,9 @@ class ExistValidator extends Validator
         if (!$this->allowArray) {
             foreach ($params as $key => $value) {
                 if (is_array($value)) {
-                    $this->addError($model, $attribute, Yii::t('yii', '{attribute} is invalid.'));
+                    $this->addError($model, $attribute, Reaction::t('yii', '{attribute} is invalid.'));
 
-                    return;
+                    return null;
                 }
                 $conditions[] = [$key => $value];
             }
@@ -159,9 +153,11 @@ class ExistValidator extends Validator
         $targetClass = $this->targetClass === null ? get_class($model) : $this->targetClass;
         $query = $this->createQuery($targetClass, $conditions);
 
-        if (!$this->valueExists($targetClass, $query, $model->$attribute)) {
-            $this->addError($model, $attribute, $this->message);
-        }
+        return $this->valueExists($query, $model->$attribute)
+            ->then(null, function() use (&$model, $attribute) {
+                $this->addError($model, $attribute, $this->message);
+                return null;
+            });
     }
 
     /**
@@ -229,45 +225,26 @@ class ExistValidator extends Validator
 
         $query = $this->createQuery($this->targetClass, [$this->targetAttribute => $value]);
 
-        return $this->valueExists($this->targetClass, $query, $value) ? null : [$this->message, []];
+        return $this->valueExists($query, $value)
+            ->then(null, function() {
+                return [$this->message, []];
+            });
     }
 
     /**
      * Check whether value exists in target table
      *
-     * @param string $targetClass
      * @param QueryInterface $query
      * @param mixed $value the value want to be checked
-     * @return bool
+     * @return ExtendedPromiseInterface
      */
-    private function valueExists($targetClass, $query, $value)
-    {
-        $db = $targetClass::getDb();
-        $exists = false;
-
-        if ($this->forceMasterDb && method_exists($db, 'useMaster')) {
-            $db->useMaster(function($db) use ($query, $value, &$exists) {
-                $exists = $this->queryValueExists($query, $value);
-            });
-        } else {
-            $exists = $this->queryValueExists($query, $value);
-        }
-
-        return $exists;
-    }
-
-
-    /**
-     * Run query to check if value exists
-     *
-     * @param QueryInterface $query
-     * @param mixed $value the value to be checked
-     * @return bool
-     */
-    private function queryValueExists($query, $value)
+    private function valueExists($query, $value)
     {
         if (is_array($value)) {
-            return $query->count("DISTINCT [[$this->targetAttribute]]") == count($value);
+            return $query->count("DISTINCT [[$this->targetAttribute]]")
+                ->then(function($count) use ($value) {
+                    return $count == count($value) ? true : reject(new Error("Not exists (count mismatch)"));
+                });
         }
         return $query->exists();
     }
@@ -276,11 +253,11 @@ class ExistValidator extends Validator
      * Creates a query instance with the given condition.
      * @param string $targetClass the target AR class
      * @param mixed $condition query condition
-     * @return \yii\db\ActiveQueryInterface the query instance
+     * @return \Reaction\Db\Orm\ActiveQueryInterface the query instance
      */
     protected function createQuery($targetClass, $condition)
     {
-        /* @var $targetClass \yii\db\ActiveRecordInterface */
+        /* @var $targetClass \Reaction\Db\Orm\ActiveRecordInterface */
         $query = $targetClass::find()->andWhere($condition);
         if ($this->filter instanceof \Closure) {
             call_user_func($this->filter, $query);
