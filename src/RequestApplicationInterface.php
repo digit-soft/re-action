@@ -24,18 +24,27 @@ use Reaction\Web\View;
  * @property ServerRequestInterface   $request
  * @property RequestHelper            $reqHelper
  * @property RouteInterface           $route
- * @property ResponseBuilderInterface $response     //TODO: Attach response builder
- * @property Session                  $session      //TODO: Attach session
- * @property User                     $user         //TODO: Attach web user
- * @property UrlManager               $urlManager   //TODO: Attach session
- * @property View                     $view         //TODO: Attach view
- * @property AssetManager             $assetManager //TODO: Attach assetManager
+ * @property ResponseBuilderInterface $response
+ * @property Session                  $session
+ * @property User                     $user
+ * @property UrlManager               $urlManager
+ * @property View                     $view
+ * @property AssetManager             $assetManager
  * @property HelpersGroup             $helpers
  */
 interface RequestApplicationInterface extends EventEmitterWildcardInterface
 {
     const EVENT_REQUEST_INIT    = 'requestInit';
     const EVENT_REQUEST_END     = 'requestEnd';
+
+    /**
+     * Resolve app action
+     * @param string|null $routePath
+     * @param string|null $method
+     * @param array|null $params
+     * @return Promise\ExtendedPromiseInterface
+     */
+    public function resolveAction($routePath = null, $method = null, $params = null);
 
     /**
      * Get route for request
@@ -48,6 +57,16 @@ interface RequestApplicationInterface extends EventEmitterWildcardInterface
      * @param RouteInterface|null $route
      */
     public function setRoute($route = null);
+
+    /**
+     * Create Route with given params
+     * @param string|null $routePath
+     * @param string|null $method
+     * @param array|null  $params
+     * @param bool        $onlyReturn
+     * @return RouteInterface
+     */
+    public function createRoute($routePath = null, $method = null, $params = null, $onlyReturn = false);
 
     /**
      * Get app URL manager

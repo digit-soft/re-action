@@ -190,7 +190,7 @@ abstract class RouterAbstract extends Component implements RouterInterface
             }
         )->then(
             function () use (&$app) {
-                return $app->getRoute()->resolve();
+                return $app->resolveAction();
             }
         )->then(
             function ($response) use (&$app) {
@@ -205,10 +205,12 @@ abstract class RouterAbstract extends Component implements RouterInterface
 
     /**
      * Get data from dispatcher
-     * @param RequestApplicationInterface $app
+     * @param RequestApplicationInterface $app Request application
+     * @param string                      $routePath URI path to resolve
+     * @param string                      $method HTTP request method
      * @return array
      */
-    abstract public function getDispatcherData(RequestApplicationInterface $app);
+    abstract public function getDispatcherData(RequestApplicationInterface $app, $routePath, $method = 'GET');
 
     /**
      * Get controller for errors

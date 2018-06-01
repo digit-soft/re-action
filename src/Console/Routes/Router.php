@@ -33,13 +33,14 @@ class Router extends RouterAbstract implements RouterInterface
 
     /**
      * Get data from dispatcher
-     * @param RequestApplicationInterface $app
+     * @param RequestApplicationInterface $app Request application
+     * @param string                      $routePath URI path to resolve
+     * @param string                      $method HTTP request method
      * @return array
      */
-    public function getDispatcherData(RequestApplicationInterface $app)
+    public function getDispatcherData(RequestApplicationInterface $app, $routePath, $method = 'GET')
     {
-        $path = (string)$app->reqHelper->getPathInfo();
-        list($controller, $actionName) = $this->createController($path, ['app' => $app]);
+        list($controller, $actionName) = $this->createController($routePath, ['app' => $app]);
         return [Dispatcher::FOUND, [$controller, $actionName]];
     }
 }

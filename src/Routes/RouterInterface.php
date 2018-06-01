@@ -125,10 +125,12 @@ interface RouterInterface
 
     /**
      * Get data from dispatcher
-     * @param RequestApplicationInterface $app
+     * @param RequestApplicationInterface $app Request application
+     * @param string                      $routePath URI path to resolve
+     * @param string                      $method HTTP request method
      * @return array
      */
-    public function getDispatcherData(RequestApplicationInterface $app);
+    public function getDispatcherData(RequestApplicationInterface $app, $routePath, $method = 'GET');
 
     /**
      * Get controller and action from path (Just parse path)

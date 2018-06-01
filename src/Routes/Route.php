@@ -169,8 +169,11 @@ class Route extends RequestAppComponent implements RouteInterface
             if (isset($data[2])) {
                 $this->_params = is_array($data[2]) ? $data[2] : (array)$data[2];
                 $this->_paramsClean = $this->_params;
-                $queryParams = ArrayHelper::merge($this->app->reqHelper->getQueryParams(), $this->_params);
-                $this->app->reqHelper->setQueryParams($queryParams);
+                //Overwrite query parameters
+                if (ArrayHelper::isAssociative($this->_params)) {
+                    $queryParams = ArrayHelper::merge($this->app->reqHelper->getQueryParams(), $this->_params);
+                    $this->app->reqHelper->setQueryParams($queryParams);
+                }
             }
             //Parse controller and action
             if (is_array($callable) && count($callable) >= 2 && $callable[0] instanceof ControllerInterface) {

@@ -35,16 +35,10 @@ class RequestApplication extends ServiceLocator implements RequestApplicationInt
     /**
      * Get route for request
      * @return RouteInterface
-     * @throws InvalidConfigException
      */
     public function getRoute() {
         if (!isset($this->_route)) {
-            $data = Reaction::$app->router->getDispatcherData($this);
-            $this->_route = Reaction::create([
-                'class' => RouteInterface::class,
-                'app' => $this,
-                'dispatchedData' => $data,
-            ]);
+            $this->createRoute();
         }
         return $this->_route;
     }
@@ -58,9 +52,45 @@ class RequestApplication extends ServiceLocator implements RequestApplicationInt
         $this->_route = $route;
     }
 
-    public function resolveRequest()
+    /**
+     * Create Route with given params
+     * @param string|null $routePath
+     * @param string|null $method
+     * @param array|null  $params
+     * @param bool        $onlyReturn
+     * @return RouteInterface
+     */
+    public function createRoute($routePath = null, $method = null, $params = null, $onlyReturn = false)
     {
+        $routePath = isset($routePath) ? $routePath : $this->reqHelper->getPathInfo();
+        $method = isset($method) ? $method : $this->reqHelper->getMethod();
+        $data = Reaction::$app->router->getDispatcherData($this, $routePath, $method);
+        //Parameters overwrite
+        if (is_array($params) && count($data) >= 2) {
+            $data[2] = $params;
+        }
+        $route = Reaction::create([
+            'class' => RouteInterface::class,
+            'app' => $this,
+            'dispatchedData' => $data,
+        ]);
+        if (!$onlyReturn) {
+            $this->_route = $route;
+        }
+        return $route;
+    }
 
+    /**
+     * Resolve app action
+     * @param string|null $routePath
+     * @param string|null $method
+     * @param array|null $params
+     * @return Promise\ExtendedPromiseInterface
+     */
+    public function resolveAction($routePath = null, $method = null, $params = null)
+    {
+        $route = $this->createRoute($routePath, $method, $params);
+        return $route->resolve();
     }
 
     /**

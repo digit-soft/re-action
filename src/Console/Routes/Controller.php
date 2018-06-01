@@ -96,6 +96,10 @@ class Controller extends \Reaction\Routes\Controller
         $params = ArrayHelper::merge($params, $paramsConsole);
         array_unshift($params, $app);
         $this->processActionParams($action, $params);
+        if ($this->help && $this->getUniqueId() !== 'help') {
+            $routePath = $this->getUniqueId() . '/' . $action;
+            return $app->resolveAction('help', 'GET', [$routePath]);
+        }
         return parent::resolveAction($app, $action, ...$params);
     }
 
@@ -573,11 +577,6 @@ class Controller extends \Reaction\Routes\Controller
                     . "\n";
             }
             throw new \Reaction\Console\Exception($errorMessage);
-        }
-        if ($this->help) {
-            $actionId = 'help';
-            //$route = $this->getUniqueId() . '/' . $id;
-            //return Yii::$app->runAction('help', [$route]);
         }
     }
 }
