@@ -3,6 +3,7 @@
 namespace Reaction\Validators;
 
 use Reaction;
+use Reaction\Assets\ValidationAsset;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Helpers\Json;
 use Reaction\Base\JsExpression;
@@ -115,15 +116,13 @@ class UrlValidator extends Validator
      */
     public function clientValidateAttribute($model, $attribute, $view)
     {
-        //TODO: Make a Validation Asset
-        //TODO: Make a AssetBundle
-        //ValidationAsset::register($view);
+        ValidationAsset::register($view);
         //if ($this->enableIDN) {
         //    PunycodeAsset::register($view);
         //}
         $options = $this->getClientOptions($model, $attribute);
 
-        return 'yii.validation.url(value, messages, ' . Json::htmlEncode($options) . ');';
+        return 'reaction.validation.url(value, messages, ' . Json::htmlEncode($options) . ');';
     }
 
     /**
