@@ -2,13 +2,10 @@
 
 namespace Reaction\Web\Sessions;
 
-use React\Filesystem\Node\FileInterface;
-use React\Promise\ExtendedPromiseInterface;
+use Reaction\Promise\ExtendedPromiseInterface;
 use React\Promise\PromiseInterface;
 use Reaction\Cache\ExtendedCacheInterface;
-use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Exceptions\SessionException;
-use Reaction\Helpers\ArrayHelper;
 use Reaction\Promise\Promise;
 
 /**
@@ -46,7 +43,7 @@ class CachedSessionHandler extends SessionHandlerAbstract
     /**
      * Read session data and returns serialized|encoded data
      * @param string $id
-     * @return PromiseInterface  with session data
+     * @return ExtendedPromiseInterface  with session data
      */
     public function read($id)
     {
@@ -82,7 +79,7 @@ class CachedSessionHandler extends SessionHandlerAbstract
      * Write session data to storage
      * @param string $id
      * @param array  $data
-     * @return PromiseInterface  with session data
+     * @return ExtendedPromiseInterface  with session data
      */
     public function write($id, $data)
     {
@@ -103,7 +100,7 @@ class CachedSessionHandler extends SessionHandlerAbstract
     /**
      * Destroy a session
      * @param string $id The session ID being destroyed.
-     * @return PromiseInterface  with bool when finished
+     * @return ExtendedPromiseInterface with bool when finished
      */
     public function destroy($id)
     {
@@ -172,7 +169,7 @@ class CachedSessionHandler extends SessionHandlerAbstract
      * result of the PHP internally encoding
      * the $_SESSION superglobal to a serialized
      * string and passing it as this parameter.
-     * @return PromiseInterface  with bool when finished
+     * @return ExtendedPromiseInterface  with bool when finished
      */
     public function updateTimestamp($id, $data = null)
     {
@@ -222,7 +219,7 @@ class CachedSessionHandler extends SessionHandlerAbstract
     /**
      * Get data from cache storage
      * @param string $key
-     * @return Promise
+     * @return ExtendedPromiseInterface
      */
     protected function getDataFromCache($key) {
         $self = $this;

@@ -2,7 +2,7 @@
 
 namespace Reaction\Web\Sessions;
 
-use React\Promise\ExtendedPromiseInterface;
+use Reaction\Promise\ExtendedPromiseInterface;
 use React\Promise\PromiseInterface;
 use Reaction;
 use Reaction\Base\RequestAppComponent;
@@ -142,7 +142,7 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
 
     /**
      * Starts the session.
-     * @return PromiseInterface
+     * @return ExtendedPromiseInterface
      */
     public function open()
     {
@@ -165,7 +165,7 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
 
     /**
      * Open session internal method
-     * @return PromiseInterface
+     * @return ExtendedPromiseInterface
      */
     protected function openInternal()
     {
@@ -238,7 +238,7 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
 
     /**
      * Ends the current session and store session data.
-     * @return PromiseInterface
+     * @return ExtendedPromiseInterface
      */
     public function close()
     {
@@ -264,10 +264,13 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
     {
         if ($this->getIsActive()) {
             $sessionId = $this->getId();
-            $this->close();
-            $this->setId($sessionId);
-            $this->open();
+            return $this->close()
+                ->then(function() use ($sessionId) {
+                    $this->setId($sessionId);
+                    return $this->open();
+                });
         }
+        return Reaction\Promise\resolve(true);
     }
 
     /**
@@ -481,7 +484,7 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
      * @internal Do not call this method directly.
      * @param string $id session ID
      * @param array  $data session data
-     * @return PromiseInterface with bool whether session write is successful
+     * @return ExtendedPromiseInterface with bool whether session write is successful
      */
     public function writeSession($data = null, $id = null)
     {
@@ -499,7 +502,7 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
      * Session destroy handler.
      * @internal Do not call this method directly.
      * @param string $id session ID
-     * @return PromiseInterface with bool whether session is destroyed successfully
+     * @return ExtendedPromiseInterface with bool whether session is destroyed successfully
      */
     public function destroySession($id = null)
     {

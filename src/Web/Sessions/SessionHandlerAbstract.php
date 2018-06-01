@@ -4,7 +4,7 @@ namespace Reaction\Web\Sessions;
 
 use React\EventLoop\LoopInterface;
 use React\EventLoop\Timer\TimerInterface;
-use React\Promise\ExtendedPromiseInterface;
+use Reaction\Promise\ExtendedPromiseInterface;
 use React\Promise\PromiseInterface;
 use Reaction\Base\Component;
 use Reaction\Exceptions\InvalidConfigException;
@@ -74,7 +74,7 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
     /**
      * Read session data and returns serialized|encoded data
      * @param string $id
-     * @return PromiseInterface  with session data
+     * @return ExtendedPromiseInterface  with session data
      */
     abstract public function read($id);
 
@@ -82,14 +82,14 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
      * Write session data to storage
      * @param string $id
      * @param array  $data
-     * @return PromiseInterface  with session data
+     * @return ExtendedPromiseInterface  with session data
      */
     abstract public function write($id, $data);
 
     /**
      * Destroy a session
      * @param string $id The session ID being destroyed.
-     * @return PromiseInterface  with bool when finished
+     * @return ExtendedPromiseInterface  with bool when finished
      */
     abstract public function destroy($id);
 
@@ -98,13 +98,12 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
      * @param string                      $idOld
      * @param RequestApplicationInterface $app
      * @param bool                        $deleteOldSession
-     * @return PromiseInterface  with new session ID (string)
+     * @return ExtendedPromiseInterface  with new session ID (string)
      */
     public function regenerateId($idOld, RequestApplicationInterface $app, $deleteOldSession = false)
     {
         $self = $this;
         $dataOld = [];
-        /** @var ExtendedPromiseInterface $promise */
         $promise = $this->read($idOld)->then(
             function($data) { return $data; },
             function() { return []; }
@@ -142,7 +141,7 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
     /**
      * Return a new session ID
      * @param RequestApplicationInterface $app
-     * @return PromiseInterface  with session ID valid for session handler
+     * @return ExtendedPromiseInterface  with session ID valid for session handler
      */
     public function createId(RequestApplicationInterface $app)
     {
@@ -172,14 +171,14 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
      * result of the PHP internally encoding
      * the $_SESSION superglobal to a serialized
      * string and passing it as this parameter.
-     * @return PromiseInterface  with bool when finished
+     * @return ExtendedPromiseInterface  with bool when finished
      */
     abstract public function updateTimestamp($id, $data);
 
     /**
      * Check session id for uniqueness
      * @param string $sessionId
-     * @return PromiseInterface
+     * @return ExtendedPromiseInterface
      */
     public function checkSessionId($sessionId)
     {
