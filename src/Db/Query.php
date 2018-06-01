@@ -4,6 +4,7 @@ namespace Reaction\Db;
 
 use Reaction\Base\Component;
 use Reaction\Db\Expressions\Expression;
+use Reaction\Exceptions\Error;
 use Reaction\Exceptions\InvalidArgumentException;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Helpers\ArrayHelper;
@@ -368,9 +369,10 @@ class Query extends Component implements QueryInterface, ExpressionInterface
         $params = $command->params;
         $command->setSql($command->db->getQueryBuilder()->selectExists($command->getSql()));
         $command->bindValues($params);
-        return $command->queryScalar()->thenLazy(
-            function() { return true; }
-        );
+        return $command->queryScalar()
+            ->thenLazy(function($count = 0) {
+                return $count > 0 ? true : reject(new Error("Does not exist"));
+            });
     }
 
     /**
