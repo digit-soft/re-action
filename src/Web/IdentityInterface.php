@@ -2,7 +2,7 @@
 
 namespace Reaction\Web;
 
-use React\Promise\ExtendedPromiseInterface;
+use Reaction\Promise\ExtendedPromiseInterface;
 
 /**
  * IdentityInterface is the interface that should be implemented by a class providing identity information.

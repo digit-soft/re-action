@@ -464,8 +464,7 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
         try {
             $_validators = $this->getValidators();
         } catch (InvalidConfigException $exception) {
-            //TODO: Rewrite
-            App::app()->exceptions->throwToStdout($exception);
+            Reaction::error($exception);
             $_validators = [];
         }
         foreach ($_validators as $validator) {
