@@ -2,8 +2,11 @@
 
 namespace Reaction;
 
+use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Server as Http;
+use React\Promise\PromiseInterface;
 use React\Socket\ServerInterface as SocketServerInterface;
+use Reaction\Web\Response;
 
 /**
  * Class StaticApplication
@@ -16,10 +19,8 @@ class StaticApplicationWeb extends StaticApplicationAbstract
      * @throws Exceptions\InvalidConfigException
      */
     public function run() {
-        // TODO: Make more serious Exception handler :)
-        $this->router->registerControllers();
-        $this->router->publishRoutes();
-        $this->addMiddleware([$this->router, 'resolveRequest']);
+        $this->router->initRoutes();
+        $this->addMiddleware([$this, 'processRequest']);
         $this->socket = \Reaction::create(SocketServerInterface::class);
         $this->http = \Reaction::create(Http::class, [$this->middleware]);
         $this->http->listen($this->socket);

@@ -2,6 +2,7 @@
 
 namespace Reaction;
 
+use Psr\Http\Message\ServerRequestInterface;
 use React\Filesystem\FilesystemInterface;
 use React\Promise\PromiseInterface;
 use Reaction\Base\Logger\LoggerInterface;
@@ -9,6 +10,7 @@ use Reaction\Db\DatabaseInterface;
 use Reaction\Events\EventEmitterWildcardInterface;
 use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\Routes\UrlManager;
+use Reaction\Web\Response;
 use Reaction\Web\Sessions\SessionHandlerInterface;
 
 /**
@@ -54,6 +56,20 @@ interface StaticApplicationInterface extends EventEmitterWildcardInterface
      * @param callable|array $middleware
      */
     public function addMiddleware($middleware);
+
+    /**
+     * Process React request
+     * @param ServerRequestInterface $request
+     * @return PromiseInterface
+     */
+    public function processRequest(ServerRequestInterface $request);
+
+    /**
+     * Create RequestApplicationInterface instance from react request
+     * @param ServerRequestInterface $request
+     * @return RequestApplicationInterface
+     */
+    public function createRequestApplication(ServerRequestInterface $request);
 
     /**
      * Translates a path alias into an actual path.

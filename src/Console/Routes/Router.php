@@ -27,7 +27,7 @@ class Router extends RouterAbstract implements RouterInterface
     /**
      * Register all defined routes in dispatcher
      */
-    public function publishRoutes()
+    protected function publishRoutes()
     {
     }
 

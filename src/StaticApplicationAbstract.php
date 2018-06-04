@@ -2,14 +2,18 @@
 
 namespace Reaction;
 
+use Psr\Http\Message\ServerRequestInterface;
 use React\EventLoop\LoopInterface;
 use React\Http\Server as Http;
+use React\Promise\PromiseInterface;
 use React\Socket\Server as Socket;
+use Reaction;
 use Reaction\Db\DatabaseInterface;
 use Reaction\DI\ServiceLocator;
 use Reaction\DI\ServiceLocatorAutoloadInterface;
 use Reaction\Exceptions\InvalidArgumentException;
 use Reaction\Promise\ExtendedPromiseInterface;
+use Reaction\Web\Response;
 
 /**
  * Class StaticApplicationAbstract
@@ -59,7 +63,7 @@ abstract class StaticApplicationAbstract extends ServiceLocator implements Stati
      */
     public function init()
     {
-        $this->loop = \Reaction::create(\React\EventLoop\LoopInterface::class);
+        $this->loop = Reaction::create(\React\EventLoop\LoopInterface::class);
     }
 
     /**
@@ -67,13 +71,14 @@ abstract class StaticApplicationAbstract extends ServiceLocator implements Stati
      */
     public function run()
     {
-        if (!\Reaction::isConsoleApp()) {
+        $isConsole = Reaction::isConsoleApp();
+        if (!$isConsole) {
             echo "Running server on $this->hostname:$this->port\n";
         }
         $this->initPromise = $this->loadComponents()->always(
-            function() {
-                if (!\Reaction::isConsoleApp()) {
-                    \Reaction::info('StaticApplication initialized');
+            function() use ($isConsole) {
+                if (!$isConsole) {
+                    Reaction::info('StaticApplication initialized');
                 }
                 $this->initialized = true;
                 return true;
@@ -92,6 +97,47 @@ abstract class StaticApplicationAbstract extends ServiceLocator implements Stati
         } else {
             $this->middleware[] = $middleware;
         }
+    }
+
+    /**
+     * Process React request
+     * @param ServerRequestInterface $request
+     * @return ExtendedPromiseInterface
+     */
+    public function processRequest(ServerRequestInterface $request)
+    {
+        $app = $this->createRequestApplication($request);
+        $initPromise = !$this->initialized ? $this->initPromise : \Reaction\Promise\resolve(true);
+        return $initPromise->then(
+            function() use(&$app) {
+                return $app->loadComponents();
+            }
+        )->then(
+            function () use (&$app) {
+                return $app->resolveAction();
+            }
+        )->then(
+            function ($response) use (&$app) {
+                return $app->emitAndWait(RequestApplicationInterface::EVENT_REQUEST_END, [$app])->then(
+                    function () use ($response) {
+                        return $response;
+                    }
+                );
+            }
+        );
+    }
+
+    /**
+     * Create RequestApplicationInterface instance from react request
+     * @param ServerRequestInterface $request
+     * @return RequestApplicationInterface
+     */
+    public function createRequestApplication(ServerRequestInterface $request)
+    {
+        $config = Reaction::$config->get('appRequest');
+        $config = ['request' => $request] + $config;
+        $app = Reaction::create($config);
+        return $app;
     }
 
     /**

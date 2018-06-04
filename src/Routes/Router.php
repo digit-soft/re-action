@@ -24,19 +24,6 @@ class Router extends RouterAbstract implements RouterInterface
     protected $_routePaths = [];
 
     /**
-     * Register all defined routes in dispatcher
-     */
-    public function publishRoutes() {
-        $routes = $this->routes;
-        $this->parseRoutesData();
-        $this->dispatcher = $this->createDispatcher(function (\FastRoute\RouteCollector $r) use ($routes) {
-            foreach ($routes as $routeRow) {
-                $r->addRoute($routeRow['httpMethod'], $routeRow['route'], $routeRow['handler']);
-            }
-        });
-    }
-
-    /**
      * Get data from dispatcher
      * @param RequestApplicationInterface $app Request application
      * @param string                      $routePath URI path to resolve
@@ -76,6 +63,19 @@ class Router extends RouterAbstract implements RouterInterface
             $this->_routeParser = Reaction::create($this->routeParserClass, $this->routeParserOptions);
         }
         return $this->_routeParser;
+    }
+
+    /**
+     * Register all defined routes in dispatcher
+     */
+    protected function publishRoutes() {
+        $routes = $this->routes;
+        $this->parseRoutesData();
+        $this->dispatcher = $this->createDispatcher(function (\FastRoute\RouteCollector $r) use ($routes) {
+            foreach ($routes as $routeRow) {
+                $r->addRoute($routeRow['httpMethod'], $routeRow['route'], $routeRow['handler']);
+            }
+        });
     }
 
     /**

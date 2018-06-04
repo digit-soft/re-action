@@ -65,95 +65,6 @@ abstract class RouterAbstract extends Component implements RouterInterface
     }
 
     /**
-     * GET method shortcut for ::addRoute()
-     * @see Router::addRoute()
-     * @param string $route
-     * @param mixed  $handler
-     */
-    public function get($route, $handler) {
-        return $this->addRoute('GET', $route, $handler);
-    }
-
-    /**
-     * POST method shortcut for ::addRoute()
-     * @see Router::addRoute()
-     * @param string $route
-     * @param mixed  $handler
-     */
-    public function post($route, $handler) {
-        return $this->addRoute('POST', $route, $handler);
-    }
-
-    /**
-     * DELETE method shortcut for ::addRoute()
-     * @see Router::addRoute()
-     * @param string $route
-     * @param mixed  $handler
-     */
-    public function delete($route, $handler) {
-        return $this->addRoute('DELETE', $route, $handler);
-    }
-
-    /**
-     * HEAD method shortcut for ::addRoute()
-     * @see Router::addRoute()
-     * @param string $route
-     * @param mixed  $handler
-     */
-    public function head($route, $handler) {
-        return $this->addRoute('HEAD', $route, $handler);
-    }
-
-    /**
-     * PATCH method shortcut for ::addRoute()
-     * @see Router::addRoute()
-     * @param string $route
-     * @param mixed  $handler
-     */
-    public function patch($route, $handler) {
-        return $this->addRoute('PATCH', $route, $handler);
-    }
-
-    /**
-     * PUT method shortcut for ::addRoute()
-     * @see Router::addRoute()
-     * @param string $route
-     * @param mixed  $handler
-     */
-    public function put($route, $handler) {
-        return $this->addRoute('PUT', $route, $handler);
-    }
-
-    /**
-     * All methods shortcut for ::addRoute()
-     * @see Router::addRoute()
-     * @param string $route
-     * @param mixed  $handler
-     */
-    public function any($route, $handler) {
-        return $this->addRoute(['GET', 'POST', 'DELETE', 'PUT', 'PATCH', 'HEAD'], $route, $handler);
-    }
-
-    /**
-     * Create a routes group
-     * @param string $groupPrefix
-     * @param mixed  $callback
-     */
-    public function addGroup($groupPrefix, $callback) {
-        if(!is_callable($callback) && !is_string($callback)) {
-            throw new BadRouteException(sprintf("Not valid callback for group '%s'", $groupPrefix));
-        }
-        //Save previous group
-        $prevGroup = $this->groupCurrent;
-        //Set new group
-        $this->groupCurrent = $groupPrefix;
-        //Call function with Router as argument to add routes
-        $callback($this);
-        //Restore group
-        $this->groupCurrent = $prevGroup;
-    }
-
-    /**
      * Add controller with its actions
      * @param Controller $controller
      */
@@ -164,44 +75,19 @@ abstract class RouterAbstract extends Component implements RouterInterface
     /**
      * Find controllers in given namespaces and register as routes
      */
-    public function registerControllers() {
+    public function initRoutes()
+    {
         $classNames = ClassFinderHelper::findClassesPsr4($this->controllerNamespaces, true);
         foreach ($classNames as $className) {
             $this->registerController($className);
         }
+        $this->publishRoutes();
     }
 
     /**
      * Register all defined routes in dispatcher
      */
-    abstract public function publishRoutes();
-
-    /**
-     * Dispatch requested route
-     * @param ServerRequestInterface $request
-     * @return PromiseInterface
-     */
-    public function resolveRequest(ServerRequestInterface $request) {
-        $app = $this->createRequestApplication($request);
-        $initPromise = !Reaction::$app->initialized ? Reaction::$app->initPromise : Reaction\Promise\resolve(true);
-        return $initPromise->then(
-            function() use(&$app) {
-                return $app->loadComponents();
-            }
-        )->then(
-            function () use (&$app) {
-                return $app->resolveAction();
-            }
-        )->then(
-            function ($response) use (&$app) {
-                return $app->emitAndWait(RequestApplicationInterface::EVENT_REQUEST_END, [$app])->then(
-                    function () use ($response) {
-                        return $response;
-                    }
-                );
-            }
-        );
-    }
+    abstract protected function publishRoutes();
 
     /**
      * Get data from dispatcher
@@ -321,18 +207,6 @@ abstract class RouterAbstract extends Component implements RouterInterface
             }
         }
         return [$controller, $actionId];
-    }
-
-    /**
-     * Create application from request
-     * @param ServerRequestInterface $request
-     * @return RequestApplicationInterface
-     */
-    protected function createRequestApplication(ServerRequestInterface $request) {
-        $config = Reaction::$config->get('appRequest');
-        $config = ['request' => $request] + $config;
-        $app = Reaction::createNoExc($config);
-        return $app;
     }
 
     /**

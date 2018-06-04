@@ -2,7 +2,10 @@
 
 namespace Reaction;
 
+use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Io\ServerRequest;
+use React\Promise\PromiseInterface;
+use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\Web\Response;
 use function Reaction\Promise\resolve;
 
@@ -34,7 +37,7 @@ class StaticApplicationConsole extends StaticApplicationAbstract
         };
         $promise->then(
             function() {
-                return $this->router->resolveRequest($this->createRequest());
+                return $this->processRequest($this->createRequest());
             }
         )->then(
             function($response = null) {
