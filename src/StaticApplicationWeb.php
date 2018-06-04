@@ -2,11 +2,9 @@
 
 namespace Reaction;
 
-use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Server as Http;
-use React\Promise\PromiseInterface;
 use React\Socket\ServerInterface as SocketServerInterface;
-use Reaction\Web\Response;
+use Reaction;
 
 /**
  * Class StaticApplication
@@ -21,8 +19,8 @@ class StaticApplicationWeb extends StaticApplicationAbstract
     public function run() {
         $this->router->initRoutes();
         $this->addMiddleware([$this, 'processRequest']);
-        $this->socket = \Reaction::create(SocketServerInterface::class);
-        $this->http = \Reaction::create(Http::class, [$this->middleware]);
+        $this->socket = Reaction::create(SocketServerInterface::class);
+        $this->http = Reaction::create(Http::class, [$this->middleware]);
         $this->http->listen($this->socket);
         //Exception handler
         $this->http->on('error', function (\Throwable $error) {
