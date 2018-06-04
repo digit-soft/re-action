@@ -33,7 +33,8 @@ class Reaction
      * @param string                         $configsPath Path where to look for config files
      * @param string                         $appType Application type (web|console)
      */
-    public static function init(Composer\Autoload\ClassLoader $composer, $configsPath = null, $appType = StaticApplicationInterface::APP_TYPE_WEB) {
+    public static function init(Composer\Autoload\ClassLoader $composer, $configsPath = null, $appType = StaticApplicationInterface::APP_TYPE_WEB)
+    {
         static::$composer = $composer;
         if (!isset($configsPath)) {
             throw new \Reaction\Exceptions\InvalidArgumentException("Missing \$configsPath option");
@@ -52,7 +53,8 @@ class Reaction
      * @param array $params
      * @return mixed|null
      */
-    public static function createNoExc($type, array $params = []) {
+    public static function createNoExc($type, array $params = [])
+    {
         try {
             return static::create($type, $params);
         } catch (\Throwable $exception) {
@@ -67,7 +69,8 @@ class Reaction
      * @return object|mixed
      * @throws InvalidConfigException
      */
-    public static function create($type, array $params = []) {
+    public static function create($type, array $params = [])
+    {
         if (is_string($type)) {
             return static::$di->get($type, $params);
         } elseif (is_array($type) && isset($type['class'])) {
@@ -91,7 +94,8 @@ class Reaction
      * @throws InvalidConfigException
      * @throws \Reaction\Exceptions\NotInstantiableException
      */
-    public static function invoke($callable, $params = []) {
+    public static function invoke($callable, $params = [])
+    {
         return static::$di->invoke($callable, $params);
     }
 
@@ -118,7 +122,8 @@ class Reaction
      * @param string $language
      * @return mixed
      */
-    public static function t($domain, $message, $params = [], $language = null) {
+    public static function t($domain, $message, $params = [], $language = null)
+    {
         $_params = [];
         foreach ($params as $key => $value) { $_params['{' . $key . '}'] = $value; }
         return !empty($params) ? strtr($message, $_params) : $message;
@@ -128,7 +133,8 @@ class Reaction
      * Returns a string representing the current version of framework.
      * @return string the version of Reaction framework
      */
-    public static function getVersion() {
+    public static function getVersion()
+    {
         return '0.2.1';
     }
 
@@ -136,7 +142,8 @@ class Reaction
      * Check that application type is web
      * @return bool
      */
-    public static function isWebApp() {
+    public static function isWebApp()
+    {
         return static::$appType === StaticApplicationInterface::APP_TYPE_WEB;
     }
 
@@ -144,7 +151,8 @@ class Reaction
      * Check that application type is console
      * @return bool
      */
-    public static function isConsoleApp() {
+    public static function isConsoleApp()
+    {
         return static::$appType === StaticApplicationInterface::APP_TYPE_CONSOLE;
     }
 
@@ -152,7 +160,8 @@ class Reaction
      * Shortcut function to check that Application is using DEVELOPMENT environment
      * @return bool
      */
-    public static function isDev() {
+    public static function isDev()
+    {
         return empty(Reaction::$app) || Reaction::$app->envType === StaticApplicationInterface::APP_ENV_DEV;
     }
 
@@ -160,7 +169,8 @@ class Reaction
      * Shortcut function to check that Application is using PRODUCTION environment
      * @return bool
      */
-    public static function isProd() {
+    public static function isProd()
+    {
         return Reaction::$app && Reaction::$app->envType === StaticApplicationInterface::APP_ENV_PROD;
     }
 
@@ -168,7 +178,8 @@ class Reaction
      * Shortcut function to check that Application is in DEBUG mode
      * @return bool
      */
-    public static function isDebug() {
+    public static function isDebug()
+    {
         return Reaction::$app && Reaction::$app->debug;
     }
 
@@ -176,7 +187,8 @@ class Reaction
      * Shortcut function to check that Application is in TESTING mode
      * @return bool
      */
-    public static function isTest() {
+    public static function isTest()
+    {
         return Reaction::$app && Reaction::$app->test;
     }
 
@@ -185,7 +197,8 @@ class Reaction
      * @param string|mixed $message
      * @param array $context
      */
-    public static function debug($message, $context = []) {
+    public static function debug($message, $context = [])
+    {
         static::$app->logger->debug($message, $context, 1);
     }
 
@@ -194,7 +207,8 @@ class Reaction
      * @param string|mixed $message
      * @param array $context
      */
-    public static function info($message, $context = []) {
+    public static function info($message, $context = [])
+    {
         static::$app->logger->info($message, $context, 1);
     }
 
@@ -203,7 +217,8 @@ class Reaction
      * @param string|mixed $message
      * @param array $context
      */
-    public static function warning($message, $context = []) {
+    public static function warning($message, $context = [])
+    {
         static::$app->logger->warning($message, $context, 1);
     }
 
@@ -212,7 +227,8 @@ class Reaction
      * @param string|mixed $message
      * @param array $context
      */
-    public static function error($message, $context = []) {
+    public static function error($message, $context = [])
+    {
         static::$app->logger->error($message, $context, 1);
     }
 
@@ -222,7 +238,8 @@ class Reaction
      * @param string|null $endId
      * @return string|null
      */
-    public static function profile($message = null, $endId = null) {
+    public static function profile($message = null, $endId = null)
+    {
         return static::$app->logger->profile($message, $endId, 1);
     }
 
@@ -231,15 +248,38 @@ class Reaction
      * @param string|null $endId
      * @param string|null $message
      */
-    public static function profileEnd($endId = null, $message = null) {
+    public static function profileEnd($endId = null, $message = null)
+    {
         static::$app->logger->profileEnd($endId, $message, 1);
+    }
+
+    /**
+     * Shortcut to Reaction::$app->getAlias()
+     * @param string $alias
+     * @param bool   $throwException
+     * @return bool|string
+     */
+    public static function getAlias($alias, $throwException = true)
+    {
+        return Reaction::$app->getAlias($alias, $throwException);
+    }
+
+    /**
+     * Shortcut to Reaction::$app->setAlias()
+     * @param string $alias
+     * @param string $path
+     */
+    public static function setAlias($alias, $path)
+    {
+        Reaction::$app->setAlias($alias, $path);
     }
 
     /**
      * Get instance of config reader
      * @return \Reaction\Base\ConfigReader
      */
-    protected static function getConfigReader() {
+    protected static function getConfigReader()
+    {
         $conf = [
             'path' => static::$configsPath,
             'appType' => static::$appType,
@@ -250,7 +290,8 @@ class Reaction
     /**
      * Initialize DI container
      */
-    protected static function initContainer() {
+    protected static function initContainer()
+    {
         $config = static::$config->get('container');
         static::$di = new \Reaction\DI\Container($config);
     }
@@ -258,7 +299,8 @@ class Reaction
     /**
      * Initialize application object
      */
-    protected static function initStaticApp() {
+    protected static function initStaticApp()
+    {
         $config = static::$config->get('appStatic');
         $config['class'] = StaticApplicationInterface::class;
         static::$app = static::create($config);
@@ -267,7 +309,8 @@ class Reaction
     /**
      * Initialize annotation reader
      */
-    protected static function initAnnotationReader() {
+    protected static function initAnnotationReader()
+    {
         static::$annotations = new \Reaction\Base\AnnotationsReader();
     }
 }
