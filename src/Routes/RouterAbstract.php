@@ -2,10 +2,7 @@
 
 namespace Reaction\Routes;
 
-use FastRoute\BadRouteException;
 use FastRoute\Dispatcher;
-use Psr\Http\Message\ServerRequestInterface;
-use React\Promise\PromiseInterface;
 use Reaction;
 use Reaction\Annotations\Ctrl;
 use Reaction\Annotations\CtrlAction;
@@ -86,24 +83,6 @@ abstract class RouterAbstract extends Component implements RouterInterface
     }
 
     /**
-     * Get router path expressions
-     * @return array
-     */
-    public function getRoutePaths()
-    {
-        return isset($this->_routePaths) ? $this->_routePaths : [];
-    }
-
-    /**
-     * Search for a given route
-     * @param RequestApplicationInterface $app
-     * @param string                      $routePath
-     * @param string                      $method
-     * @return array
-     */
-    abstract public function searchRoute(RequestApplicationInterface $app, $routePath, $method = 'GET');
-
-    /**
      * Get controller for errors
      * @return Controller
      * @throws InvalidConfigException
@@ -179,6 +158,24 @@ abstract class RouterAbstract extends Component implements RouterInterface
         }
         return $candidate;
     }
+
+    /**
+     * Get router path expressions
+     * @return array
+     */
+    public function getRoutePaths()
+    {
+        return isset($this->_routePaths) ? $this->_routePaths : [];
+    }
+
+    /**
+     * Search for a given route
+     * @param RequestApplicationInterface $app
+     * @param string                      $routePath
+     * @param string                      $method
+     * @return array
+     */
+    abstract public function searchRoute(RequestApplicationInterface $app, $routePath, $method = 'GET');
 
     /**
      * Search controller by name and action ID
