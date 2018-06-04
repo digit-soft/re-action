@@ -59,16 +59,16 @@ abstract class BaseMigrateController extends Controller
      * @var array list of namespaces containing the migration classes.
      *
      * Migration namespaces should be resolvable as a [path alias](guide:concept-aliases) if prefixed with `@`, e.g. if you specify
-     * the namespace `app\migrations`, the code `Yii::getAlias('@app/migrations')` should be able to return
+     * the namespace `app\migrations`, the code `Reaction::getAlias('@app/migrations')` should be able to return
      * the file path to the directory this namespace refers to.
-     * This corresponds with the [autoloading conventions](guide:concept-autoloading) of Yii.
+     * This corresponds with the [autoloading conventions](guide:concept-autoloading) of framework.
      *
      * For example:
      *
      * ```php
      * [
-     *     'app\migrations',
-     *     'some\extension\migrations',
+     *     'App\Migrations',
+     *     'Some\Namespace\Migrations',
      * ]
      * ```
      *

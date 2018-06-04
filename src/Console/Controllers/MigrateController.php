@@ -56,10 +56,10 @@ use Reaction\RequestApplicationInterface;
  * return [
  *     'controllerMap' => [
  *         'migrate' => [
- *             'class' => 'yii\console\controllers\MigrateController',
+ *             'class' => 'Reaction\Console\Controllers\MigrateController',
  *             'migrationNamespaces' => [
- *                 'app\migrations',
- *                 'some\extension\migrations',
+ *                 'App\Migrations',
+ *                 'Some\Namespace\Migrations',
  *             ],
  *             //'migrationPath' => null, // allows to disable not namespaced migration completely
  *         ],
