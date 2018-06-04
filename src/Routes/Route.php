@@ -2,7 +2,6 @@
 
 namespace Reaction\Routes;
 
-use FastRoute\Dispatcher;
 use Psr\Http\Message\ResponseInterface;
 use Reaction\Base\RequestAppComponent;
 use Reaction\Exceptions\Exception;
@@ -22,10 +21,13 @@ use Reaction\Web\ResponseBuilderInterface;
  */
 class Route extends RequestAppComponent implements RouteInterface
 {
+    const CONTROLLER_RESOLVE_ACTION = 'resolveAction';
+    const CONTROLLER_RESOLVE_ERROR  = 'resolveError';
+
     protected $_dispatchedData;
     protected $_controller;
+    protected $_controllerMethod;
     protected $_action;
-    protected $_actionClean;
     protected $_params = [];
     protected $_paramsClean = [];
     protected $_exception;
@@ -39,7 +41,7 @@ class Route extends RequestAppComponent implements RouteInterface
      */
     public function getRoutePath($onlyStaticPart = false) {
         if (!isset($this->_routePath) && isset($this->_controller)) {
-            $this->_routePath = $this->controller->getActionPath($this->_actionClean);
+            $this->_routePath = $this->controller->getActionPath($this->_action);
         }
         if ($onlyStaticPart) {
             return \Reaction::$app->urlManager->extractStaticPart($this->_routePath);
@@ -116,29 +118,14 @@ class Route extends RequestAppComponent implements RouteInterface
     }
 
     /**
-     * Convert route to error route
-     * @param \Throwable $exception
-     */
-    public function convertToError(\Throwable $exception) {
-        $this->setException($exception);
-        $this->_controller = \Reaction::$app->router->errorController;
-        $this->_action = 'resolveError';
-        $this->_params = [$this->_exception];
-        //If we have cycle of exceptions than deliver error as plain text
-        if ($this->_exceptionsCount > 3) {
-            $this->_params[] = true;
-        }
-    }
-
-    /**
      * Resolve route for request
      * @return ExtendedPromiseInterface
      */
     public function resolve()
     {
-        $callable = isset($this->_controller) ? [$this->_controller, $this->_action] : $this->_action;
+        $callable = [$this->_controller, $this->_controllerMethod];
         $args = $this->_params;
-        array_unshift($args, $this->app);
+        array_unshift($args, $this->app, $this->_action);
         $promise = new Promise(function ($r) use ($callable, $args) {
             $result = call_user_func_array($callable, $args);
             $r($result);
@@ -157,35 +144,38 @@ class Route extends RequestAppComponent implements RouteInterface
     }
 
     /**
+     * Convert route to error route
+     * @param \Throwable $exception
+     */
+    protected function convertToError(\Throwable $exception) {
+        $this->setException($exception);
+        $this->_controller = \Reaction::$app->router->errorController;
+        $this->_controllerMethod = static::CONTROLLER_RESOLVE_ERROR;
+        $this->_params = [$this->_exception];
+        //If we have cycle of exceptions than deliver error as plain text
+        if ($this->_exceptionsCount > 3) {
+            $this->_params[] = true;
+        }
+    }
+
+    /**
      * Parse data from dispatcher
      */
     protected function processDispatchedData() {
-        $data = $this->_dispatchedData;
-        $dispatcherCode = $data[0];
+        list($code, $controller, $action, $params) = $this->_dispatchedData;
 
-        if ($dispatcherCode === Dispatcher::FOUND) {
-            $callable = $data[1];
-            //Parse params
-            if (isset($data[2])) {
-                $this->_params = is_array($data[2]) ? $data[2] : (array)$data[2];
-                $this->_paramsClean = $this->_params;
-                //Overwrite query parameters
-                if (ArrayHelper::isAssociative($this->_params)) {
-                    $queryParams = ArrayHelper::merge($this->app->reqHelper->getQueryParams(), $this->_params);
-                    $this->app->reqHelper->setQueryParams($queryParams);
-                }
-            }
-            //Parse controller and action
-            if (is_array($callable) && count($callable) >= 2 && $callable[0] instanceof ControllerInterface) {
-                $this->_controller = $callable[0];
-                $this->_action = 'resolveAction';
-                $this->_actionClean = $callable[1];
-                array_unshift($this->_params, $callable[1]);
-            } else {
-                $this->_action = $callable;
+        if ($code === RouterInterface::ERROR_OK) {
+            $this->_controllerMethod = static::CONTROLLER_RESOLVE_ACTION;
+            $this->_controller = $controller;
+            $this->_action = $action;
+            $this->_params = $this->_paramsClean = $params;
+            //Overwrite query parameters
+            if (ArrayHelper::isAssociative($this->_params)) {
+                $queryParams = ArrayHelper::merge($this->app->reqHelper->getQueryParams(), $this->_params);
+                $this->app->reqHelper->setQueryParams($queryParams);
             }
         } else {
-            $exception = $this->getDispatcherException($dispatcherCode);
+            $exception = $this->getRouterException($code);
             $this->convertToError($exception);
         }
     }
@@ -212,17 +202,17 @@ class Route extends RequestAppComponent implements RouteInterface
     }
 
     /**
-     * Get Exception by dispatcher code
-     * @param $dispatcherCode
+     * Get Exception by Router error code
+     * @param int $code
      * @return \Throwable
      */
-    protected function getDispatcherException($dispatcherCode) {
+    protected function getRouterException($code) {
         $errors = [
-            Dispatcher::NOT_FOUND => NotFoundException::class,
-            Dispatcher::METHOD_NOT_ALLOWED => MethodNotAllowedException::class,
+            RouterInterface::ERROR_NOT_FOUND => NotFoundException::class,
+            RouterInterface::ERROR_METHOD_NOT_ALLOWED => MethodNotAllowedException::class,
             '*' => NotSupportedException::class,
         ];
-        $errorClass = isset($errors[$dispatcherCode]) ? $errors[$dispatcherCode] : $errors['*'];
+        $errorClass = isset($errors[$code]) ? $errors[$code] : $errors['*'];
         try {
             $exception = \Reaction::create($errorClass);
         } catch (InvalidConfigException $createException) {

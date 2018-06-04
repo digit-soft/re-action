@@ -2,6 +2,7 @@
 
 namespace Reaction\Routes;
 
+use FastRoute\Dispatcher;
 use FastRoute\RouteParser;
 use Reaction;
 use Reaction\Helpers\ArrayHelper;
@@ -10,6 +11,7 @@ use Reaction\RequestApplicationInterface;
 /**
  * Class Router
  * @package Reaction\Routes
+ * @property RouteParser $routeParser
  */
 class Router extends RouterAbstract implements RouterInterface
 {
@@ -18,29 +20,40 @@ class Router extends RouterAbstract implements RouterInterface
     public $routeParserClass = '\FastRoute\RouteParser\Std';
     public $routeParserOptions = [];
 
-    /** @var RouteParser */
+    /**
+     * @var RouteParser
+     */
     protected $_routeParser;
-    /** @var array  Route path expressions. Used to build URLs */
-    protected $_routePaths = [];
 
     /**
-     * Get data from dispatcher
-     * @param RequestApplicationInterface $app Request application
-     * @param string                      $routePath URI path to resolve
-     * @param string                      $method HTTP request method
+     * Search for a given route
+     * @param RequestApplicationInterface $app
+     * @param string                      $routePath
+     * @param string                      $method
      * @return array
      */
-    public function getDispatcherData(RequestApplicationInterface $app, $routePath, $method = 'GET')
+    public function searchRoute(RequestApplicationInterface $app, $routePath, $method = 'GET')
     {
-        return $this->dispatcher->dispatch($method, $routePath);
+        $dispatcherData = $this->dispatcher->dispatch($method, $routePath);
+        if ($dispatcherData[0] === Dispatcher::NOT_FOUND) {
+            return [static::ERROR_NOT_FOUND, null, null, []];
+        } elseif ($dispatcherData[0] === Dispatcher::METHOD_NOT_ALLOWED) {
+            return [static::ERROR_METHOD_NOT_ALLOWED, null, null, []];
+        } else {
+            $ctrlAndAction = $dispatcherData[1];
+            $params = isset($dispatcherData[2]) ? $dispatcherData[2] : [];
+            $params = (array)$params;
+            return [static::ERROR_OK, $ctrlAndAction[0], $ctrlAndAction[1], $params];
+        }
     }
 
     /**
-     * Get router path expressions
-     * @return array
+     * @inheritdoc
      */
-    public function getRoutePaths() {
-        return $this->_routePaths;
+    public function initRoutes()
+    {
+        parent::initRoutes();
+        $this->publishRoutes();
     }
 
     /**
@@ -58,7 +71,7 @@ class Router extends RouterAbstract implements RouterInterface
      * @return RouteParser
      * @throws \Reaction\Exceptions\InvalidConfigException
      */
-    public function getRouteParser() {
+    protected function getRouteParser() {
         if (!isset($this->_routeParser)) {
             $this->_routeParser = Reaction::create($this->routeParserClass, $this->routeParserOptions);
         }

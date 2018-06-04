@@ -6,6 +6,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Reaction;
 use Reaction\DI\ServiceLocator;
 use Reaction\Exceptions\InvalidConfigException;
+use Reaction\Helpers\ArrayHelper;
 use Reaction\Routes\RouteInterface;
 
 /**
@@ -14,7 +15,9 @@ use Reaction\Routes\RouteInterface;
  */
 class RequestApplication extends ServiceLocator implements RequestApplicationInterface, Reaction\DI\ServiceLocatorAutoloadInterface
 {
-    /** @var ServerRequestInterface Application request instance */
+    /**
+     * @var ServerRequestInterface Application request instance
+     */
     public $request;
     /**
      * @var string Application request charset
@@ -64,10 +67,10 @@ class RequestApplication extends ServiceLocator implements RequestApplicationInt
     {
         $routePath = isset($routePath) ? $routePath : $this->reqHelper->getPathInfo();
         $method = isset($method) ? $method : $this->reqHelper->getMethod();
-        $data = Reaction::$app->router->getDispatcherData($this, $routePath, $method);
+        $data = Reaction::$app->router->searchRoute($this, $routePath, $method);
         //Parameters overwrite
-        if (is_array($params) && count($data) >= 2) {
-            $data[2] = $params;
+        if (is_array($params) && count($data) >= 3) {
+            $data[3] = $params;
         }
         $route = Reaction::create([
             'class' => RouteInterface::class,
@@ -137,7 +140,7 @@ class RequestApplication extends ServiceLocator implements RequestApplicationInt
 
         if (is_string($definition)) {
             $config = ['class' => $definition];
-        } elseif (\Reaction\Helpers\ArrayHelper::isIndexed($definition) && count($definition) === 2) {
+        } elseif (ArrayHelper::isIndexed($definition) && count($definition) === 2) {
             $config = $definition[0];
             $params = $definition[1];
         } else {
@@ -145,7 +148,7 @@ class RequestApplication extends ServiceLocator implements RequestApplicationInt
         }
 
         if (is_array($config)) {
-            $config = \Reaction\Helpers\ArrayHelper::merge(['app' => $this], $config);
+            $config = ArrayHelper::merge(['app' => $this], $config);
             $definition = isset($params) ? [$config, $params] : $config;
         }
 

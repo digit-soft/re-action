@@ -2,21 +2,21 @@
 
 namespace Reaction\Routes;
 
-use FastRoute\RouteParser;
-use Psr\Http\Message\ServerRequestInterface;
-use React\Promise\PromiseInterface;
 use Reaction\RequestApplicationInterface;
 
 /**
  * Interface RouterInterface
  * @package Reaction\Routes
  * @property Controller  $errorController
- * @property RouteParser $routeParser
  * @property array       $routePaths
  * @property array       $controllerNamespaces
  */
 interface RouterInterface
 {
+    const ERROR_OK                  = 200; //No error
+    const ERROR_NOT_FOUND           = 404; //Page (controller|action) not found
+    const ERROR_METHOD_NOT_ALLOWED  = 400; //Method not allowed for this action
+
     /**
      * Add route handling
      * @param string|string[] $httpMethod
@@ -49,13 +49,13 @@ interface RouterInterface
     public function setErrorController($controller);
 
     /**
-     * Get data from dispatcher
-     * @param RequestApplicationInterface $app Request application
-     * @param string                      $routePath URI path to resolve
-     * @param string                      $method HTTP request method
+     * Search for a given route
+     * @param RequestApplicationInterface $app
+     * @param string                      $routePath
+     * @param string                      $method
      * @return array
      */
-    public function getDispatcherData(RequestApplicationInterface $app, $routePath, $method = 'GET');
+    public function searchRoute(RequestApplicationInterface $app, $routePath, $method = 'GET');
 
     /**
      * Get controller and action from path (Just parse path)

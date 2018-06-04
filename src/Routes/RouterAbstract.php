@@ -48,6 +48,8 @@ abstract class RouterAbstract extends Component implements RouterInterface
     protected $dispatcher;
     /** @var array Registered controllers */
     protected $controllers = [];
+    /** @var array  Route path expressions. Used to build URLs */
+    protected $_routePaths = [];
 
     /**
      * Add route handling
@@ -81,22 +83,25 @@ abstract class RouterAbstract extends Component implements RouterInterface
         foreach ($classNames as $className) {
             $this->registerController($className);
         }
-        $this->publishRoutes();
     }
 
     /**
-     * Register all defined routes in dispatcher
-     */
-    abstract protected function publishRoutes();
-
-    /**
-     * Get data from dispatcher
-     * @param RequestApplicationInterface $app Request application
-     * @param string                      $routePath URI path to resolve
-     * @param string                      $method HTTP request method
+     * Get router path expressions
      * @return array
      */
-    abstract public function getDispatcherData(RequestApplicationInterface $app, $routePath, $method = 'GET');
+    public function getRoutePaths()
+    {
+        return isset($this->_routePaths) ? $this->_routePaths : [];
+    }
+
+    /**
+     * Search for a given route
+     * @param RequestApplicationInterface $app
+     * @param string                      $routePath
+     * @param string                      $method
+     * @return array
+     */
+    abstract public function searchRoute(RequestApplicationInterface $app, $routePath, $method = 'GET');
 
     /**
      * Get controller for errors
@@ -176,16 +181,22 @@ abstract class RouterAbstract extends Component implements RouterInterface
     }
 
     /**
-     * Search controller by name and existing method
-     * @param string $controllerName
-     * @param string $actionId
-     * @param array  $config
+     * Search controller by name and action ID
+     * @param string|ControllerInterface $controllerName
+     * @param string                     $actionId
+     * @param array                      $config
      * @return array
      */
     protected function createControllerInstance($controllerName, $actionId = null, $config = [])
     {
         if (!isset($controllerName)) {
             return [null, $actionId];
+        } elseif ($controllerName instanceof ControllerInterface) {
+            $controller = $controllerName;
+            if (!isset($actionId) || !$controller->hasAction($actionId)) {
+                $actionId = $controller->defaultAction;
+            }
+            return [$controller, $actionId];
         }
         $controller = null;
         foreach ($this->controllerNamespaces as $namespace) {
@@ -236,7 +247,7 @@ abstract class RouterAbstract extends Component implements RouterInterface
     protected function registerControllerWithAnnotations($className, Ctrl $ctrlAnnotation) {
         $actions = (new \ReflectionClass($className))->getMethods(\ReflectionMethod::IS_PUBLIC);
         $actions = array_filter($actions, function ($value) {
-            return strpos($value->name, 'action') === 0 ? $value : false;
+            return $value->name !== 'actions' && strpos($value->name, 'action') === 0 ? $value : false;
         });
         $actions = Reaction\Helpers\ArrayHelper::getColumn($actions, 'name', false);
         if (empty($actions)) {
@@ -249,7 +260,8 @@ abstract class RouterAbstract extends Component implements RouterInterface
             /** @var CtrlAction $ctrlAction */
             $ctrlAction = $actionAnnotations[CtrlAction::class];
             $path = $ctrlAnnotation->group . '/' . ltrim($ctrlAction->path, '/');
-            $this->addRoute($ctrlAction->method, $path, [$controller, $actions[$i]]);
+            $actionId = Controller::getActionId($actions[$i]);
+            $this->addRoute($ctrlAction->method, $path, [$controller, $actionId]);
         }
     }
 
@@ -269,7 +281,8 @@ abstract class RouterAbstract extends Component implements RouterInterface
             $method = $row['method'];
             $route = $group . $row['route'];
             $handlerName = $row['handler'];
-            $this->addRoute($method, $route, [$controller, $handlerName]);
+            $actionId = Controller::getActionId($handlerName);
+            $this->addRoute($method, $route, [$controller, $actionId]);
         }
     }
 

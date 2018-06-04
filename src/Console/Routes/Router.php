@@ -8,12 +8,30 @@ use Reaction\RequestApplicationInterface;
 use Reaction\Routes\RouterAbstract;
 use Reaction\Routes\RouterInterface;
 
+/**
+ * Class Router
+ * @package Reaction\Console\Routes
+ * You can use controllerMap for this router
+ *      'controllerMap' => [
+ *         'migrate' => [
+ *             'class' => 'Reaction\Console\Controllers\MigrateController',
+ *             'migrationNamespaces' => [
+ *                 'App\Migrations',
+ *                 'Some\Namespace\Migrations',
+ *             ],
+ *         ],
+ *     ],
+ */
 class Router extends RouterAbstract implements RouterInterface
 {
 
     public $controllerNamespaces = [
         'Reaction\Console\Controllers',
     ];
+    /**
+     * @var array Controllers map
+     */
+    public $controllerMap = [];
 
     /** @var array|string|object Error controller */
     public $_errorController = [
@@ -25,22 +43,38 @@ class Router extends RouterAbstract implements RouterInterface
     public $defaultController = 'Reaction\Console\Controllers\HelpController';
 
     /**
-     * Register all defined routes in dispatcher
+     * Search for a given route
+     * @param RequestApplicationInterface $app
+     * @param string                      $routePath
+     * @param string                      $method
+     * @return array
      */
-    protected function publishRoutes()
+    public function searchRoute(RequestApplicationInterface $app, $routePath, $method = 'GET')
     {
+        /** @var Controller $controller */
+        list($controller, $actionName) = $this->createController($routePath, ['app' => $app]);
+        //Params are ignored by console controllers (parameters extracted from command line on action run)
+        return [static::ERROR_OK, $controller, $actionName, []];
     }
 
     /**
-     * Get data from dispatcher
-     * @param RequestApplicationInterface $app Request application
-     * @param string                      $routePath URI path to resolve
-     * @param string                      $method HTTP request method
-     * @return array
+     * @inheritdoc
      */
-    public function getDispatcherData(RequestApplicationInterface $app, $routePath, $method = 'GET')
+    public function createController($path, $config = [], $defaultOnFault = true)
     {
-        list($controller, $actionName) = $this->createController($routePath, ['app' => $app]);
-        return [Dispatcher::FOUND, [$controller, $actionName]];
+        $parts = explode('/', trim($path, '/'));
+        $actionId = count($parts) >= 2 ? mb_strtolower(array_pop($parts)) : null;
+        $controllerPart = mb_strtolower(array_pop($parts));
+        if (is_string($controllerPart) && isset($this->controllerMap[$controllerPart])) {
+            $configMap = $this->controllerMap[$controllerPart];
+            $configMap = is_string($configMap) ? ['class' => $configMap] : $configMap;
+            $config = Reaction\Helpers\ArrayHelper::merge($configMap, $config);
+            $controller = Reaction::create($config);
+            list($controller, $actionId) = $this->createControllerInstance($controller, $actionId, $config);
+            return $controller !== null
+                ? [$controller, $actionId]
+                : ($defaultOnFault ? $this->getDefaultControllerAndAction($config) : [null, null]);
+        }
+        return parent::createController($path, $config, $defaultOnFault);
     }
 }
