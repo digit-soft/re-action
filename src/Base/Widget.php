@@ -4,7 +4,6 @@ namespace Reaction\Base;
 
 use Reaction\Exceptions\InvalidArgumentException;
 use Reaction\Exceptions\InvalidCallException;
-use ReflectionClass;
 use Reaction;
 
 /**
@@ -29,12 +28,10 @@ class Widget extends Component implements ViewContextInterface
     /**
      * @event WidgetEvent an event raised right before executing a widget.
      * You may set [[WidgetEvent::isValid]] to be false to cancel the widget execution.
-     * @since 2.0.11
      */
     const EVENT_BEFORE_RUN = 'beforeRun';
     /**
      * @event WidgetEvent an event raised right after executing a widget.
-     * @since 2.0.11
      */
     const EVENT_AFTER_RUN = 'afterRun';
 
@@ -183,7 +180,7 @@ class Widget extends Component implements ViewContextInterface
     public function getView()
     {
         if ($this->_view === null) {
-            $this->_view = Yii::$app->getView();
+            throw new Reaction\Exceptions\InvalidConfigException("View component is not set");
         }
 
         return $this->_view;
@@ -221,25 +218,32 @@ class Widget extends Component implements ViewContextInterface
      *
      * If the view name does not contain a file extension, it will use the default one `.php`.
      *
-     * @param string $view the view name.
-     * @param array $params the parameters (name-value pairs) that should be made available in the view.
+     * @param string                 $viewName the view name.
+     * @param array                  $params the parameters (name-value pairs) that should be made available in the view.
+     * @param Reaction\Web\View|null $view
      * @return string the rendering result.
      * @throws InvalidArgumentException if the view file does not exist.
      */
-    public function render($view, $params = [])
+    public function render($viewName, $params = [], $view = null)
     {
-        return $this->getView()->render($view, $params, $this);
+        if ($view !== null) {
+            $this->setView($view);
+        }
+        return $this->getView()->render($viewName, $params, $this);
     }
 
     /**
      * Renders a view file.
-     * @param string $file the view file to be rendered. This can be either a file path or a [path alias](guide:concept-aliases).
-     * @param array $params the parameters (name-value pairs) that should be made available in the view.
+     * @param string                 $file the view file to be rendered. This can be either a file path or a [path alias](guide:concept-aliases).
+     * @param array                  $params the parameters (name-value pairs) that should be made available in the view.
+     * @param Reaction\Web\View|null $view
      * @return string the rendering result.
-     * @throws InvalidArgumentException if the view file does not exist.
      */
-    public function renderFile($file, $params = [])
+    public function renderFile($file, $params = [], $view = null)
     {
+        if ($view !== null) {
+            $this->setView($view);
+        }
         return $this->getView()->renderFile($file, $params, $this);
     }
 
@@ -250,7 +254,7 @@ class Widget extends Component implements ViewContextInterface
      */
     public function getViewPath()
     {
-        $class = new ReflectionClass($this);
+        $class = Reaction\Helpers\ReflectionHelper::getClassReflection($this);
 
         return dirname($class->getFileName()) . DIRECTORY_SEPARATOR . 'views';
     }
@@ -275,10 +279,13 @@ class Widget extends Component implements ViewContextInterface
      *     return true; // or false to not run the widget
      * }
      * ```
+     * @return bool
      */
     public function beforeRun()
     {
-        $this->emit(self::EVENT_BEFORE_RUN, [$this]);
+        $isValid = true;
+        $this->emit(self::EVENT_BEFORE_RUN, [$this, &$isValid]);
+        return $isValid;
     }
 
     /**
@@ -299,9 +306,11 @@ class Widget extends Component implements ViewContextInterface
      * ```
      *
      * @param mixed $result the widget return result.
+     * @return mixed
      */
     public function afterRun($result)
     {
         $this->emit(self::EVENT_AFTER_RUN, [$this, &$result]);
+        return $result;
     }
 }

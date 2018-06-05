@@ -80,7 +80,6 @@ interface ViewInterface
      * @param string $_file_ the view file.
      * @param array $_params_ the parameters (name-value pairs) that will be extracted and made available in the view file.
      * @return string the rendering result
-     * @throws \Exception
      * @throws \Throwable
      */
     public function renderPhpFile($_file_, $_params_ = []);
