@@ -49,18 +49,8 @@ class SessionArchiveInFiles extends BaseObject implements SessionArchiveInterfac
                 );
             }
         )->then(
-            function($stream) use (&$file) {
-                /** @var \React\Filesystem\Stream\ReadableStream $stream */
-                return \React\Promise\Stream\buffer($stream)->then(
-                    function($data) use (&$file) {
-                        $file->close();
-                        return $data;
-                    },
-                    function($error) use (&$file) {
-                        $file->close();
-                        return reject($error);
-                    }
-                );
+            function($stream = null) use (&$file) {
+                return $file->getContents();
             }
         )->then(
             function($dataStr) use ($self, &$file, $remove) {
