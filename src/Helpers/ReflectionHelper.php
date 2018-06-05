@@ -34,7 +34,8 @@ class ReflectionHelper
      * @param string $interfaceName
      * @return bool
      */
-    public static function isImplements($className, $interfaceName) {
+    public static function isImplements($className, $interfaceName)
+    {
         $implementations = class_implements($className, true);
         return isset($implementations[$interfaceName]);
     }
@@ -44,7 +45,8 @@ class ReflectionHelper
      * @param string $className
      * @return bool
      */
-    public static function isInstantiable($className) {
+    public static function isInstantiable($className)
+    {
         $reflection = static::getClassReflection($className);
         if ($reflection === null) {
             return false;
@@ -57,7 +59,8 @@ class ReflectionHelper
      * @param string|object $objectOrName
      * @return string|null
      */
-    public static function getClassDocFull($objectOrName) {
+    public static function getClassDocFull($objectOrName)
+    {
         return static::getClassDoc($objectOrName, 'parseDocCommentDetail');
     }
 
@@ -66,7 +69,8 @@ class ReflectionHelper
      * @param string|object $objectOrName
      * @return string|null
      */
-    public static function getClassDocSummary($objectOrName) {
+    public static function getClassDocSummary($objectOrName)
+    {
         return static::getClassDoc($objectOrName, 'parseDocCommentSummary');
     }
 
@@ -75,7 +79,8 @@ class ReflectionHelper
      * @param string|object $objectOrName
      * @return array|null
      */
-    public static function getClassDocTags($objectOrName) {
+    public static function getClassDocTags($objectOrName)
+    {
         return static::getClassDoc($objectOrName, 'parseDocCommentTags');
     }
 
@@ -85,7 +90,8 @@ class ReflectionHelper
      * @param string|object|null       $objectOrName
      * @return array|null|string
      */
-    public static function getMethodDocFull($method, $objectOrName = null) {
+    public static function getMethodDocFull($method, $objectOrName = null)
+    {
         return static::getMethodPropertyDoc($method, $objectOrName, static::REFLECTION_METHOD,'parseDocCommentDetail');
     }
 
@@ -95,7 +101,8 @@ class ReflectionHelper
      * @param string|object|null       $objectOrName
      * @return string|null
      */
-    public static function getMethodDocSummary($method, $objectOrName = null) {
+    public static function getMethodDocSummary($method, $objectOrName = null)
+    {
         return static::getMethodPropertyDoc($method, $objectOrName, static::REFLECTION_METHOD, 'parseDocCommentSummary');
     }
 
@@ -105,7 +112,8 @@ class ReflectionHelper
      * @param string|object|null       $objectOrName
      * @return array|null
      */
-    public static function getMethodDocTags($method, $objectOrName = null) {
+    public static function getMethodDocTags($method, $objectOrName = null)
+    {
         return static::getMethodPropertyDoc($method, $objectOrName, static::REFLECTION_METHOD, 'parseDocCommentTags');
     }
 
@@ -115,7 +123,8 @@ class ReflectionHelper
      * @param string|object|null         $objectOrName
      * @return string|null
      */
-    public static function getPropertyDocFull($property, $objectOrName = null) {
+    public static function getPropertyDocFull($property, $objectOrName = null)
+    {
         return static::getMethodPropertyDoc($property, $objectOrName, static::REFLECTION_PROPERTY,'parseDocCommentDetail');
     }
 
@@ -125,7 +134,8 @@ class ReflectionHelper
      * @param string|object|null         $objectOrName
      * @return string|null
      */
-    public static function getPropertyDocSummary($property, $objectOrName = null) {
+    public static function getPropertyDocSummary($property, $objectOrName = null)
+    {
         return static::getMethodPropertyDoc($property, $objectOrName, static::REFLECTION_PROPERTY, 'parseDocCommentSummary');
     }
 
@@ -135,7 +145,8 @@ class ReflectionHelper
      * @param string|object|null         $objectOrName
      * @return array|null
      */
-    public static function getPropertyDocTags($property, $objectOrName = null) {
+    public static function getPropertyDocTags($property, $objectOrName = null)
+    {
         return static::getMethodPropertyDoc($property, $objectOrName, static::REFLECTION_PROPERTY, 'parseDocCommentTags');
     }
 
@@ -145,7 +156,8 @@ class ReflectionHelper
      * @param string $methodName
      * @return null|\ReflectionMethod
      */
-    public static function getMethodReflection($objectOrName, $methodName) {
+    public static function getMethodReflection($objectOrName, $methodName)
+    {
         $cached = static::getReflectionFromCache(static::REFLECTION_METHOD, $objectOrName, $methodName);
         if ($cached !== null) {
             return $cached;
@@ -164,7 +176,8 @@ class ReflectionHelper
      * @param string|object $objectOrName
      * @return null|\ReflectionClass
      */
-    public static function getClassReflection($objectOrName) {
+    public static function getClassReflection($objectOrName)
+    {
         $cached = static::getReflectionFromCache(static::REFLECTION_CLASS, $objectOrName);
         if ($cached !== null) {
             return $cached;
@@ -184,7 +197,8 @@ class ReflectionHelper
      * @param string        $propertyName
      * @return mixed|null|\ReflectionProperty
      */
-    public static function getPropertyReflection($objectOrName, $propertyName) {
+    public static function getPropertyReflection($objectOrName, $propertyName)
+    {
         $cached = static::getReflectionFromCache(static::REFLECTION_PROPERTY, $objectOrName, $propertyName);
         if ($cached !== null) {
             return $cached;
@@ -243,7 +257,8 @@ class ReflectionHelper
      * @param mixed  ...$params
      * @return mixed
      */
-    protected static function getReflectionFromCache($type = self::REFLECTION_CLASS, $objectOrName, ...$params) {
+    protected static function getReflectionFromCache($type = self::REFLECTION_CLASS, $objectOrName, ...$params)
+    {
         $cache = &static::$_reflections[$type];
         $key = static::getCacheKey($type, $objectOrName, ...$params);
         return isset($cache[$key]) ? $cache[$key] : null;
@@ -257,7 +272,8 @@ class ReflectionHelper
      * @param mixed      ...$params
      * @return mixed
      */
-    protected static function setReflectionToCache($reflection, $type = self::REFLECTION_CLASS, $objectOrName = null, ...$params) {
+    protected static function setReflectionToCache($reflection, $type = self::REFLECTION_CLASS, $objectOrName = null, ...$params)
+    {
         if (null === $reflection || null === $objectOrName) {
             return null;
         }
@@ -273,7 +289,8 @@ class ReflectionHelper
      * @param mixed[]  ...$params
      * @return mixed|string
      */
-    protected static function getCacheKey($type = self::REFLECTION_CLASS, $objectOrName, ...$params) {
+    protected static function getCacheKey($type = self::REFLECTION_CLASS, $objectOrName, ...$params)
+    {
         if (is_object($objectOrName)) {
             $className = static::getObjectClassName($objectOrName);
         } else {
@@ -383,7 +400,8 @@ class ReflectionHelper
      * @param string $parseMethod
      * @return string|array|null
      */
-    protected static function getClassDoc($object, $parseMethod = 'parseDocCommentSummary') {
+    protected static function getClassDoc($object, $parseMethod = 'parseDocCommentSummary')
+    {
         try {
             $reflection = new \ReflectionClass($object);
             $docData = static::$parseMethod($reflection);
@@ -401,7 +419,8 @@ class ReflectionHelper
      * @param string                                       $parseMethod
      * @return string|array|null
      */
-    protected static function getMethodPropertyDoc($method, $object = null, $type = self::REFLECTION_METHOD, $parseMethod = 'parseDocCommentSummary') {
+    protected static function getMethodPropertyDoc($method, $object = null, $type = self::REFLECTION_METHOD, $parseMethod = 'parseDocCommentSummary')
+    {
         try {
             //Method is already a \ReflectionMethod|\ReflectionProperty
             if ($method instanceof \ReflectionMethod || $method instanceof \ReflectionProperty) {

@@ -8,6 +8,7 @@ use Doctrine\Common\Annotations\IndexedReader;
 use Doctrine\Common\Annotations\SimpleAnnotationReader;
 use Doctrine\Common\Cache\ArrayCache;
 use Reaction\Helpers\ClassFinderHelper;
+use Reaction\Helpers\ReflectionHelper;
 
 /**
  * Class AnnotationsReader
@@ -61,7 +62,8 @@ class AnnotationsReader extends BaseObject
      * @return mixed|object
      * @throws \Doctrine\Common\Annotations\AnnotationException
      */
-    protected function getReader() {
+    protected function getReader()
+    {
         if(!isset($this->_reader)) {
             ClassFinderHelper::findClassesPsr4($this->annotationNamespaces);
             $this->_reader = new CachedReader(
@@ -78,7 +80,8 @@ class AnnotationsReader extends BaseObject
      * @return \ReflectionClass
      * @throws \ReflectionException
      */
-    protected function getClassReflection($class) {
+    protected function getClassReflection($class)
+    {
         if (is_object($class) && $class instanceof \ReflectionClass) {
             return $class;
         }
@@ -92,7 +95,8 @@ class AnnotationsReader extends BaseObject
      * @return \ReflectionProperty
      * @throws \ReflectionException
      */
-    protected function getPropertyReflection($class, $property) {
+    protected function getPropertyReflection($class, $property)
+    {
         if (is_object($class) && $class instanceof \ReflectionProperty) {
             return $class;
         }
@@ -102,14 +106,15 @@ class AnnotationsReader extends BaseObject
     /**
      * Get method reflection
      * @param string|object $class
-     * @param string         $method
+     * @param string        $method
      * @return object|\ReflectionMethod
      * @throws \ReflectionException
      */
-    protected function getMethodReflection($class, $method) {
+    protected function getMethodReflection($class, $method)
+    {
         if (is_object($class) && $class instanceof \ReflectionMethod) {
             return $class;
         }
-        return new \ReflectionMethod($class, $method);
+        return ReflectionHelper::getMethodReflection($class, $method);
     }
 }
