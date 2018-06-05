@@ -182,10 +182,12 @@ class User extends Reaction\Base\RequestAppServiceLocator implements UserInterfa
     public function initComponent()
     {
         return $this->getIdentityAsync()
+            ->always(function() {
+                $this->_initialized = true;
+            })
             ->then(function() {
                 return true;
-            })
-            ->otherwise(function() {
+            }, function() {
                 return false;
             });
     }
