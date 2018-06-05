@@ -127,8 +127,11 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
      */
     public function initComponent()
     {
-        $this->_initialized = true;
-        return $this->open();
+        return $this->open()
+            ->then(function() {
+                $this->_initialized = true;
+                return true;
+            });
     }
 
     /**
