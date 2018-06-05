@@ -262,8 +262,7 @@ class ServiceLocator extends Component
      * ```php
      * [
      *     'db' => [
-     *         'class' => 'Reaction\Db\Connection',
-     *         'dsn' => 'sqlite:path/to/file.db',
+     *         'class' => 'Reaction\Db\Database',
      *     ],
      *     'cache' => [
      *         'class' => 'Reaction\Caching\DbCache',
@@ -305,6 +304,16 @@ class ServiceLocator extends Component
             }
             if ($component instanceof ComponentInitBlockingInterface && !$component->isInitialized()) {
                 $promises[] = $component->initComponent()->then(null, function() { return true; });
+                if(Reaction::isDebug()) {
+                    Reaction::$app->loop->addTimer(3, function() use ($component, $componentName) {
+                        if (!$component->isInitialized()) {
+                            Reaction::error("Component '{name}' ({className}) initialization is to long (more then 3 sec.)", [
+                                'name' => $componentName,
+                                'className' => get_class($component),
+                            ]);
+                        }
+                    });
+                }
             }
         }
         if (!empty($promises)) {
