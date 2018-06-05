@@ -315,7 +315,7 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
         } catch (NotFoundException $e) {
             return null;
         }
-        $annotations = \Reaction::$annotations->getMethod($this, $action);
+        $annotations = \Reaction::$annotations->getMethod($action, $this);
         if (isset($annotations[CtrlAction::class])) {
             /** @var CtrlAction $actionAnnotation */
             $actionAnnotation = $annotations[CtrlAction::class];
@@ -543,7 +543,7 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
     protected function validateAction($action, RequestApplicationInterface $app)
     {
         $annotationsCtrl = \Reaction::$annotations->getClass($this);
-        $annotationsAction = \Reaction::$annotations->getMethod($this, $action);
+        $annotationsAction = \Reaction::$annotations->getMethod($action, $this);
         $annotations = ArrayHelper::merge(array_values($annotationsCtrl), array_values($annotationsAction));
         $promises = [];
         if (!empty($annotations)) {

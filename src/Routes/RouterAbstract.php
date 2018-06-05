@@ -252,7 +252,7 @@ abstract class RouterAbstract extends Component implements RouterInterface
         }
         $controller = is_string($className) ? new $className() : $className;
         for ($i = 0; $i < count($actions); $i++) {
-            $actionAnnotations = Reaction::$annotations->getMethod($className, $actions[$i]);
+            $actionAnnotations = Reaction::$annotations->getMethod($actions[$i], $className);
             if(!isset($actionAnnotations[CtrlAction::class])) continue;
             /** @var CtrlAction $ctrlAction */
             $ctrlAction = $actionAnnotations[CtrlAction::class];
