@@ -105,7 +105,7 @@ class Route extends RequestAppComponent implements RouteInterface
      * @param \Throwable|mixed $exception
      */
     public function setException($exception) {
-        if (!($exception instanceof \Throwable)) {
+        if (!$exception instanceof \Throwable) {
             if (is_string($exception)) {
                 $exception = new Exception($exception);
             } else {
@@ -125,7 +125,10 @@ class Route extends RequestAppComponent implements RouteInterface
     {
         $callable = [$this->_controller, $this->_controllerMethod];
         $args = $this->_params;
-        array_unshift($args, $this->app, $this->_action);
+        if (!$this->isError()) {
+            array_unshift($args, $this->_action);
+        }
+        array_unshift($args, $this->app);
         $promise = new Promise(function ($r) use ($callable, $args) {
             $result = call_user_func_array($callable, $args);
             $r($result);
@@ -141,6 +144,15 @@ class Route extends RequestAppComponent implements RouteInterface
                 return $self->resolve();
             }
         );
+    }
+
+    /**
+     * Check that route is resolving an error
+     * @return bool
+     */
+    public function isError()
+    {
+        return $this->_controllerMethod === static::CONTROLLER_RESOLVE_ERROR;
     }
 
     /**

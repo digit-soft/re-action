@@ -64,4 +64,10 @@ interface RouteInterface extends RequestAppComponentInterface
      * @return ExtendedPromiseInterface
      */
     public function resolve();
+
+    /**
+     * Check that route is resolving an error
+     * @return bool
+     */
+    public function isError();
 }
