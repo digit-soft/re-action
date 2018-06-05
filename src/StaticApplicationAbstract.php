@@ -5,7 +5,6 @@ namespace Reaction;
 use Psr\Http\Message\ServerRequestInterface;
 use React\EventLoop\LoopInterface;
 use React\Http\Server as Http;
-use React\Promise\PromiseInterface;
 use React\Socket\Server as Socket;
 use Reaction;
 use Reaction\Db\DatabaseInterface;
@@ -13,7 +12,6 @@ use Reaction\DI\ServiceLocator;
 use Reaction\DI\ServiceLocatorAutoloadInterface;
 use Reaction\Exceptions\InvalidArgumentException;
 use Reaction\Promise\ExtendedPromiseInterface;
-use Reaction\Web\Response;
 
 /**
  * Class StaticApplicationAbstract
@@ -309,7 +307,6 @@ abstract class StaticApplicationAbstract extends ServiceLocator implements Stati
         }
     }
 
-
     /**
      * Get path for '@views'
      * @return string
@@ -326,6 +323,16 @@ abstract class StaticApplicationAbstract extends ServiceLocator implements Stati
     public function getRuntimePath()
     {
         return $this->getAlias('@runtime');
+    }
+
+    /**
+     * Returns the root directory of the component.
+     * It defaults to the directory containing the component class file.
+     * @return string the root directory of the component.
+     */
+    public function getBasePath()
+    {
+        return parent::getBasePath();
     }
 
     /**
