@@ -1,6 +1,7 @@
 <?php
 
 use Reaction\Exceptions\InvalidConfigException;
+use Reaction\Helpers\Console;
 use Reaction\StaticApplicationInterface;
 
 /**
@@ -312,5 +313,14 @@ class Reaction
     protected static function initAnnotationReader()
     {
         static::$annotations = new \Reaction\Base\AnnotationsReader();
+    }
+
+    /**
+     * Print backtrace
+     * @param bool $withArgs
+     */
+    public static function dbg($withArgs = false)
+    {
+        \Reaction\Base\Logger\Debugger::backTrace($withArgs, 1);
     }
 }
