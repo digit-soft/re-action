@@ -2,7 +2,6 @@
 
 namespace Reaction\Base;
 
-use React\Promise\PromiseInterface;
 use Reaction\Exceptions\InvalidCallException;
 use Reaction\Exceptions\UnknownMethodException;
 use Reaction\Exceptions\UnknownPropertyException;

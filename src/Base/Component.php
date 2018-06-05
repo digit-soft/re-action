@@ -85,5 +85,6 @@ class Component extends BaseObject implements EventEmitterWildcardInterface
     {
         $this->listeners = [];
         $this->onceListeners = [];
+        $this->listenersWildcard = [];
     }
 }
