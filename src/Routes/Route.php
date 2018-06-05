@@ -3,6 +3,7 @@
 namespace Reaction\Routes;
 
 use Psr\Http\Message\ResponseInterface;
+use Reaction;
 use Reaction\Base\RequestAppComponent;
 use Reaction\Exceptions\Exception;
 use Reaction\Exceptions\Http\MethodNotAllowedException;
@@ -44,7 +45,7 @@ class Route extends RequestAppComponent implements RouteInterface
             $this->_routePath = $this->controller->getActionPath($this->_action);
         }
         if ($onlyStaticPart) {
-            return \Reaction::$app->urlManager->extractStaticPart($this->_routePath);
+            return Reaction::$app->urlManager->extractStaticPart($this->_routePath);
         }
         return $this->_routePath;
     }
@@ -161,7 +162,7 @@ class Route extends RequestAppComponent implements RouteInterface
      */
     protected function convertToError(\Throwable $exception) {
         $this->setException($exception);
-        $this->_controller = \Reaction::$app->router->errorController;
+        $this->_controller = Reaction::$app->router->errorController;
         $this->_controllerMethod = static::CONTROLLER_RESOLVE_ERROR;
         $this->_params = [$this->_exception];
         //If we have cycle of exceptions than deliver error as plain text
@@ -205,7 +206,7 @@ class Route extends RequestAppComponent implements RouteInterface
             return $response->build();
         }
         //Do not throw error on console app
-        if (\Reaction::isConsoleApp()) {
+        if (Reaction::isConsoleApp()) {
             return $response;
         }
         $type = is_object($response) ? get_class($response) : gettype($response);
@@ -226,7 +227,7 @@ class Route extends RequestAppComponent implements RouteInterface
         ];
         $errorClass = isset($errors[$code]) ? $errors[$code] : $errors['*'];
         try {
-            $exception = \Reaction::create($errorClass);
+            $exception = Reaction::create($errorClass);
         } catch (InvalidConfigException $createException) {
             return $createException;
         }
