@@ -14,7 +14,6 @@ use Reaction\Promise\LazyPromise;
 use Reaction\Promise\LazyPromiseInterface;
 use function Reaction\Promise\reject;
 use function Reaction\Promise\resolve;
-use function ReturnTypes\returnAlias;
 
 /**
  * Migration is the base class for representing a database migration.
@@ -81,6 +80,10 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
      * @var bool Flag whenever component is initialized or not
      */
     protected $_initialized = false;
+    /**
+     * @var ConnectionInterface|null Connection used for transactions
+     */
+    protected $_connection;
 
 
     /**
@@ -130,6 +133,8 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
         $transaction = $this->db->createTransaction();
         return $transaction->begin()->thenLazy(
             function($connection) {
+                //Set transaction connection
+                $this->_connection = $connection;
                 $promise = $this->safeUp($connection);
                 return is_array($promise) ? allInOrder($promise) : $promise;
             }
@@ -139,7 +144,12 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
             },
             function($error) use ($transaction) {
                 $this->printException($error);
-                return $transaction->rollBack()->then(
+                return $transaction->rollBack()
+                    ->always(function() {
+                        //Remove transaction connection
+                        $this->_connection = null;
+                    })
+                    ->then(
                     function() use ($error) { throw $error; },
                     function($e) { throw $e; }
                 );
@@ -251,7 +261,7 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
      */
     public function insert($table, $columns)
     {
-        $cmdPromise = $this->db->createCommand()->insert($table, $columns)->execute();
+        $cmdPromise = $this->createCommand()->insert($table, $columns)->execute();
         return $this->execPromise($cmdPromise, "insert into $table");
     }
 
@@ -265,7 +275,7 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
      */
     public function batchInsert($table, $columns, $rows)
     {
-        $cmdPromise = $this->db->createCommand()->batchInsert($table, $columns, $rows)->execute();
+        $cmdPromise = $this->createCommand()->batchInsert($table, $columns, $rows)->execute();
         return $this->execPromise($cmdPromise, "insert into $table");
     }
 
@@ -287,7 +297,7 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
      */
     public function upsert($table, $insertColumns, $updateColumns = true, $params = [])
     {
-        $cmdPromise = $this->db->createCommand()->upsert($table, $insertColumns, $updateColumns, $params)->execute();
+        $cmdPromise = $this->createCommand()->upsert($table, $insertColumns, $updateColumns, $params)->execute();
         return $this->execPromise($cmdPromise, "upsert into $table");
     }
 
@@ -303,7 +313,7 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
      */
     public function update($table, $columns, $condition = '', $params = [])
     {
-        $cmdPromise = $this->db->createCommand()->update($table, $columns, $condition, $params)->execute();
+        $cmdPromise = $this->createCommand()->update($table, $columns, $condition, $params)->execute();
         return $this->execPromise($cmdPromise, "update $table");
     }
 
@@ -317,7 +327,7 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
      */
     public function delete($table, $condition = '', $params = [])
     {
-        $cmdPromise = $this->db->createCommand()->delete($table, $condition, $params)->execute();
+        $cmdPromise = $this->createCommand()->delete($table, $condition, $params)->execute();
         return $this->execPromise($cmdPromise, "delete from $table");
     }
 
@@ -341,10 +351,10 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
     public function createTable($table, $columns, $options = null)
     {
         $promises = [];
-        $promises[] = $this->db->createCommand()->createTable($table, $columns, $options)->execute();
+        $promises[] = $this->createCommand()->createTable($table, $columns, $options)->execute();
         foreach ($columns as $column => $type) {
             if ($type instanceof ColumnSchemaBuilder && $type->comment !== null) {
-                $promises[] = $this->db->createCommand()->addCommentOnColumn($table, $column, $type->comment)->execute();
+                $promises[] = $this->createCommand()->addCommentOnColumn($table, $column, $type->comment)->execute();
             }
         }
 
@@ -359,7 +369,7 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
      */
     public function renameTable($table, $newName)
     {
-        $cmdPromise = $this->db->createCommand()->renameTable($table, $newName)->execute();
+        $cmdPromise = $this->createCommand()->renameTable($table, $newName)->execute();
         return $this->execPromise($cmdPromise, "rename table $table to $newName");
     }
 
@@ -370,7 +380,7 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
      */
     public function dropTable($table)
     {
-        $cmdPromise = $this->db->createCommand()->dropTable($table)->execute();
+        $cmdPromise = $this->createCommand()->dropTable($table)->execute();
         return $this->execPromise($cmdPromise, "drop table $table");
     }
 
@@ -381,7 +391,7 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
      */
     public function truncateTable($table)
     {
-        $cmdPromise = $this->db->createCommand()->truncateTable($table)->execute();
+        $cmdPromise = $this->createCommand()->truncateTable($table)->execute();
         return $this->execPromise($cmdPromise, "truncate table $table");
     }
 
@@ -397,9 +407,9 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
     public function addColumn($table, $column, $type)
     {
         $promises = [];
-        $promises[] = $this->db->createCommand()->addColumn($table, $column, $type)->execute();
+        $promises[] = $this->createCommand()->addColumn($table, $column, $type)->execute();
         if ($type instanceof ColumnSchemaBuilder && $type->comment !== null) {
-            $promises[] = $this->db->createCommand()->addCommentOnColumn($table, $column, $type->comment)->execute();
+            $promises[] = $this->createCommand()->addCommentOnColumn($table, $column, $type->comment)->execute();
         }
 
         return $this->execPromise($promises, "add column $column $type to table $table");
@@ -413,7 +423,7 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
      */
     public function dropColumn($table, $column)
     {
-        $cmdPromise = $this->db->createCommand()->dropColumn($table, $column)->execute();
+        $cmdPromise = $this->createCommand()->dropColumn($table, $column)->execute();
         return $this->execPromise($cmdPromise, "drop column $column from table $table");
     }
 
@@ -426,7 +436,7 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
      */
     public function renameColumn($table, $name, $newName)
     {
-        $cmdPromise = $this->db->createCommand()->renameColumn($table, $name, $newName)->execute();
+        $cmdPromise = $this->createCommand()->renameColumn($table, $name, $newName)->execute();
         return $this->execPromise($cmdPromise, "rename column $name in table $table to $newName");
     }
 
@@ -442,9 +452,9 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
     public function alterColumn($table, $column, $type)
     {
         $promises = [];
-        $promises[] = $this->db->createCommand()->alterColumn($table, $column, $type)->execute();
+        $promises[] = $this->createCommand()->alterColumn($table, $column, $type)->execute();
         if ($type instanceof ColumnSchemaBuilder && $type->comment !== null) {
-            $promises[] = $this->db->createCommand()->addCommentOnColumn($table, $column, $type->comment)->execute();
+            $promises[] = $this->createCommand()->addCommentOnColumn($table, $column, $type->comment)->execute();
         }
         return $this->execPromise($promises, "alter column $column in table $table to $type");
     }
@@ -460,7 +470,7 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
     public function addPrimaryKey($name, $table, $columns)
     {
         $description = "add primary key $name on $table (" . (is_array($columns) ? implode(',', $columns) : $columns) . ')';
-        $cmdPromise = $this->db->createCommand()->addPrimaryKey($name, $table, $columns)->execute();
+        $cmdPromise = $this->createCommand()->addPrimaryKey($name, $table, $columns)->execute();
         return $this->execPromise($cmdPromise, $description);
     }
 
@@ -472,7 +482,7 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
      */
     public function dropPrimaryKey($name, $table)
     {
-        $cmdPromise = $this->db->createCommand()->dropPrimaryKey($name, $table)->execute();
+        $cmdPromise = $this->createCommand()->dropPrimaryKey($name, $table)->execute();
         return $this->execPromise($cmdPromise, "drop primary key $name");
     }
 
@@ -491,7 +501,7 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
     public function addForeignKey($name, $table, $columns, $refTable, $refColumns, $delete = null, $update = null)
     {
         $description = "add foreign key $name: $table (" . implode(',', (array) $columns) . ") references $refTable (" . implode(',', (array) $refColumns) . ')';
-        $cmdPromise = $this->db->createCommand()->addForeignKey($name, $table, $columns, $refTable, $refColumns, $delete, $update)->execute();
+        $cmdPromise = $this->createCommand()->addForeignKey($name, $table, $columns, $refTable, $refColumns, $delete, $update)->execute();
         return $this->execPromise($cmdPromise, $description);
     }
 
@@ -503,7 +513,7 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
      */
     public function dropForeignKey($name, $table)
     {
-        $cmdPromise = $this->db->createCommand()->dropForeignKey($name, $table)->execute();
+        $cmdPromise = $this->createCommand()->dropForeignKey($name, $table)->execute();
         return $this->execPromise($cmdPromise, "drop foreign key $name from table $table");
     }
 
@@ -520,7 +530,7 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
     public function createIndex($name, $table, $columns, $unique = false)
     {
         $description = 'create' . ($unique ? ' unique' : '') . " index $name on $table (" . implode(',', (array) $columns) . ')';
-        $cmdPromise = $this->db->createCommand()->createIndex($name, $table, $columns, $unique)->execute();
+        $cmdPromise = $this->createCommand()->createIndex($name, $table, $columns, $unique)->execute();
         return $this->execPromise($cmdPromise, $description);
     }
 
@@ -532,7 +542,7 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
      */
     public function dropIndex($name, $table)
     {
-        $cmdPromise = $this->db->createCommand()->dropIndex($name, $table)->execute();
+        $cmdPromise = $this->createCommand()->dropIndex($name, $table)->execute();
         return $this->execPromise($cmdPromise, "drop index $name on $table");
     }
 
@@ -546,7 +556,7 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
      */
     public function addCommentOnColumn($table, $column, $comment)
     {
-        $cmdPromise = $this->db->createCommand()->addCommentOnColumn($table, $column, $comment)->execute();
+        $cmdPromise = $this->createCommand()->addCommentOnColumn($table, $column, $comment)->execute();
         return $this->execPromise($cmdPromise, "add comment on column $column");
     }
 
@@ -559,7 +569,7 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
      */
     public function addCommentOnTable($table, $comment)
     {
-        $cmdPromise = $this->db->createCommand()->addCommentOnTable($table, $comment)->execute();
+        $cmdPromise = $this->createCommand()->addCommentOnTable($table, $comment)->execute();
         return $this->execPromise($cmdPromise, "add comment on table $table");
     }
 
@@ -572,7 +582,7 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
      */
     public function dropCommentFromColumn($table, $column)
     {
-        $cmdPromise = $this->db->createCommand()->dropCommentFromColumn($table, $column)->execute();
+        $cmdPromise = $this->createCommand()->dropCommentFromColumn($table, $column)->execute();
         return $this->execPromise($cmdPromise, "drop comment from column $column");
     }
 
@@ -584,7 +594,7 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
      */
     public function dropCommentFromTable($table)
     {
-        $cmdPromise = $this->db->createCommand()->dropCommentFromTable($table)->execute();
+        $cmdPromise = $this->createCommand()->dropCommentFromTable($table)->execute();
         return $this->execPromise($cmdPromise, "drop comment from table $table");
     }
 
@@ -647,5 +657,20 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
                 });
             }
         );
+    }
+
+    /**
+     * Create DB command
+     * @param string|null              $sql
+     * @param array                    $params
+     * @param ConnectionInterface|null $connection
+     * @return CommandInterface
+     */
+    protected function createCommand($sql = null, $params = [], $connection = null)
+    {
+        if ($connection === null && isset($this->_connection)) {
+            $connection = $this->_connection;
+        }
+        return $this->db->createCommand($sql, $params, $connection);
     }
 }
