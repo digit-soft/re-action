@@ -141,7 +141,7 @@ class Debugger
                 if ($argType === 'object' && $arg instanceof \Throwable) {
                     $exceptionArgs[] = $argNum;
                     $argIsException = true;
-                    $argValue = $arg->getMessage();
+                    $argValue = "'" . $arg->getMessage() . "'" . ' thrown in (' . $arg->getFile() . ' #' . $arg->getLine() . ')';
                 } elseif ($argType === 'integer') {
                     $argValue = $arg;
                 } elseif ($argType === 'string') {
