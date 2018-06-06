@@ -8,6 +8,7 @@ use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Exceptions\NotSupportedException;
 use Reaction\Console\Routes\Controller;
 use Reaction\Console\Exception;
+use Reaction\Helpers\ClassFinderHelper;
 use function Reaction\Promise\allInOrder;
 use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\Promise\LazyPromise;
@@ -783,7 +784,7 @@ abstract class BaseMigrateController extends Controller
      */
     protected function getNamespacePath($namespace)
     {
-        return str_replace('/', DIRECTORY_SEPARATOR, \Reaction::$app->getAlias('@' . str_replace('\\', '/', $namespace)));
+        return ClassFinderHelper::getNamespacePath($namespace);
     }
 
     /**
@@ -1018,6 +1019,7 @@ abstract class BaseMigrateController extends Controller
                 closedir($handle);
             }
             ksort($migrations);
+            \Reaction::warning($migrations);
 
             return array_values($migrations);
         });
