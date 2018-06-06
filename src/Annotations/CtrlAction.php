@@ -19,6 +19,7 @@ use Doctrine\Common\Annotations\Annotation\Target;
  */
 class CtrlAction
 {
+    /** @var array Possible HTTP request methods */
     const METHODS = ["GET", "HEAD", "POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "PATCH", "TRACE"];
 
     /** @var array Http method */
@@ -44,18 +45,12 @@ class CtrlAction
             $this->path = $values;
         } elseif (is_array($values)) {
             if (!empty($values['method'])) {
-                $values['method'] = (array)$values['method'];
-                if (strtoupper($values['method'][0]) === "ANY") {
-                    $values['method'] = static::METHODS;
-                }
-                $this->method = (array)$values['method'];
+                $this->method = $this->normalizeMethod($values['method']);
             }
             if (!empty($values['path'])) {
-                $this->path = (string)$values['path'];
+                $this->path = $this->normalizePath($values['path']);
             }
         }
-
-        $this->normalizePath();
 
         if(empty($this->path)) {
             throw new \Exception("Property 'path' is required");
@@ -64,18 +59,37 @@ class CtrlAction
 
     /**
      * Normalize path
+     * @param string $path
+     * @return string|null
      */
-    protected function normalizePath() {
-        if (!isset($this->path)) {
-            return;
+    protected function normalizePath($path) {
+        if (!isset($path)) {
+            return null;
         }
-        $path = trim($this->path);
+        $path = trim((string)$path);
         if (($qPos = strpos($path, '?')) !== false) {
             $path = mb_substr($path, 0, $qPos);
         }
         if ($path !== "/") {
             $path = rtrim($path, '/');
         }
-        $this->path = $path;
+        return $path;
+    }
+
+    /**
+     * Normalize method
+     * @param array|string $method
+     * @return array
+     */
+    protected function normalizeMethod($method)
+    {
+        $method = (array)$method;
+        foreach ($method as &$methodRow) {
+            $methodRow = strtoupper($methodRow);
+        }
+        if (in_array('ANY', $method)) {
+            $method = static::METHODS;
+        }
+        return $method;
     }
 }
