@@ -68,6 +68,43 @@ class ClassFinderHelper
     }
 
     /**
+     * Get namespace directory path
+     * @param string $namespace
+     * @param bool $first
+     * @return array|mixed|null|string
+     */
+    public static function getNamespacePath($namespace, $first = true)
+    {
+        $namespace = trim($namespace, static::CS);
+        $nsPrefixes = static::getNamespacePrefixes($namespace);
+        $loaderPrefixes = static::getLoaderPrefixes();
+        $nsSuffix = '';
+        foreach ($nsPrefixes as $prefix) {
+            if (!isset($loaderPrefixes[$prefix])) {
+                continue;
+            }
+            $nsSuffix = trim(mb_substr($namespace, mb_strlen($prefix)), static::CS);
+            $paths = $loaderPrefixes[$prefix];
+            break;
+        }
+        if (!isset($paths)) {
+            return $first ? null : [];
+        }
+        $results = [];
+        foreach ($paths as $path) {
+            $result = $path . static::DS . str_replace('\\', static::DS, $nsSuffix);
+            if (!file_exists($result) || !is_dir($result)) {
+                continue;
+            }
+            if ($first) {
+                return $result;
+            }
+            $results[] = $result;
+        }
+        return $results;
+    }
+
+    /**
      * Get possible namespace paths
      * @param string $namespace
      * @return array|mixed
