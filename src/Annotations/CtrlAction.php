@@ -73,7 +73,9 @@ class CtrlAction
         if (($qPos = strpos($path, '?')) !== false) {
             $path = mb_substr($path, 0, $qPos);
         }
-        $path = rtrim($path, '/');
+        if ($path !== "/") {
+            $path = rtrim($path, '/');
+        }
         $this->path = $path;
     }
 }

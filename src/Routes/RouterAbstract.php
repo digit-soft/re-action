@@ -257,6 +257,7 @@ abstract class RouterAbstract extends Component implements RouterInterface
             /** @var CtrlAction $ctrlAction */
             $ctrlAction = $actionAnnotations[CtrlAction::class];
             $path = $ctrlAnnotation->group . '/' . ltrim($ctrlAction->path, '/');
+            $path = $path !== '/' ? rtrim($path, '/') : $path;
             $actionId = Controller::getActionId($actions[$i]);
             $this->addRoute($ctrlAction->method, $path, [$controller, $actionId]);
         }
