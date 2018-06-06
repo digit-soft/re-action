@@ -10,7 +10,6 @@ use function Reaction\Promise\reject;
 use function Reaction\Promise\resolve;
 
 /**
- * TODO: Return after Authorization & User complete
  * @Annotation
  * @Target({"METHOD", "CLASS"})
  * @Attributes({
@@ -40,9 +39,18 @@ class CtrlAuth implements CtrlActionValidatorInterface
      */
     public function validate(RequestApplicationInterface $app)
     {
-        if (empty($this->permissions) && $this->authorized === null) {
-            return resolve(true);
+        if ($this->authorized && $app->user->getIsGuest()) {
+            return reject(false);
         }
-        return reject(false);
+        if (!empty($this->permissions)) {
+            $promises = [];
+            foreach ($this->permissions as $permissionName) {
+                $promises[] = $app->user->can($permissionName);
+            }
+            return !empty($promises)
+                ? \Reaction\Promise\any($promises)
+                : reject(false);
+        }
+        return resolve(true);
     }
 }
