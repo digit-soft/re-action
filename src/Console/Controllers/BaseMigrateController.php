@@ -1019,7 +1019,6 @@ abstract class BaseMigrateController extends Controller
                 closedir($handle);
             }
             ksort($migrations);
-            \Reaction::warning($migrations);
 
             return array_values($migrations);
         });
