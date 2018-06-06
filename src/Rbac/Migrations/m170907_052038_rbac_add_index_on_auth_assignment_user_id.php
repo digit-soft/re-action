@@ -1,5 +1,9 @@
 <?php
 
+namespace Reaction\Rbac\Migrations;
+
+use Reaction;
+use Reaction\Db\ConnectionInterface;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Rbac\DbManager;
 use Reaction\Db\Migration;
@@ -15,7 +19,7 @@ class m170907_052038_rbac_add_index_on_auth_assignment_user_id extends Migration
     public $index = 'auth_assignment_user_id_idx';
 
     /**
-     * @throws Reaction\Exceptions\InvalidConfigException
+     * @throws \Reaction\Exceptions\InvalidConfigException
      * @return DbManager
      */
     protected function getAuthManager()
@@ -31,7 +35,7 @@ class m170907_052038_rbac_add_index_on_auth_assignment_user_id extends Migration
     /**
      * {@inheritdoc}
      */
-    public function up()
+    public function safeUp(ConnectionInterface $connection)
     {
         $authManager = $this->getAuthManager();
         return $this->createIndex($this->index, $authManager->assignmentTable, $this->column);
@@ -40,7 +44,7 @@ class m170907_052038_rbac_add_index_on_auth_assignment_user_id extends Migration
     /**
      * {@inheritdoc}
      */
-    public function down()
+    public function safeDown(ConnectionInterface $connection)
     {
         $authManager = $this->getAuthManager();
         return $this->dropIndex($this->index, $authManager->assignmentTable);

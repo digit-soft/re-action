@@ -1,5 +1,10 @@
 <?php
 
+namespace Reaction\Rbac\Migrations;
+
+use Reaction;
+use Reaction\Db\ConnectionInterface;
+use Reaction\Db\Migration;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Rbac\DbManager;
 use function Reaction\Promise\allInOrder;
@@ -7,10 +12,10 @@ use function Reaction\Promise\allInOrder;
 /**
  * Initializes RBAC tables.
  */
-class m140506_102106_rbac_init extends \Reaction\Db\Migration
+class m140506_102106_rbac_init extends Migration
 {
     /**
-     * @throws Reaction\Exceptions\InvalidConfigException
+     * @throws \Reaction\Exceptions\InvalidConfigException
      * @return DbManager
      */
     protected function getAuthManager()
@@ -24,6 +29,7 @@ class m140506_102106_rbac_init extends \Reaction\Db\Migration
     }
 
     /**
+     * Check that DB is MSSQL
      * @return bool
      */
     protected function isMSSQL()
@@ -32,6 +38,10 @@ class m140506_102106_rbac_init extends \Reaction\Db\Migration
         return $driver === 'mssql' || $driver === 'sqlsrv' || $driver === 'dblib';
     }
 
+    /**
+     * Check that DB is Oracle
+     * @return bool
+     */
     protected function isOracle()
     {
         return $this->db->getDriverName() === 'oci';
@@ -40,7 +50,7 @@ class m140506_102106_rbac_init extends \Reaction\Db\Migration
     /**
      * {@inheritdoc}
      */
-    public function up()
+    public function safeUp(ConnectionInterface $connection)
     {
         $authManager = $this->getAuthManager();
         $this->db = $authManager->db;
@@ -136,7 +146,7 @@ class m140506_102106_rbac_init extends \Reaction\Db\Migration
     /**
      * {@inheritdoc}
      */
-    public function down()
+    public function safeDown(ConnectionInterface $connection)
     {
         $authManager = $this->getAuthManager();
         $this->db = $authManager->db;
@@ -153,6 +163,12 @@ class m140506_102106_rbac_init extends \Reaction\Db\Migration
         return allInOrder($promises);
     }
 
+    /**
+     * Build foreign key clause string
+     * @param string $delete
+     * @param string $update
+     * @return string
+     */
     protected function buildFkClause($delete = '', $update = '')
     {
         if ($this->isMSSQL()) {
