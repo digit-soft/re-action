@@ -277,12 +277,32 @@ class Command extends Component implements CommandInterface
      */
     public function fetchResultsRow($row = [], $fetchMethod = self::FETCH_ALL, $fetchMode = self::FETCH_MODE_ASSOC, $colIndex = 0) {
         if (in_array($fetchMethod, [static::FETCH_ALL, static::FETCH_ROW])) {
+            $this->processResultRow($row);
             return $fetchMode === static::FETCH_MODE_OBJECT ? (object)$row : $row;
         } elseif (in_array($fetchMethod, [static::FETCH_COLUMN, static::FETCH_FIELD]) && $colIndex < count($row)) {
             $rowIndexed = array_values($row);
+            $this->processResultRow($rowIndexed[$colIndex]);
             return $rowIndexed[$colIndex];
         }
         return null;
+    }
+
+    /**
+     * Process result row (remove slashes etc.)
+     * @param mixed $row
+     */
+    protected function processResultRow(&$row)
+    {
+        if (is_array($row)) {
+            foreach ($row as &$fieldValue) {
+                if (!is_string($fieldValue)) {
+                    continue;
+                }
+                $fieldValue = stripslashes($fieldValue);
+            }
+        } elseif (is_string($row)) {
+            $row = stripslashes($row);
+        }
     }
 
 
