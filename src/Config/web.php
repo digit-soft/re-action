@@ -7,6 +7,19 @@ use Reaction\DI\Instance;
 use Reaction\DI\Value;
 
 return [
+    //Static application config
+    'appStatic' => [
+        //Components
+        'components' => [
+            'router' => [
+                'class' => 'Reaction\Routes\RouterInterface',
+                'controllerNamespaces' => [
+                    'Reaction\Routes\StdControllers',
+                    'App\Controllers',
+                ],
+            ],
+        ]
+    ],
     'container' => [
         'definitions' => [],
         'singletons' => [
