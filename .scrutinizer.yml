@@ -13,6 +13,8 @@ coding_style:
             within:
                 brackets: false
 filter:
+    dependency_paths:
+      - vendor/
     excluded_paths:
       - src/Helpers/
       - src/I18n/Migrations/
