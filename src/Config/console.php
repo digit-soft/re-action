@@ -6,8 +6,7 @@ return [
     'appStatic' => [
         'debug' => true,
         //Components
-        'components' => [
-        ],
+        'components' => [],
     ],
     //Request application config
     'appRequest' => [
