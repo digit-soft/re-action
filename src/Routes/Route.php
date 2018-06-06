@@ -134,15 +134,14 @@ class Route extends RequestAppComponent implements RouteInterface
             $result = call_user_func_array($callable, $args);
             $r($result);
         });
-        $self = $this;
         return $promise->then(
-            function ($response) use ($self) {
-                return $self->processResponse($response);
+            function ($response) {
+                return $this->processResponse($response);
             }
         )->otherwise(
-            function ($error) use ($self) {
-                $self->convertToError($error);
-                return $self->resolve();
+            function ($error) {
+                $this->convertToError($error);
+                return $this->resolve();
             }
         );
     }
