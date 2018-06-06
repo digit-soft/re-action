@@ -277,7 +277,7 @@ class ReflectionHelper
         if (null === $reflection || null === $objectOrName) {
             return null;
         }
-        $key = static::getCacheKey($type, $objectOrName, $params);
+        $key = static::getCacheKey($type, $objectOrName, ...$params);
         static::$_reflections[$type][$key] = $reflection;
         return $reflection;
     }

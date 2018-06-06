@@ -113,7 +113,7 @@ class Debugger
         $argsStrLength = 0;
         if (!empty($row['args'])) {
             if (!$isClosure) {
-                $funcRef = $row['class']
+                $funcRef = isset($row['class']) && $row['class'] !== ""
                     ? new \ReflectionMethod($row['class'], $row['function'])
                     : new \ReflectionFunction($row['function']);
                 $funcParams = $funcRef->getParameters();
@@ -144,8 +144,8 @@ class Debugger
                     $argValue = $arg->getMessage();
                 } elseif ($argType === 'integer') {
                     $argValue = $arg;
-                } elseif ($argType === 'string' && strlen($arg) < 30) {
-                    $argValue = strlen($arg) < 30 ? $arg : StringHelper::truncate($arg, 30);
+                } elseif ($argType === 'string') {
+                    $argValue = strlen($arg) < 80 ? $arg : StringHelper::truncate($arg, 80);
                     $argValue = "'" . $argValue . "'";
                 } elseif ($argType === 'boolean') {
                     $argValue = !empty($arg) ? 'TRUE' : 'FALSE';
