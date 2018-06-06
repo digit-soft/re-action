@@ -19,6 +19,8 @@ use Doctrine\Common\Annotations\Annotation\Target;
  */
 class CtrlAction
 {
+    const METHODS = ["GET", "HEAD", "POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "PATCH", "TRACE"];
+
     /** @var array Http method */
     public $method = ['GET'];
 
@@ -42,6 +44,10 @@ class CtrlAction
             $this->path = $values;
         } elseif (is_array($values)) {
             if (!empty($values['method'])) {
+                $values['method'] = (array)$values['method'];
+                if (strtoupper($values['method'][0]) === "ANY") {
+                    $values['method'] = static::METHODS;
+                }
                 $this->method = (array)$values['method'];
             }
             if (!empty($values['path'])) {
