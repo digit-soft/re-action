@@ -116,7 +116,7 @@ return [
             'React\Filesystem\FilesystemInterface' => function(\Reaction\DI\Container $di) {
                 /** @var React\EventLoop\LoopInterface $loop */
                 $loop = $di->get('React\EventLoop\LoopInterface');
-                return \React\Filesystem\Filesystem::createFromAdapter(new \React\Filesystem\ChildProcess\Adapter($loop, []));
+                return \React\Filesystem\Filesystem::createFromAdapter(new \React\Filesystem\Eio\Adapter($loop, []));
             },
             //Router
             'Reaction\Routes\RouterInterface' => 'Reaction\Routes\Router',
