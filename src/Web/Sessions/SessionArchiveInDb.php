@@ -6,14 +6,13 @@ use Reaction\Db\CommandInterface;
 use Reaction\Db\ConnectionInterface;
 use Reaction\Db\DatabaseInterface;
 use Reaction\Db\Query;
-use Reaction\Helpers\Json;
 use Reaction\Promise\ExtendedPromiseInterface;
 
 /**
  * Class SessionArchiveInDb
  * @package Reaction\Web\Sessions
  */
-class SessionArchiveInDb extends SessionArchiveAbstract implements SessionArchiveInterface
+class SessionArchiveInDb extends SessionArchiveAbstract
 {
     /**
      * @var string Db table name

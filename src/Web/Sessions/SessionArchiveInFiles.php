@@ -5,7 +5,6 @@ namespace Reaction\Web\Sessions;
 use React\Filesystem\Node\File;
 use React\Filesystem\Node\FileInterface;
 use React\Stream\WritableStreamInterface;
-use Reaction\Base\BaseObject;
 use Reaction\Exceptions\SessionException;
 use Reaction\Helpers\FileHelperAsc;
 use Reaction\Helpers\Json;
@@ -17,7 +16,7 @@ use function Reaction\Promise\resolve;
  * Class SessionArchiveInFiles
  * @package Reaction\Web\Sessions
  */
-class SessionArchiveInFiles extends BaseObject implements SessionArchiveInterface
+class SessionArchiveInFiles extends SessionArchiveAbstract
 {
     /**
      * @var string Session archive path
@@ -34,7 +33,7 @@ class SessionArchiveInFiles extends BaseObject implements SessionArchiveInterfac
      * @param bool   $remove Flag to remove data
      * @return ExtendedPromiseInterface with data array
      */
-    public function get($id, $remove = true)
+    public function get($id, $remove = false)
     {
         $self = $this;
         /** @var File $file */
@@ -55,7 +54,7 @@ class SessionArchiveInFiles extends BaseObject implements SessionArchiveInterfac
         )->then(
             function($dataStr) use ($self, &$file, $remove) {
                 try {
-                    $data = $self->unserializeData($dataStr);
+                    $data = $self->getHandler()->unserializeData($dataStr);
                 } catch (\InvalidArgumentException $exception) {
                     $data = null;
                 }
@@ -82,7 +81,7 @@ class SessionArchiveInFiles extends BaseObject implements SessionArchiveInterfac
      */
     public function set($id, $data)
     {
-        $dataSr = $this->serializeData($data);
+        $dataSr = $this->getHandler()->serializeData($data);
         /** @var File $file */
         $file = null;
         $createMode = FileHelperAsc::permissionsAsString(0777);
@@ -231,29 +230,5 @@ class SessionArchiveInFiles extends BaseObject implements SessionArchiveInterfac
                 return resolve($filePath);
             }
         );
-    }
-
-    /**
-     * Serialize session data
-     * @param array $sessionData
-     * @return string
-     */
-    protected function serializeData($sessionData)
-    {
-        if (is_string($sessionData)) return $sessionData;
-        return Json::encode($sessionData);
-    }
-
-    /**
-     * Unserialize session data
-     * @param string $sessionData
-     * @return array
-     */
-    protected function unserializeData($sessionData)
-    {
-        if (is_array($sessionData)) {
-            return $sessionData;
-        }
-        return Json::decode($sessionData);
     }
 }
