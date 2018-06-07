@@ -2,18 +2,18 @@
 
 namespace Reaction\Web\Sessions;
 
-use Reaction\Base\BaseObject;
 use Reaction\Db\CommandInterface;
 use Reaction\Db\ConnectionInterface;
 use Reaction\Db\DatabaseInterface;
 use Reaction\Db\Query;
+use Reaction\Helpers\Json;
 use Reaction\Promise\ExtendedPromiseInterface;
 
 /**
  * Class SessionArchiveInDb
  * @package Reaction\Web\Sessions
  */
-class SessionArchiveInDb extends BaseObject implements SessionArchiveInterface
+class SessionArchiveInDb extends SessionArchiveAbstract implements SessionArchiveInterface
 {
     /**
      * @var string Db table name
@@ -55,7 +55,7 @@ class SessionArchiveInDb extends BaseObject implements SessionArchiveInterface
      */
     public function set($id, $data)
     {
-        $dataSerialized = $this->serializeData($data);
+        $dataSerialized = $this->getHandler()->serializeData($data);
         $timestamp = time();
         $row = [
             'sid' => $id,
@@ -139,7 +139,7 @@ class SessionArchiveInDb extends BaseObject implements SessionArchiveInterface
         return $this->selectQuery()->where(['sid' => $id])
             ->one($this->db)
             ->then(function($row) use ($unserialize) {
-                return $unserialize ? $this->unserializeData($row['data']) : $row;
+                return $unserialize ? $this->getHandler()->unserializeData($row['data']) : $row;
             });
     }
 
@@ -173,29 +173,5 @@ class SessionArchiveInDb extends BaseObject implements SessionArchiveInterface
         return $this->createCommand()
             ->update($this->table, $row, ['sid' => $id])
             ->execute();
-    }
-
-    /**
-     * Serialize session data
-     * @param array $sessionData
-     * @return string
-     */
-    protected function serializeData($sessionData)
-    {
-        if (is_string($sessionData)) return $sessionData;
-        return serialize($sessionData);
-    }
-
-    /**
-     * Unserialize session data
-     * @param string $sessionData
-     * @return array
-     */
-    protected function unserializeData($sessionData)
-    {
-        if (is_array($sessionData)) {
-            return $sessionData;
-        }
-        return unserialize($sessionData);
     }
 }

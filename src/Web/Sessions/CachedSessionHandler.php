@@ -204,7 +204,7 @@ class CachedSessionHandler extends SessionHandlerAbstract
      */
     public function extractData($sessionRecord = [], $unserialize = false) {
         $data = isset($sessionRecord[$this->dataKey]) ? $sessionRecord[$this->dataKey] : [];
-        return $unserialize ? $this->unserializeSessionData($data) : $data;
+        return $unserialize && is_string($data) ? $this->unserializeData($data) : $data;
     }
 
     /**
@@ -277,7 +277,9 @@ class CachedSessionHandler extends SessionHandlerAbstract
             $record[$dKey] = $data;
         }
         $record[$this->timestampKey] = time();
-        $record[$dKey] = $this->serializeSessionData($record[$dKey]);
+        $record[$dKey] = !is_string($record[$dKey])
+            ? $this->serializeData($record[$dKey])
+            : $record[$dKey];
         return $record;
     }
 }

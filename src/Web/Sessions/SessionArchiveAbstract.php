@@ -1,0 +1,20 @@
+<?php
+namespace Reaction\Web\Sessions;
+
+use Reaction\Base\BaseObject;
+
+/**
+ * Class SessionArchiveAbstract
+ * @package Reaction\Web\Sessions
+ */
+abstract class SessionArchiveAbstract extends BaseObject implements SessionArchiveInterface
+{
+    /**
+     * Get session handler
+     * @return SessionHandlerInterface
+     */
+    protected function getHandler()
+    {
+        return \Reaction::$app->get('sessionHandler');
+    }
+}
