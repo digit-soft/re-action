@@ -28,7 +28,7 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
      * After that time GC will remove data from storage and archive it for '$sessionLifetime' seconds
      * @see $gcArchiveLifetime
      */
-    public $gcLifetime = 60;
+    public $gcLifetime = 3;
     /**
      * @var integer Session lifetime in seconds (default 7 days).
      * Time for archive session life from where it can be restored
@@ -186,27 +186,23 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
     }
 
     /**
-     * Serialize session data
-     * @param array $sessionData
+     * Serialize session data to string
+     * @param array $data
      * @return string
      */
-    protected function serializeSessionData($sessionData)
+    public function serializeData($data)
     {
-        if (is_string($sessionData)) return $sessionData;
-        return Json::encode($sessionData);
+        return Json::encode($data);
     }
 
     /**
-     * Unserialize session data
-     * @param string $sessionData
+     * Unserialize session data from string
+     * @param string $dataSerialized
      * @return array
      */
-    protected function unserializeSessionData($sessionData)
+    public function unserializeData($dataSerialized)
     {
-        if (is_array($sessionData)) {
-            return $sessionData;
-        }
-        return Json::decode($sessionData);
+        return Json::decode($dataSerialized);
     }
 
     /**

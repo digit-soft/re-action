@@ -74,4 +74,20 @@ interface SessionHandlerInterface
      * @return ExtendedPromiseInterface  with bool when finished
      */
     public function updateTimestamp($id, $data);
+
+    /**
+     * Serialize session data to string
+     * @param array $data
+     * @return string
+     * @internal
+     */
+    public function serializeData($data);
+
+    /**
+     * Unserialize session data from string
+     * @param string $dataSerialized
+     * @return array
+     * @internal
+     */
+    public function unserializeData($dataSerialized);
 }
