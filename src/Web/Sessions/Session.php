@@ -247,18 +247,19 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
 
     /**
      * Ends the current session and store session data.
+     * @param bool $destroy
      * @return ExtendedPromiseInterface
      */
-    public function close()
+    public function close($destroy = false)
     {
         if ($this->getIsActive()) {
             if (Reaction::isDebug()) {
                 //Reaction::info('Session closed');
             }
-            return $this->isEmpty() ? $this->destroySession() : $this->writeSession();
+            return $destroy || $this->isEmpty() ? $this->destroySession() : $this->writeSession();
         }
         $this->_isActive = false;
-        return \Reaction\Promise\resolve(null);
+        return \Reaction\Promise\resolve(true);
     }
 
     /**
@@ -273,7 +274,8 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
     {
         if ($this->getIsActive()) {
             $sessionId = $this->getId();
-            return $this->close()
+            return $this->close(true)
+                ->otherwise(function() { return true; })
                 ->then(function() use ($sessionId) {
                     $this->setId($sessionId);
                     return $this->open();
@@ -519,7 +521,7 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
         if (!isset($id)) {
             return \Reaction\Promise\reject(new Reaction\Exceptions\ErrorException('Param "$id" must be specified in "' . __METHOD__ . '"'));
         }
-        return $this->handler->destroy($id);
+        return $this->handler->destroy($id, true);
     }
 
     /**

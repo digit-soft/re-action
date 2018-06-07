@@ -29,9 +29,10 @@ interface SessionHandlerInterface
     /**
      * Destroy a session
      * @param string $id The session ID being destroyed.
+     * @param bool   $archiveRemove Remove data from archive or no
      * @return ExtendedPromiseInterface  with bool when finished
      */
-    public function destroy($id);
+    public function destroy($id, $archiveRemove = false);
 
     /**
      * Regenerate session id

@@ -100,9 +100,10 @@ class CachedSessionHandler extends SessionHandlerAbstract
     /**
      * Destroy a session
      * @param string $id The session ID being destroyed.
+     * @param bool   $archiveRemove Remove data from archive or no
      * @return ExtendedPromiseInterface with bool when finished
      */
-    public function destroy($id)
+    public function destroy($id, $archiveRemove = false)
     {
         if (isset($this->keys[$id])) {
             unset($this->keys[$id]);
@@ -114,7 +115,9 @@ class CachedSessionHandler extends SessionHandlerAbstract
                 $message = sprintf('Failed to destroy session "%s"', $id);
                 throw new SessionException($message, 0, $error);
             }
-        );
+        )->always(function() use ($id, $archiveRemove) {
+            return $archiveRemove ? $this->archive->remove($id) : true;
+        });
     }
 
     /**
@@ -142,7 +145,7 @@ class CachedSessionHandler extends SessionHandlerAbstract
                         }
                     )->then(
                         function () use ($id) {
-                            return $this->destroy($id);
+                            return $this->destroy($id, false);
                         }
                     );
                     $promises[] = $promise;
