@@ -102,7 +102,7 @@ class SessionArchiveInDb extends SessionArchiveAbstract
     {
         $expiredTs = time() - $lifeTime;
         return $this->createCommand()
-            ->delete($this->table, ['updated_at' => $expiredTs])
+            ->delete($this->table, ['<', 'updated_at', $expiredTs])
             ->execute();
     }
 
