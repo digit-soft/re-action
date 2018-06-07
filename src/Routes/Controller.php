@@ -422,19 +422,18 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
 
     /**
      * Normalize action name
-     * @param string $action
+     * @param string $actionMethod
      * @param bool   $throwException
      * @return string|null
      * @throws NotFoundException
      */
-    protected function normalizeActionName($action, $throwException = true)
+    protected function normalizeActionName($actionMethod, $throwException = true)
     {
-        if (!StringHelper::startsWith($action, 'action')) {
-            $action = strpos($action, '-') ? Inflector::id2camel($action) : $action;
-            $action = 'action' . ucfirst($action);
+        if (!StringHelper::startsWith($actionMethod, 'action')) {
+            $actionMethod = static::getActionMethod($actionMethod);
         }
 
-        if (!method_exists($this, $action)) {
+        if (!method_exists($this, $actionMethod)) {
             if ($throwException) {
                 throw new NotFoundException('Page not found');
             } else {
@@ -442,14 +441,15 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
             }
         }
 
-        return $action;
+        return $actionMethod;
     }
 
     /**
      * Resolve error as rendered html
      * @param RequestApplicationInterface $app
-     * @param \Throwable          $exception
+     * @param \Throwable                  $exception
      * @return ResponseBuilderInterface|ExtendedPromiseInterface
+     * @throws NotFoundException
      */
     protected function resolveErrorAsHtml(RequestApplicationInterface $app, \Throwable $exception)
     {
@@ -460,6 +460,7 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
         }
         $action = null;
         foreach ($actions as $possibleAction) {
+            Reaction::warning($possibleAction);
             $action = $this->normalizeActionName($possibleAction, false);
             if (isset($action)) {
                 break;
