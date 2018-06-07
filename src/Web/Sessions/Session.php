@@ -131,6 +131,8 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
             ->then(function() {
                 $this->_initialized = true;
                 return true;
+            }, function($error = null) {
+                Reaction::error($error);
             });
     }
 
@@ -192,7 +194,7 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
                 },
                 function($error = null) use ($self) {
                     $self->data = [];
-                    return Reaction\Promise\reject($error);
+                    return false;
                 }
             )->always(function() {
                 //Write initial data state for future needs
