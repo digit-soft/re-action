@@ -11,6 +11,7 @@ use Reaction\Db\DatabaseInterface;
 use Reaction\DI\ServiceLocator;
 use Reaction\DI\ServiceLocatorAutoloadInterface;
 use Reaction\Exceptions\InvalidArgumentException;
+use Reaction\Helpers\Console;
 use Reaction\Promise\ExtendedPromiseInterface;
 
 /**
@@ -61,6 +62,10 @@ abstract class StaticApplicationAbstract extends ServiceLocator implements Stati
      */
     public function init()
     {
+        if (Reaction::isDev()) {
+            error_reporting(E_ALL);
+        }
+        set_error_handler([$this, 'handleError']);
         $this->loop = Reaction::create(\React\EventLoop\LoopInterface::class);
     }
 
@@ -355,5 +360,54 @@ abstract class StaticApplicationAbstract extends ServiceLocator implements Stati
         /** @var DatabaseInterface $db */
         $db = $this->get('db');
         return $db;
+    }
+
+    /**
+     * Handles PHP execution errors such as warnings and notices.
+     *
+     * @param int $code the level of the error raised.
+     * @param string $message the error message.
+     * @param string $file the filename that the error was raised in.
+     * @param int $line the line number the error was raised at.
+     */
+    public function handleError($code, $message, $file, $line)
+    {
+        if (error_reporting() & $code) {
+            /** @var Reaction\Base\Logger\StdioLogger $logger */
+            $logger = Reaction::$app->logger;
+            $reportMessage = $message;
+            if (!$logger->withLineNum) {
+                $reportMessage .= "\n" . $file;
+                $reportMessage .= ":" . $line;
+            }
+            list($level, $format) = $this->getErrorLogLevel($code);
+            $format = is_array($format) ? $format : [$format];
+            $reportMessage = Console::ansiFormat('[' . strtoupper($level) . '] ' . $reportMessage, $format);
+            $logger->logRaw($reportMessage, [], 1);
+        }
+    }
+
+    /**
+     * Get error log level by error code
+     * @param int $code
+     * @return array|mixed
+     */
+    protected function getErrorLogLevel($code)
+    {
+        $levels = [
+            E_ERROR => ['error', [Console::FG_RED, Console::BOLD] ],
+            E_WARNING => ['warning', [Console::FG_YELLOW, Console::BOLD] ],
+            E_PARSE => ['parse error', Console::FG_RED ],
+            E_NOTICE => ['notice', Console::FG_YELLOW ],
+            E_CORE_ERROR => ['core error', Console::FG_RED ],
+            E_CORE_WARNING => ['core warning', Console::FG_YELLOW ],
+            E_STRICT => ['strict warning', Console::FG_BLUE ],
+        ];
+        foreach ($levels as $mask => $level) {
+            if ($mask & $code) {
+                return $level;
+            }
+        }
+        return ['low error', Console::FG_GREY];
     }
 }
