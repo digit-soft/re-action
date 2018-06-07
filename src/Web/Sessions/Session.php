@@ -97,7 +97,7 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
     protected $_isActive = false;
 
     /** @var array Session data before changes */
-    protected $_dataPrev;
+    protected $_dataInitial;
     /** @var bool */
     protected $_initialized = false;
 
@@ -175,14 +175,14 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
         $self = $this;
         if (!$this->getId()) {
             $self = $this;
-            return $this->handler->createId($this->app)->then(
-                function($id = null) use ($self) {
+            return $this->handler->createId($this->app)
+                ->then(function($id = null) use ($self) {
                     $self->_isActive = true;
                     $self->setId($id);
                     $cookie = $self->createSessionCookie();
                     $self->app->response->cookies->add($cookie);
-                }
-            );
+                    return true;
+                });
         } else {
             $this->_isActive = true;
             return $this->readSession()->then(
@@ -190,10 +190,14 @@ class Session extends RequestAppComponent implements \IteratorAggregate, \ArrayA
                     $self->data = is_array($data) ? $data : [];
                     return true;
                 },
-                function() use ($self) {
+                function($error = null) use ($self) {
                     $self->data = [];
+                    return Reaction\Promise\reject($error);
                 }
-            );
+            )->always(function() {
+                //Write initial data state for future needs
+                $this->_dataInitial = $this->data;
+            });
         }
     }
 

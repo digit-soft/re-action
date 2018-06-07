@@ -56,7 +56,7 @@ class CachedSessionHandler extends SessionHandlerAbstract
             null,
             function ($error = null) use ($id) {
                 //return $self->restoreSessionData($id, true)->then(
-                return $this->archive->get($id, true)->then(
+                return $this->archive->get($id)->then(
                     function ($data) use ($id, $error) {
                         if (is_array($data)) {
                             return $this->write($id, $data);
