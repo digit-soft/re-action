@@ -4,6 +4,7 @@ namespace Reaction;
 
 use Psr\Http\Message\ServerRequestInterface;
 use React\Promise\PromiseInterface;
+use Reaction\Base\ErrorHandler;
 use Reaction\DI\ServiceLocator;
 use Reaction\Events\EventEmitterWildcardInterface;
 use Reaction\Helpers\Request\HelpersGroup;
@@ -32,6 +33,7 @@ use Reaction\Web\View;
  * @property View                     $view
  * @property AssetManager             $assetManager
  * @property HelpersGroup             $helpers
+ * @property ErrorHandler             $errorHandler
  */
 interface RequestApplicationInterface extends EventEmitterWildcardInterface
 {
