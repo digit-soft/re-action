@@ -271,12 +271,12 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
      * @param RequestApplicationInterface $app
      * @param string                      $viewName
      * @param array                       $params
-     * @param bool                        $asString
+     * @param bool                        $asResponse
      * @return \Reaction\Web\ResponseBuilderInterface|string
      */
-    public function render(RequestApplicationInterface $app, $viewName, $params = [], $asString = false)
+    public function render(RequestApplicationInterface $app, $viewName, $params = [], $asResponse = false)
     {
-        return $this->renderInLayout($app, $viewName, $params, $asString);
+        return $this->renderInLayout($app, $viewName, $params, $asResponse);
     }
 
     /**
@@ -284,12 +284,12 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
      * @param RequestApplicationInterface $app
      * @param string                      $viewName
      * @param array                       $params
-     * @param bool                        $asString
+     * @param bool                        $asResponse
      * @return \Reaction\Web\ResponseBuilderInterface|string
      */
-    public function renderPartial(RequestApplicationInterface $app, $viewName, $params = [], $asString = false)
+    public function renderPartial(RequestApplicationInterface $app, $viewName, $params = [], $asResponse = false)
     {
-        return $this->renderInternal($app, $viewName, $params, false, $asString);
+        return $this->renderInternal($app, $viewName, $params, false, $asResponse);
     }
 
     /**
@@ -297,12 +297,12 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
      * @param RequestApplicationInterface $app
      * @param string                      $viewName
      * @param array                       $params
-     * @param bool                        $asString
+     * @param bool                        $asResponse
      * @return \Reaction\Web\ResponseBuilderInterface|string
      */
-    public function renderAjax(RequestApplicationInterface $app, $viewName, $params = [], $asString = false)
+    public function renderAjax(RequestApplicationInterface $app, $viewName, $params = [], $asResponse = false)
     {
-        return $this->renderInternal($app, $viewName, $params, true, $asString);
+        return $this->renderInternal($app, $viewName, $params, true, $asResponse);
     }
 
     /**
@@ -368,10 +368,10 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
      * @param RequestApplicationInterface $app
      * @param string                      $viewName
      * @param array                       $params
-     * @param bool                        $asString
+     * @param bool                        $asResponse
      * @return \Reaction\Web\ResponseBuilderInterface|string
      */
-    protected function renderInLayout(RequestApplicationInterface $app, $viewName, $params = [], $asString = false)
+    protected function renderInLayout(RequestApplicationInterface $app, $viewName, $params = [], $asResponse = false)
     {
         $view = $app->view;
         if (isset($this->layout)) {
@@ -379,9 +379,9 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
         } else {
             $layoutFile = $view->findViewFile($view->layout, $this);
         }
-        $content = $this->renderInternal($app, $viewName, $params, false, true);
+        $content = $this->renderInternal($app, $viewName, $params, false, false);
         $rendered = $this->renderFile($app, $layoutFile, ['content' => $content]);
-        if ($asString) {
+        if (!$asResponse) {
             return $rendered;
         }
         $app->response->setBody($rendered);
@@ -394,14 +394,14 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
      * @param string                      $viewName
      * @param array                       $params
      * @param bool                        $ajax
-     * @param bool                        $asString
+     * @param bool                        $asResponse
      * @return \Reaction\Web\ResponseBuilderInterface|string
      */
-    protected function renderInternal(RequestApplicationInterface $app, $viewName, $params = [], $ajax = false, $asString = false)
+    protected function renderInternal(RequestApplicationInterface $app, $viewName, $params = [], $ajax = false, $asResponse = false)
     {
         $view = $app->view;
         $rendered = $ajax ? $view->renderAjax($viewName, $params, $this) : $view->render($viewName, $params, $this);
-        if ($asString) {
+        if (!$asResponse) {
             return $rendered;
         }
         $app->response->setBody($rendered);
@@ -460,7 +460,6 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
         }
         $action = null;
         foreach ($actions as $possibleAction) {
-            Reaction::warning($possibleAction);
             $action = $this->normalizeActionName($possibleAction, false);
             if (isset($action)) {
                 break;

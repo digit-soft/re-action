@@ -29,6 +29,6 @@ class ErrorController extends Controller
         return $this->render($app, 'view', [
             'exception' => $exception,
             'exceptionName' => $this->getExceptionName($exception),
-        ]);
+        ], true);
     }
 }
