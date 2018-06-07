@@ -6,8 +6,10 @@ use Doctrine\Common\Annotations\Annotation\Attribute;
 use Doctrine\Common\Annotations\Annotation\Attributes;
 use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\RequestApplicationInterface;
+use function Reaction\Promise\any;
 use function Reaction\Promise\reject;
 use function Reaction\Promise\resolve;
+use Reaction\Web\User;
 
 /**
  * @Annotation
@@ -17,7 +19,7 @@ use function Reaction\Promise\resolve;
  *   @Attribute("permissions",  type = "array"),
  * })
  *
- * Class Auth. Auth validation for controller action
+ * Class Auth. Auth validation for controller or action
  * @package Reaction\Annotations
  */
 class CtrlAuth implements CtrlActionValidatorInterface
@@ -39,18 +41,27 @@ class CtrlAuth implements CtrlActionValidatorInterface
      */
     public function validate(RequestApplicationInterface $app)
     {
-        if ($this->authorized && $app->user->getIsGuest()) {
-            return reject(false);
+        $this->processPermissions();
+        if (empty($this->permissions)) {
+            return resolve(true);
         }
-        if (!empty($this->permissions)) {
-            $promises = [];
-            foreach ($this->permissions as $permissionName) {
-                $promises[] = $app->user->can($permissionName);
-            }
-            return !empty($promises)
-                ? \Reaction\Promise\any($promises)
-                : reject(false);
+        $promises = [];
+        foreach ($this->permissions as $permissionName) {
+            $promises[] = $app->user->can($permissionName);
         }
-        return resolve(true);
+        return !empty($promises) ? any($promises) : reject(false);
+    }
+
+    /**
+     * Process permissions
+     */
+    protected function processPermissions()
+    {
+        $permissions = (array)$this->permissions;
+        if (isset($this->authorized)) {
+            $loggedInPermission = $this->authorized ? User::PERMISSION_LOGGED_IN : User::PERMISSION_NOT_LOGGED_IN;
+            array_unshift($permissions, $loggedInPermission);
+        }
+        $this->permissions = array_unique($permissions, SORT_STRING);
     }
 }

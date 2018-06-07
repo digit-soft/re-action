@@ -3,6 +3,7 @@
 namespace Reaction\Routes;
 
 use React\Promise\PromiseInterface;
+use Reaction;
 use Reaction\Annotations\CtrlAction;
 use Reaction\Annotations\CtrlActionValidatorInterface;
 use Reaction\Base\Component;
@@ -18,6 +19,7 @@ use Reaction\Helpers\ReflectionHelper;
 use Reaction\Helpers\StringHelper;
 use Reaction\Promise\ExtendedPromiseInterface;
 use function Reaction\Promise\resolve;
+use function Reaction\Promise\reject;
 use function Reaction\Promise\all;
 use Reaction\RequestApplicationInterface;
 use Reaction\Web\Response;
@@ -123,7 +125,7 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
     public function getViewPath()
     {
         if (!isset($this->_viewPath)) {
-            $baseViewPath = isset($this->baseViewPath) ? $this->baseViewPath : \Reaction::$app->getViewPath();
+            $baseViewPath = isset($this->baseViewPath) ? $this->baseViewPath : Reaction::$app->getViewPath();
             try {
                 $reflection = new \ReflectionClass($this);
                 $shortName = $reflection->getShortName();
@@ -159,7 +161,7 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
             function() use (&$app, &$self, $action, $actionId, $params) {
                 if ($this->beforeAction($actionId)) {
                     $app->view->context = $self;
-                    return \Reaction::$di->invoke([$self, $action], $params);
+                    return Reaction::$di->invoke([$self, $action], $params);
                 } else {
                     throw new Exception("Before action error");
                 }
@@ -315,7 +317,7 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
         } catch (NotFoundException $e) {
             return null;
         }
-        $annotations = \Reaction::$annotations->getMethod($action, $this);
+        $annotations = Reaction::$annotations->getMethod($action, $this);
         if (isset($annotations[CtrlAction::class])) {
             /** @var CtrlAction $actionAnnotation */
             $actionAnnotation = $annotations[CtrlAction::class];
@@ -466,7 +468,7 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
         if (!isset($action)) {
             return $this->resolveErrorAsPlainText($app, $exception);
         }
-        return \Reaction::$di->invoke([$this, $action], [$app, $exception]);
+        return Reaction::$di->invoke([$this, $action], [$app, $exception]);
     }
 
     /**
@@ -511,7 +513,7 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
             'code' => $exception instanceof HttpExceptionInterface ? $exception->statusCode : $exception->getCode(),
             'name' => $this->getExceptionName($exception),
         ];
-        if (\Reaction::isDebug() || \Reaction::isDev()) {
+        if (Reaction::isDebug() || Reaction::isDev()) {
             $data['file'] = $exception->getFile();
             $data['line'] = $exception->getLine();
             $data['trace'] = $exception->getTraceAsString();
@@ -542,8 +544,8 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
      */
     protected function validateAction($action, RequestApplicationInterface $app)
     {
-        $annotationsCtrl = \Reaction::$annotations->getClass($this);
-        $annotationsAction = \Reaction::$annotations->getMethod($action, $this);
+        $annotationsCtrl = Reaction::$annotations->getClass($this);
+        $annotationsAction = Reaction::$annotations->getMethod($action, $this);
         $annotations = ArrayHelper::merge(array_values($annotationsCtrl), array_values($annotationsAction));
         $promises = [];
         if (!empty($annotations)) {
@@ -553,8 +555,10 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
                 }
                 $promise = $annotation->validate($app);
                 if (!$promise instanceof PromiseInterface) {
-                    $promise = !empty($promise) ? \Reaction\Promise\resolve(true) : \Reaction\Promise\reject(false);
-                    \Reaction::warning('not PR');
+                    $promise = !empty($promise) ? resolve(true) : reject(false);
+                    Reaction::warning("Controller validator '{class}' returned NOT a promise", [
+                        'class' => get_class($annotation),
+                    ]);
                 }
                 $promises[] = $promise;
                 $promises[] = \Reaction\Promise\resolve(true);
