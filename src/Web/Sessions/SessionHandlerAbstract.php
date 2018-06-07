@@ -29,14 +29,14 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
      */
     public $gcLifetime = 60;
     /**
-     * @var integer Session lifetime in seconds (default 7 days).
+     * @var integer Session lifetime in seconds (default 1 day).
      * Time for archive session life from where it can be restored
      */
-    public $gcArchiveLifetime = 3600;
+    public $gcArchiveLifetime = 86400;
     /**
      * @var integer GC timer interval in seconds
      */
-    public $timerInterval = 3;
+    public $timerInterval = 10;
     /**
      * @var bool Whenever do not use internal garbage collector
      */
