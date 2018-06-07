@@ -64,6 +64,9 @@ class User extends Reaction\Base\RequestAppServiceLocator implements UserInterfa
     const EVENT_BEFORE_LOGOUT = 'beforeLogout';
     const EVENT_AFTER_LOGOUT = 'afterLogout';
 
+    const PERMISSION_LOGGED_IN = '@';
+    const PERMISSION_NOT_LOGGED_IN = '?';
+
     /**
      * @var string the class name of the [[identity]] object.
      */
@@ -660,9 +663,10 @@ class User extends Reaction\Base\RequestAppServiceLocator implements UserInterfa
      */
     protected function removeIdentityCookie()
     {
-        $this->app->response->getCookies()->remove(Reaction::create(array_merge($this->identityCookie, [
+        $cookie = Reaction::create(array_merge($this->identityCookie, [
             'class' => 'Reaction\Web\Cookie',
-        ])));
+        ]));
+        $this->app->response->getCookies()->remove($cookie);
     }
 
     /**
@@ -785,6 +789,14 @@ class User extends Reaction\Base\RequestAppServiceLocator implements UserInterfa
      */
     public function can($permissionName, $params = [], $allowCaching = true)
     {
+        //Special permissions for logged in status handling
+        if (in_array($permissionName, [static::PERMISSION_NOT_LOGGED_IN, static::PERMISSION_LOGGED_IN])) {
+            $isGuest = $this->getIsGuest();
+            if ($isGuest && static::PERMISSION_NOT_LOGGED_IN || !$isGuest && static::PERMISSION_LOGGED_IN) {
+                return resolve(true);
+            }
+            return reject(new Error("Uses::can() - denied by logged in status"));
+        }
         if ($allowCaching && empty($params) && isset($this->_access[$permissionName])) {
             return $this->_access[$permissionName]
                 ? resolve(true)
