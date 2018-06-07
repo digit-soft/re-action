@@ -5,13 +5,12 @@ namespace Reaction\Web\Sessions;
 use React\EventLoop\LoopInterface;
 use React\EventLoop\Timer\TimerInterface;
 use Reaction\Promise\ExtendedPromiseInterface;
-use React\Promise\PromiseInterface;
 use Reaction\Base\Component;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Exceptions\SessionException;
-use Reaction\Helpers\Json;
 use Reaction\RequestApplicationInterface;
 use function Reaction\Promise\resolve;
+use Zumba\JsonSerializer\JsonSerializer;
 
 /**
  * Class SessionHandlerAbstract
@@ -192,7 +191,8 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
      */
     public function serializeData($data)
     {
-        return Json::encode($data);
+        $serializer = new JsonSerializer();
+        return $serializer->serialize($data);
     }
 
     /**
@@ -202,7 +202,8 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
      */
     public function unserializeData($dataSerialized)
     {
-        return Json::decode($dataSerialized);
+        $serializer = new JsonSerializer();
+        return $serializer->unserialize($dataSerialized);
     }
 
     /**
