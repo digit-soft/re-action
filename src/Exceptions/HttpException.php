@@ -1,6 +1,7 @@
 <?php
 
 namespace Reaction\Exceptions;
+
 use Reaction\Web\Response;
 
 /**
@@ -8,7 +9,7 @@ use Reaction\Web\Response;
  * Base class for HTTP exceptions
  * @package Reaction\Exceptions
  */
-class HttpException extends Exception implements HttpExceptionInterface
+class HttpException extends UserException implements HttpExceptionInterface
 {
     /**
      * @return int
