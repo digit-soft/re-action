@@ -55,6 +55,7 @@ class Widget extends RequestAppComponent implements ViewContextInterface
     public function init()
     {
         parent::init();
+        $this->checkAppPersistence();
         $this->emit(self::EVENT_INIT, [$this]);
     }
 
@@ -305,5 +306,17 @@ class Widget extends RequestAppComponent implements ViewContextInterface
     {
         $this->emit(self::EVENT_AFTER_RUN, [$this, &$result]);
         return $result;
+    }
+
+    /**
+     * Check that RequestApplicationInterface is set
+     * @throws Reaction\Exceptions\InvalidConfigException
+     */
+    protected function checkAppPersistence()
+    {
+        if (!isset($this->app) || !$this->app instanceof Reaction\RequestApplicationInterface) {
+            $message = sprintf("You must specify \$app (RequestApplicationInterface) parameter for widget '%s'", get_called_class());
+            throw new Reaction\Exceptions\InvalidConfigException($message);
+        }
     }
 }
