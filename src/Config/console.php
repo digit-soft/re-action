@@ -23,6 +23,8 @@ return [
             'Reaction\StaticApplicationInterface' => 'Reaction\StaticApplicationConsole',
             //Router
             'Reaction\Routes\RouterInterface' => 'Reaction\Console\Routes\Router',
+            //Error handler
+            'Reaction\Base\ErrorHandlerInterface' => 'Reaction\Console\ErrorHandler',
         ],
     ],
 ];

@@ -27,6 +27,8 @@ return [
             'Reaction\StaticApplicationInterface' => 'Reaction\StaticApplicationWeb',
             //React http server
             'React\Http\Server' => 'React\Http\Server',
+            //Error handler
+            'Reaction\Base\ErrorHandlerInterface' => 'Reaction\Web\ErrorHandler',
             //React socket server
             'React\Socket\Server' => [
                 ['class' => 'React\Socket\Server'],

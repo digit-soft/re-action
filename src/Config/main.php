@@ -54,6 +54,7 @@ return [
     'appRequest' => [
         'class' => 'Reaction\RequestApplicationInterface',
         'components' => [
+            'errorHandler' => 'Reaction\Base\ErrorHandlerInterface',
             'reqHelper' => [
                 'class' => 'Reaction\Web\RequestHelper',
                 'cookieValidationKey' => 'dmyyHbvzRjd7RjXJ',
