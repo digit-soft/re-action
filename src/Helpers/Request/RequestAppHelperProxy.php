@@ -10,7 +10,9 @@ use Reaction\Base\RequestAppComponent;
  */
 class RequestAppHelperProxy extends RequestAppComponent
 {
-    /** @var string Helper static class name */
+    /**
+     * @var string Helper static class name
+     */
     public $helperClass = '';
 
     /**
