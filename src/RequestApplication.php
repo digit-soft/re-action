@@ -65,9 +65,10 @@ class RequestApplication extends ServiceLocator implements RequestApplicationInt
      */
     public function createRoute($routePath = null, $method = null, $params = null, $onlyReturn = false)
     {
+        $withInternalCtrl = $routePath !== null;
         $routePath = isset($routePath) ? $routePath : $this->reqHelper->getPathInfo();
         $method = isset($method) ? $method : $this->reqHelper->getMethod();
-        $data = Reaction::$app->router->searchRoute($this, $routePath, $method);
+        $data = Reaction::$app->router->searchRoute($this, $routePath, $method, $withInternalCtrl);
         //Parameters overwrite
         if (is_array($params) && count($data) >= 3) {
             $data[3] = $params;
