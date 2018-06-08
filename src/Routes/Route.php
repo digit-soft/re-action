@@ -31,8 +31,6 @@ class Route extends RequestAppComponent implements RouteInterface
     protected $_action;
     protected $_params = [];
     protected $_paramsClean = [];
-    protected $_exception;
-    protected $_exceptionsCount = 0;
     protected $_routePath;
 
     /**
@@ -61,6 +59,7 @@ class Route extends RequestAppComponent implements RouteInterface
     /**
      * Set data from dispatcher
      * @param array $data
+     * @throws \Throwable
      */
     public function setDispatchedData($data = [])
     {
@@ -84,41 +83,6 @@ class Route extends RequestAppComponent implements RouteInterface
     }
 
     /**
-     * Check that route has error
-     * @return bool
-     */
-    public function getIsError()
-    {
-        return empty($this->_exception);
-    }
-
-    /**
-     * Get exception if exists
-     * @return \Throwable
-     */
-    public function getException()
-    {
-        return $this->_exception;
-    }
-
-    /**
-     * Set exception
-     * @param \Throwable|mixed $exception
-     */
-    public function setException($exception) {
-        if (!$exception instanceof \Throwable) {
-            if (is_string($exception)) {
-                $exception = new Exception($exception);
-            } else {
-                $type = is_object($exception) ? get_class($exception) : gettype($exception);
-                $exception = new NotSupportedException(sprintf('Only exceptions are supported in "%s" but "%s" given', __METHOD__, $type));
-            }
-        }
-        $this->_exceptionsCount++;
-        $this->_exception = $exception;
-    }
-
-    /**
      * Resolve route for request
      * @return ExtendedPromiseInterface
      */
@@ -126,10 +90,7 @@ class Route extends RequestAppComponent implements RouteInterface
     {
         $callable = [$this->_controller, $this->_controllerMethod];
         $args = $this->_params;
-        if (!$this->isError()) {
-            array_unshift($args, $this->_action);
-        }
-        array_unshift($args, $this->app);
+        array_unshift($args, $this->app, $this->_action);
         $promise = new Promise(function ($r) use ($callable, $args) {
             $result = call_user_func_array($callable, $args);
             $r($result);
@@ -138,40 +99,12 @@ class Route extends RequestAppComponent implements RouteInterface
             function ($response) {
                 return $this->processResponse($response);
             }
-        )->otherwise(
-            function ($error) {
-                $this->convertToError($error);
-                return $this->resolve();
-            }
         );
     }
 
     /**
-     * Check that route is resolving an error
-     * @return bool
-     */
-    public function isError()
-    {
-        return $this->_controllerMethod === static::CONTROLLER_RESOLVE_ERROR;
-    }
-
-    /**
-     * Convert route to error route
-     * @param \Throwable $exception
-     */
-    protected function convertToError(\Throwable $exception) {
-        $this->setException($exception);
-        $this->_controller = Reaction::$app->router->errorController;
-        $this->_controllerMethod = static::CONTROLLER_RESOLVE_ERROR;
-        $this->_params = [$this->_exception];
-        //If we have cycle of exceptions than deliver error as plain text
-        if ($this->_exceptionsCount > 3) {
-            $this->_params[] = true;
-        }
-    }
-
-    /**
      * Parse data from dispatcher
+     * @throws \Throwable
      */
     protected function processDispatchedData() {
         list($code, $controller, $action, $params) = $this->_dispatchedData;
@@ -188,7 +121,7 @@ class Route extends RequestAppComponent implements RouteInterface
             }
         } else {
             $exception = $this->getRouterException($code);
-            $this->convertToError($exception);
+            throw $exception;
         }
     }
 

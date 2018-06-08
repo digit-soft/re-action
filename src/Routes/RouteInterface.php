@@ -11,8 +11,6 @@ use Reaction\RequestApplicationInterface;
  * @package Reaction\Routes
  * @property RequestApplicationInterface $app
  * @property Controller                  $controller
- * @property bool                        $isError
- * @property \Throwable                  $exception
  */
 interface RouteInterface extends RequestAppComponentInterface
 {
@@ -42,32 +40,8 @@ interface RouteInterface extends RequestAppComponentInterface
     public function getRouteParams();
 
     /**
-     * Check that route has error
-     * @return bool
-     */
-    public function getIsError();
-
-    /**
-     * Get exception if exists
-     * @return \Throwable
-     */
-    public function getException();
-
-    /**
-     * Set exception
-     * @param \Throwable|mixed $exception
-     */
-    public function setException($exception);
-
-    /**
      * Resolve route for request
      * @return ExtendedPromiseInterface
      */
     public function resolve();
-
-    /**
-     * Check that route is resolving an error
-     * @return bool
-     */
-    public function isError();
 }
