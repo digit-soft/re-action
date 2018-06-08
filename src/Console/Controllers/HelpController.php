@@ -160,13 +160,17 @@ class HelpController extends Controller
 
     /**
      * Returns all available command names.
+     * @param bool $withInternal Whenever to show internal controllers
      * @return array all available command names
      */
-    public function getCommands()
+    public function getCommands($withInternal = false)
     {$commands = [];
         $namespaces = Reaction::$app->router->controllerNamespaces;
         $controllers = Reaction\Helpers\ClassFinderHelper::findClassesPsr4($namespaces, true);
         foreach ($controllers as $controllerClass) {
+            if (!$withInternal && Reaction\Helpers\ReflectionHelper::isImplements($controllerClass, 'Reaction\Routes\ControllerInternalInterface')) {
+                continue;
+            }
             if ($this->validateControllerClass($controllerClass)) {
                 $relativePath = Reaction::$app->router->getRelativeControllerNamespace($controllerClass);
                 $pathArray = explode('\\', $relativePath);
