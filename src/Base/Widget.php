@@ -19,7 +19,7 @@ use Reaction;
  *
  * Borrowed from yii2
  */
-class Widget extends Component implements ViewContextInterface
+class Widget extends RequestAppComponent implements ViewContextInterface
 {
     /**
      * @event Event an event that is triggered when the widget is initialized via [[init()]].
@@ -180,7 +180,7 @@ class Widget extends Component implements ViewContextInterface
     public function getView()
     {
         if ($this->_view === null) {
-            throw new Reaction\Exceptions\InvalidConfigException("View component is not set");
+            return $this->app->view;
         }
 
         return $this->_view;
