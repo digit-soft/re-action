@@ -1,14 +1,19 @@
 <?php
 
-namespace Reaction\Routes;
+namespace Reaction\Routes\StdControllers;
 
+use Reaction\Annotations\Ctrl;
+use Reaction\Annotations\CtrlAction;
 use Reaction\RequestApplicationInterface;
+use Reaction\Routes\Controller;
+use Reaction\Routes\ControllerInternalInterface;
 
 /**
- * Class ErrorController
+ * @Ctrl(group="/error")
+ * Class ErrorController. This controller for internal usage only (to render errors)
  * @package Reaction\Routes
  */
-class ErrorController extends Controller
+class ErrorController extends Controller implements ControllerInternalInterface
 {
     /**
      * @inheritdoc
@@ -21,6 +26,7 @@ class ErrorController extends Controller
 
     /**
      * Error action default
+     * @CtrlAction(path="/error")
      * @param RequestApplicationInterface $app
      * @param \Throwable                  $exception
      * @return \Reaction\Web\ResponseBuilderInterface|string
