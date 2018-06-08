@@ -26,13 +26,6 @@ abstract class RouterAbstract extends Component implements RouterInterface
     ];
 
     /**
-     * @var array|string|object Error controller
-     */
-    public $_errorController = [
-        'class' => 'Reaction\Routes\ErrorController',
-    ];
-
-    /**
      * @var string Default controller if none matches
      */
     public $defaultController;
@@ -80,28 +73,6 @@ abstract class RouterAbstract extends Component implements RouterInterface
         foreach ($classNames as $className) {
             $this->registerController($className);
         }
-    }
-
-    /**
-     * Get controller for errors
-     * @return Controller
-     * @throws InvalidConfigException
-     */
-    public function getErrorController()
-    {
-        if (!is_object($this->_errorController)) {
-            $this->_errorController = Reaction::create($this->_errorController);
-        }
-        return $this->_errorController;
-    }
-
-    /**
-     * Set controller for errors
-     * @param string|array $controller
-     */
-    public function setErrorController($controller)
-    {
-        $this->_errorController = $controller;
     }
 
     /**
@@ -173,9 +144,10 @@ abstract class RouterAbstract extends Component implements RouterInterface
      * @param RequestApplicationInterface $app
      * @param string                      $routePath
      * @param string                      $method
+     * @param bool                        $withInternal
      * @return array
      */
-    abstract public function searchRoute(RequestApplicationInterface $app, $routePath, $method = 'GET');
+    abstract public function searchRoute(RequestApplicationInterface $app, $routePath, $method = 'GET', $withInternal = false);
 
     /**
      * Search controller by name and action ID

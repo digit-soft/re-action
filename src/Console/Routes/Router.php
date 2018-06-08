@@ -33,10 +33,6 @@ class Router extends RouterAbstract implements RouterInterface
      */
     public $controllerMap = [];
 
-    /** @var array|string|object Error controller */
-    public $_errorController = [
-        'class' => 'Reaction\Console\Routes\ErrorController',
-    ];
     /**
      * @var string Default controller if none matches
      */
@@ -47,12 +43,20 @@ class Router extends RouterAbstract implements RouterInterface
      * @param RequestApplicationInterface $app
      * @param string                      $routePath
      * @param string                      $method
+     * @param bool                        $withInternal
      * @return array
      */
-    public function searchRoute(RequestApplicationInterface $app, $routePath, $method = 'GET')
+    public function searchRoute(RequestApplicationInterface $app, $routePath, $method = 'GET', $withInternal = false)
     {
+        //If no command then show default ('help')
+        if ($routePath === "" || $routePath === "/") {
+            $routePath = 'help';
+        }
         /** @var Controller $controller */
-        list($controller, $actionName) = $this->createController($routePath, ['app' => $app]);
+        list($controller, $actionName) = $this->createController($routePath, ['app' => $app], false);
+        if ($controller === null || (!$withInternal && $controller instanceof Reaction\Routes\ControllerInternalInterface)) {
+            return [static::ERROR_NOT_FOUND, null, null, []];
+        }
         //Params are ignored by console controllers (parameters extracted from command line on action run)
         return [static::ERROR_OK, $controller, $actionName, []];
     }

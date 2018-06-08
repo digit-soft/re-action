@@ -30,9 +30,10 @@ class Router extends RouterAbstract implements RouterInterface
      * @param RequestApplicationInterface $app
      * @param string                      $routePath
      * @param string                      $method
+     * @param bool                        $withInternal
      * @return array
      */
-    public function searchRoute(RequestApplicationInterface $app, $routePath, $method = 'GET')
+    public function searchRoute(RequestApplicationInterface $app, $routePath, $method = 'GET', $withInternal = false)
     {
         $dispatcherData = $this->dispatcher->dispatch($method, $routePath);
         if ($dispatcherData[0] === Dispatcher::NOT_FOUND) {
@@ -43,7 +44,9 @@ class Router extends RouterAbstract implements RouterInterface
             $ctrlAndAction = $dispatcherData[1];
             $params = isset($dispatcherData[2]) ? $dispatcherData[2] : [];
             $params = (array)$params;
-            return [static::ERROR_OK, $ctrlAndAction[0], $ctrlAndAction[1], $params];
+            return $withInternal || !$dispatcherData[1][0] instanceof ControllerInternalInterface
+                ? [static::ERROR_OK, $ctrlAndAction[0], $ctrlAndAction[1], $params]
+                : [static::ERROR_NOT_FOUND, null, null, []];
         }
     }
 

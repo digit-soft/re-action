@@ -7,9 +7,8 @@ use Reaction\RequestApplicationInterface;
 /**
  * Interface RouterInterface
  * @package Reaction\Routes
- * @property Controller  $errorController
- * @property array       $routePaths
- * @property array       $controllerNamespaces
+ * @property array $routePaths
+ * @property array $controllerNamespaces
  */
 interface RouterInterface
 {
@@ -37,25 +36,14 @@ interface RouterInterface
     public function initRoutes();
 
     /**
-     * Get controller for errors
-     * @return Controller
-     */
-    public function getErrorController();
-
-    /**
-     * Set controller for errors
-     * @param string|array $controller
-     */
-    public function setErrorController($controller);
-
-    /**
      * Search for a given route
      * @param RequestApplicationInterface $app
      * @param string                      $routePath
      * @param string                      $method
+     * @param bool                        $withInternal
      * @return array
      */
-    public function searchRoute(RequestApplicationInterface $app, $routePath, $method = 'GET');
+    public function searchRoute(RequestApplicationInterface $app, $routePath, $method = 'GET', $withInternal = false);
 
     /**
      * Get controller and action from path (Just parse path)
