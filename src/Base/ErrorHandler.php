@@ -7,6 +7,7 @@ use Reaction\Exceptions\ErrorException;
 use Reaction\Exceptions\Exception;
 use Reaction\Exceptions\HttpException;
 use Reaction\Exceptions\UserException;
+use Reaction\Helpers\Console;
 use Reaction\Helpers\VarDumper;
 
 /**
@@ -150,8 +151,8 @@ abstract class ErrorHandler extends RequestAppComponent implements ErrorHandlerI
             $fileLine = "\n" . $exception->getFile() . ':' . $exception->getLine();
         }
         $logMessage = $name . "\n" . $message . $fileLine;
-        if (Reaction\Helpers\Console::streamSupportsAnsiColors(STDOUT)) {
-            $logMessage = Reaction\Helpers\Console::ansiFormat($logMessage, [Reaction\Helpers\Console::FG_RED]);
+        if (Console::streamSupportsAnsiColors(STDOUT)) {
+            $logMessage = Console::ansiFormat($logMessage, [Console::FG_RED]);
         }
         Reaction::$app->logger->logRaw($logMessage);
     }
@@ -243,6 +244,137 @@ abstract class ErrorHandler extends RequestAppComponent implements ErrorHandlerI
             . "Stack trace:\n" . $exception->getTraceAsString();
 
         return $message;
+    }
+
+    /**
+     * Get trace from exception
+     * @param \Throwable $exception
+     * @param bool       $asString
+     * @return array|string
+     */
+    public static function getExceptionTrace(\Throwable $exception, $asString = true) {
+        $trace = $exception->getTrace();
+        $trace = static::reduceStackTrace($exception, $trace);
+        return $asString ? static::getExceptionTraceAsString($trace) : $trace;
+    }
+
+    /**
+     * Reduce length of exceptions stack trace
+     * @param \Throwable $exception
+     * @param array $trace
+     * @return array
+     */
+    public static function reduceStackTrace(\Throwable $exception, $trace)
+    {
+        $exclude = [
+            'Reaction\Promise\Promise' => ['settle'],
+            'Rx\Observer\AbstractObserver' => [],
+            'Rx\Observer\AutoDetachObserver' => [],
+            'Rx\Observer\CallbackObserver' => [],
+        ];
+        $file = $exception->getFile();
+        $traceNew = [];
+        foreach ($trace as $num => $row) {
+            $rowFile = isset($row['file']) ? $row['file'] : null;
+            $rowClass = isset($row['class']) ? $row['class'] : null;
+            $rowFunction = isset($row['function']) ? $row['function'] : '{closure}';
+            if (isset($exclude[$rowClass]) && (empty($exclude[$rowClass]) || in_array($rowFunction, $exclude[$rowClass])) && $rowFile !== $file) {
+                continue;
+            }
+            $traceNew[] = $row;
+        }
+        return $traceNew;
+    }
+
+    /**
+     * @param array $trace
+     * @return string
+     */
+    protected static function getExceptionTraceAsString($trace = [])
+    {
+        $ansiEnabled = Reaction::isConsoleApp() && Console::streamSupportsAnsiColors(\STDOUT);
+        $traceStr = '';
+        $num = 0;
+        foreach ($trace as $row) {
+            $rowFile = isset($row['file']) ? $row['file'] : '[internal function]';
+            $rowLine = isset($row['line']) ? '(' . $row['line'] . ')' : '';
+            $rowClass = isset($row['class']) ? $row['class'] : '';
+            $rowFunction = isset($row['function']) ? $row['function'] : '{closure}';
+            $callType = isset($row['type']) ? $row['type'] : '::';
+            $rowFileLine = $rowFile . $rowLine;
+            if ($ansiEnabled) {
+                $rowFunction = Console::ansiFormat($rowFunction, [Console::FG_PURPLE]);
+                $rowClass = $rowClass !== "" ? Console::ansiFormat($rowClass, [Console::FG_PURPLE]) : $rowClass;
+                $callType = Console::ansiFormat($callType, [Console::FG_GREEN]);
+                $rowFileLine = Console::ansiFormat($rowFileLine, [Console::FG_GREY]);
+            }
+            $rowStr = '#' . $num . ' ' . $rowFileLine . ': '
+                . ($rowClass !== '' ? $rowClass . $callType : '') . $rowFunction;
+            if (!empty($row['args'])) {
+                $argsArray = [];
+                foreach ($row['args'] as $arg) {
+                    $argsArray[] = static::getValueType($arg, $ansiEnabled);
+                }
+                $rowStr .= '(' . implode(', ', $argsArray) . ')';
+            } else {
+                $rowStr .= '()';
+            }
+            $traceStr .= $rowStr . "\n";
+            $num++;
+        }
+        return $traceStr;
+    }
+
+    /**
+     * @param mixed $value
+     * @param bool  $withValue
+     * @param bool  $ansi
+     * @return int|null|string
+     */
+    protected static function getValueType($value, $withValue = true, $ansi = true) {
+        $type = gettype($value);
+        $valuePrint = null;
+        if ($type === 'object') {
+            $type = get_class($value);
+        } elseif ($type === 'string') {
+            $length = mb_strlen($value);
+            if ($length <= 20) {
+                $valuePrint = "'" . preg_replace('/\s/', ' ', $value) . "'";
+                $type = null;
+            } else {
+                $valuePrint = 'ln:' . $length;
+            }
+        } elseif ($type === 'integer') {
+            $valuePrint = (int)$value;
+            $type = null;
+        } elseif ($type === 'array') {
+            $length = count($value);
+            if ($length === 0) {
+                $valuePrint = '[]';
+                $type = null;
+            } else {
+                $valuePrint = 'ln:' . $length . '';
+            }
+        } elseif ($type === 'boolean') {
+            $valuePrint = $value ? 'TRUE' : 'FALSE';
+        }
+
+        if ($ansi) {
+            if ($valuePrint !== null) {
+                $valuePrint = Console::ansiFormat($valuePrint, [Console::FG_BLUE]);
+            }
+            if ($type !== null) {
+                $type = Console::ansiFormat($type, [Console::FG_YELLOW]);
+            }
+        }
+
+        if ($type === null) {
+            return $valuePrint;
+        }
+
+        $str = $withValue && isset($valuePrint) ? $type . '(' . $valuePrint . ')' : $type;
+
+        return $str;
     }
 
     /**

@@ -52,7 +52,9 @@ class ErrorHandler extends \Reaction\Base\ErrorHandler
                 . ' with message ' . $this->formatMessage("'{$exception->getMessage()}'", [Console::BOLD]) //. "\n"
                 . "\n\nin " . dirname($exception->getFile()) . DIRECTORY_SEPARATOR . $this->formatMessage(basename($exception->getFile()), [Console::BOLD])
                 . ':' . $this->formatMessage($exception->getLine(), [Console::BOLD, Console::FG_YELLOW]) . "\n";
-            $message .= "\n" . $this->formatMessage("Stack trace:\n", [Console::BOLD]) . $exception->getTraceAsString();
+            $trace = static::getExceptionTrace($exception, true);
+            //$trace = $exception->getTraceAsString();
+            $message .= "\n" . $this->formatMessage("Stack trace:\n", [Console::BOLD]) . $trace;
         } else {
             $message = $this->formatMessage('Error: ') . $exception->getMessage();
         }
@@ -73,7 +75,7 @@ class ErrorHandler extends \Reaction\Base\ErrorHandler
      */
     protected function formatMessage($message, $format = [Console::FG_RED, Console::BOLD])
     {
-        $stream = (PHP_SAPI === 'cli') ? \STDERR : \STDOUT;
+        $stream = Reaction::isConsoleApp() ? \STDERR : \STDOUT;
         // try controller first to allow check for --color switch
         if (Reaction::isConsoleApp() && Console::streamSupportsAnsiColors($stream)) {
             $message = Console::ansiFormat($message, $format);
