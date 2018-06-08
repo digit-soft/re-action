@@ -1311,6 +1311,39 @@ class HtmlHelper extends RequestAppHelperProxy
     }
 
     /**
+     * Renders Bootstrap static form control.
+     *
+     * By default value will be HTML-encoded using [[encode()]], you may control this behavior
+     * via 'encode' option.
+     * @param string $value static control value.
+     * @param array $options the tag options in terms of name-value pairs. These will be rendered as
+     * the attributes of the resulting tag. There are also a special options:
+     *
+     * - encode: boolean, whether value should be HTML-encoded or not.
+     *
+     * @return string generated HTML
+     * @see http://getbootstrap.com/css/#forms-controls-static
+     */
+    public function staticControl($value, $options = [])
+    {
+        return $this->proxy(__FUNCTION__, func_get_args());
+    }
+
+    /**
+     * Generates a Bootstrap static form control for the given model attribute.
+     * @param \Reaction\Base\Model $model the model object.
+     * @param string $attribute the attribute name or expression. See [[getAttributeName()]] for the format
+     * about attribute expression.
+     * @param array $options the tag options in terms of name-value pairs. See [[staticControl()]] for details.
+     * @return string generated HTML
+     * @see staticControl()
+     */
+    public function activeStaticControl($model, $attribute, $options = [])
+    {
+        return $this->proxy(__FUNCTION__, func_get_args());
+    }
+
+    /**
      * Renders the option tags that can be used by [[dropDownList()]] and [[listBox()]].
      * @param string|array|null $selection the selected value(s). String for single or array for multiple selection(s).
      * @param array             $items the option data items. The array keys are option values, and the array values

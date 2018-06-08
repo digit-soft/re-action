@@ -744,6 +744,7 @@ class Html
      */
     public static function radio($name, $checked = false, $options = [], $encoding = null)
     {
+        static::processBooleanInputOptions($name, $options);
         return static::booleanInput('radio', $name, $checked, $options, $encoding);
     }
 
@@ -759,6 +760,7 @@ class Html
      */
     public static function checkbox($name, $checked = false, $options = [], $encoding = null)
     {
+        static::processBooleanInputOptions($name, $options);
         return static::booleanInput('checkbox', $name, $checked, $options, $encoding);
     }
 
@@ -802,8 +804,10 @@ class Html
         if (isset($options['label'])) {
             $label = $options['label'];
             $labelOptions = isset($options['labelOptions']) ? $options['labelOptions'] : [];
+            $inputId = isset($options['id']) ? $options['id'] : null;
             unset($options['label'], $options['labelOptions']);
-            $content = static::label(static::input($type, $name, $value, $options, $encoding) . ' ' . $label, null, $labelOptions, $encoding);
+            $content = static::input($type, $name, $value, $options);
+            $content .= static::label($label, $inputId, $labelOptions, $encoding);
             return $hidden . $content;
         }
 
@@ -818,7 +822,7 @@ class Html
      * are the corresponding option labels. The array can also be nested (i.e. some array values are arrays too).
      * For each sub-array, an option group will be generated whose label is the key associated with the sub-array.
      * If you have a list of data models, you may convert them into the format described above using
-     * [[\yii\helpers\ArrayHelper::map()]].
+     * [[\Reaction\Helpers\ArrayHelper::map()]].
      *
      * Note, the values and labels will be automatically HTML-encoded by this method, and the blank spaces in
      * the labels will also be HTML-encoded.
@@ -874,7 +878,7 @@ class Html
      * are the corresponding option labels. The array can also be nested (i.e. some array values are arrays too).
      * For each sub-array, an option group will be generated whose label is the key associated with the sub-array.
      * If you have a list of data models, you may convert them into the format described above using
-     * [[\yii\helpers\ArrayHelper::map()]].
+     * [[\Reaction\Helpers\ArrayHelper::map()]].
      *
      * Note, the values and labels will be automatically HTML-encoded by this method, and the blank spaces in
      * the labels will also be HTML-encoded.
@@ -1656,7 +1660,7 @@ class Html
      * are the corresponding option labels. The array can also be nested (i.e. some array values are arrays too).
      * For each sub-array, an option group will be generated whose label is the key associated with the sub-array.
      * If you have a list of data models, you may convert them into the format described above using
-     * [[\yii\helpers\ArrayHelper::map()]].
+     * [[\Reaction\Helpers\ArrayHelper::map()]].
      *
      * Note, the values and labels will be automatically HTML-encoded by this method, and the blank spaces in
      * the labels will also be HTML-encoded.
@@ -1712,7 +1716,7 @@ class Html
      * are the corresponding option labels. The array can also be nested (i.e. some array values are arrays too).
      * For each sub-array, an option group will be generated whose label is the key associated with the sub-array.
      * If you have a list of data models, you may convert them into the format described above using
-     * [[\yii\helpers\ArrayHelper::map()]].
+     * [[\Reaction\Helpers\ArrayHelper::map()]].
      *
      * Note, the values and labels will be automatically HTML-encoded by this method, and the blank spaces in
      * the labels will also be HTML-encoded.
@@ -1845,6 +1849,53 @@ class Html
     }
 
     /**
+     * Renders Bootstrap static form control.
+     *
+     * By default value will be HTML-encoded using [[encode()]], you may control this behavior
+     * via 'encode' option.
+     * @param string $value static control value.
+     * @param array $options the tag options in terms of name-value pairs. These will be rendered as
+     * the attributes of the resulting tag. There are also a special options:
+     *
+     * - encode: boolean, whether value should be HTML-encoded or not.
+     *
+     * @return string generated HTML
+     * @see http://getbootstrap.com/css/#forms-controls-static
+     */
+    public static function staticControl($value, $options = [])
+    {
+        static::addCssClass($options, 'form-control-static');
+        $value = (string) $value;
+        if (isset($options['encode'])) {
+            $encode = $options['encode'];
+            unset($options['encode']);
+        } else {
+            $encode = true;
+        }
+        return static::tag('p', $encode ? static::encode($value) : $value, $options);
+    }
+
+    /**
+     * Generates a Bootstrap static form control for the given model attribute.
+     * @param \Reaction\Base\Model $model the model object.
+     * @param string $attribute the attribute name or expression. See [[getAttributeName()]] for the format
+     * about attribute expression.
+     * @param array $options the tag options in terms of name-value pairs. See [[staticControl()]] for details.
+     * @return string generated HTML
+     * @see staticControl()
+     */
+    public static function activeStaticControl($model, $attribute, $options = [])
+    {
+        if (isset($options['value'])) {
+            $value = $options['value'];
+            unset($options['value']);
+        } else {
+            $value = static::getAttributeValue($model, $attribute);
+        }
+        return static::staticControl($value, $options);
+    }
+
+    /**
      * Generates a list of input fields.
      * This method is mainly called by [[activeListBox()]], [[activeRadioList()]] and [[activeCheckboxList()]].
      * @param string $type the input type. This can be 'listBox', 'radioList', or 'checkBoxList'.
@@ -1880,7 +1931,7 @@ class Html
      * are the corresponding option labels. The array can also be nested (i.e. some array values are arrays too).
      * For each sub-array, an option group will be generated whose label is the key associated with the sub-array.
      * If you have a list of data models, you may convert them into the format described above using
-     * [[\yii\helpers\ArrayHelper::map()]].
+     * [[\Reaction\Helpers\ArrayHelper::map()]].
      *
      * Note, the values and labels will be automatically HTML-encoded by this method, and the blank spaces in
      * the labels will also be HTML-encoded.
@@ -2366,5 +2417,22 @@ class Html
         }
 
         return $pattern;
+    }
+
+    /**
+     * Process checkbox and radio options array
+     * @param string $name
+     * @param array $options
+     */
+    protected static function processBooleanInputOptions($name, &$options) {
+        if(isset($options['label'])) {
+            $options['labelOptions'] = isset($options['labelOptions']) ? $options['labelOptions'] : [];
+            Html::addCssClass($options['labelOptions'], ['widget' => 'form-check-label']);
+        }
+        Html::addCssClass($options, ['widget' => 'form-check-input']);
+        if(!isset($options['id'])) {
+            $idMain = strtolower(str_replace(['[]', '][', '[', ']', ' ', '.'], ['', '-', '-', '', '-', '-'], $name));
+            $options['id'] = $idMain . '-opt-' . $options['value'];
+        }
     }
 }
