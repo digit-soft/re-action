@@ -14,6 +14,11 @@ use Reaction\Web\RequestHelper;
  */
 class HtmlHelper extends RequestAppHelperProxy
 {
+    /**
+     * @var int Counter for widgets unique ID creation
+     */
+    public $counter = 0;
+
     public $helperClass = 'Reaction\Helpers\Html';
 
     /**
@@ -259,7 +264,7 @@ class HtmlHelper extends RequestAppHelperProxy
      */
     public function a($text, $url = null, $options = [], $encoding = null)
     {
-        $arguments = func_get_args();
+        $arguments = [$text, $url, $options, $encoding];
         $this->injectVariableToArguments($this->app->charset, $arguments, -1);
         $arguments[] = $this->app;
         return $this->proxy(__FUNCTION__, $arguments);

@@ -36,11 +36,6 @@ class Widget extends RequestAppComponent implements ViewContextInterface
     const EVENT_AFTER_RUN = 'afterRun';
 
     /**
-     * @var int a counter used to generate [[id]] for widgets.
-     * @internal
-     */
-    public static $counter = 0;
-    /**
      * @var string the prefix to the automatically generated widget IDs.
      * @see getId()
      */
@@ -51,7 +46,6 @@ class Widget extends RequestAppComponent implements ViewContextInterface
      * @internal
      */
     public static $stack = [];
-
 
     /**
      * Initializes the object.
@@ -117,7 +111,6 @@ class Widget extends RequestAppComponent implements ViewContextInterface
      * The widget rendering result is returned by this method.
      * @param array $config name-value pairs that will be used to initialize the object properties
      * @return string the rendering result of the widget.
-     * @throws \Exception
      */
     public static function widget($config = [])
     {
@@ -153,7 +146,7 @@ class Widget extends RequestAppComponent implements ViewContextInterface
     public function getId($autoGenerate = true)
     {
         if ($autoGenerate && $this->_id === null) {
-            $this->_id = static::$autoIdPrefix . static::$counter++;
+            $this->_id = static::$autoIdPrefix . $this->hlp->html->counter++;
         }
 
         return $this->_id;
