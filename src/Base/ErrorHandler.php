@@ -144,13 +144,12 @@ abstract class ErrorHandler extends RequestAppComponent implements ErrorHandlerI
         } elseif ($exception instanceof \ErrorException) {
             $category .= ':' . $exception->getSeverity();
         }
-        $name = get_class($exception);
         $message = $exception->getMessage();
         $fileLine = '';
         if ($exception->getFile() && $exception->getLine()) {
             $fileLine = "\n" . $exception->getFile() . ':' . $exception->getLine();
         }
-        $logMessage = $name . "\n" . $message . $fileLine;
+        $logMessage = $category . "\n" . $message . $fileLine;
         if (Console::streamSupportsAnsiColors(STDOUT)) {
             $logMessage = Console::ansiFormat($logMessage, [Console::FG_RED]);
         }
@@ -268,6 +267,7 @@ abstract class ErrorHandler extends RequestAppComponent implements ErrorHandlerI
     {
         $exclude = [
             'Reaction\Promise\Promise' => ['settle'],
+            'React\Promise\Promise' => ['settle'],
             'Rx\Observer\AbstractObserver' => [],
             'Rx\Observer\AutoDetachObserver' => [],
             'Rx\Observer\CallbackObserver' => [],
@@ -278,7 +278,11 @@ abstract class ErrorHandler extends RequestAppComponent implements ErrorHandlerI
             $rowFile = isset($row['file']) ? $row['file'] : null;
             $rowClass = isset($row['class']) ? $row['class'] : null;
             $rowFunction = isset($row['function']) ? $row['function'] : '{closure}';
-            if (isset($exclude[$rowClass]) && (empty($exclude[$rowClass]) || in_array($rowFunction, $exclude[$rowClass])) && $rowFile !== $file) {
+            if (
+                isset($exclude[$rowClass])
+                && (empty($exclude[$rowClass]) || in_array($rowFunction, $exclude[$rowClass]))
+                && $rowFile !== $file
+            ) {
                 continue;
             }
             $traceNew[] = $row;
@@ -300,7 +304,7 @@ abstract class ErrorHandler extends RequestAppComponent implements ErrorHandlerI
             $rowLine = isset($row['line']) ? '(' . $row['line'] . ')' : '';
             $rowClass = isset($row['class']) ? $row['class'] : '';
             $rowFunction = isset($row['function']) ? $row['function'] : '{closure}';
-            $callType = isset($row['type']) ? $row['type'] : '::';
+            $callType = isset($row['type']) ? $row['type'] : '';
             $rowFileLine = $rowFile . $rowLine;
             if ($ansiEnabled) {
                 $rowFunction = Console::ansiFormat($rowFunction, [Console::FG_PURPLE]);
