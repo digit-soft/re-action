@@ -1,0 +1,98 @@
+<?php
+/* @var $exception \Reaction\Exceptions\HttpException|\Exception */
+/* @var $handler \Reaction\Web\ErrorHandler */
+if ($exception instanceof \Reaction\Exceptions\HttpException) {
+    $code = $exception->statusCode;
+} else {
+    $code = $exception->getCode();
+}
+$name = $handler->getExceptionName($exception);
+if ($name === null) {
+    $name = 'Error';
+}
+if ($code) {
+    $name .= " (#$code)";
+}
+
+if ($exception instanceof \Reaction\Exceptions\UserException) {
+    $message = $exception->getMessage();
+} else {
+    $message = 'An internal server error occurred.';
+}
+
+if (method_exists($this, 'beginPage')) {
+    $this->beginPage();
+}
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title><?= $handler->htmlEncode($name) ?></title>
+
+    <style>
+        body {
+            font: normal 16px "Sans-Serif";
+            color: #000;
+            background: #fff;
+        }
+
+        .container {
+            width: 960px;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font: normal 2em "Sans-Serif";
+            color: #f00;
+            margin-bottom: .5em;
+        }
+
+        h2 {
+            font: normal 1.5em "Sans-Serif";
+            color: #800000;
+            margin-bottom: .5em;
+        }
+
+        h3 {
+            font: bold 1.2em "Sans-Serif";
+        }
+
+        p {
+            font: normal 1em "Sans-Serif";
+            color: #000;
+        }
+
+        .version {
+            color: gray;
+            font-size: 8pt;
+            border-top: 1px solid #aaa;
+            padding-top: 1em;
+            margin-bottom: 1em;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1><?= $handler->htmlEncode($name) ?></h1>
+        <h2><?= nl2br($handler->htmlEncode($message)) ?></h2>
+        <p>
+            The above error occurred while the Web server was processing your request.
+        </p>
+        <p>
+            Please contact us if you think this is a server error. Thank you.
+        </p>
+        <div class="version">
+            <?= date('Y-m-d H:i:s') ?>
+        </div>
+        <?php if (method_exists($this, 'endBody')): ?>
+            <?php $this->endBody() // to allow injecting code into body (for example by some Debug Toolbar) ?>
+        <?php endif ?>
+    </div>
+</body>
+</html>
+<?php if (method_exists($this, 'endPage')): ?>
+    <?php $this->endPage() ?>
+<?php endif ?>
