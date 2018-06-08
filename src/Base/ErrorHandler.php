@@ -52,9 +52,6 @@ abstract class ErrorHandler extends RequestAppComponent implements ErrorHandlerI
     {
         $this->exception = $exception;
 
-        // disable error capturing to avoid recursive errors while handling exceptions
-        $this->unregister();
-
         try {
             $this->logException($exception);
             if ($this->discardExistingOutput) {
