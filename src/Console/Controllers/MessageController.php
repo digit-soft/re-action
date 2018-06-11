@@ -5,6 +5,7 @@ namespace Reaction\Console\Controllers;
 use Reaction;
 use Reaction\Console\Exception;
 use Reaction\Db\DatabaseInterface;
+use Reaction\Helpers\FileHelperAsc;
 use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\Db\Query;
 use Reaction\DI\Instance;
@@ -12,6 +13,7 @@ use Reaction\Helpers\Console;
 use Reaction\Helpers\FileHelper;
 use Reaction\Helpers\VarDumper;
 use Reaction\I18n\GettextPoFile;
+use Reaction\Promise\Promise;
 use function Reaction\Promise\resolve;
 use function Reaction\Promise\reject;
 use function Reaction\Promise\all;
@@ -137,6 +139,10 @@ class MessageController extends Reaction\Console\Routes\Controller
      * This property is used only if [[$format]] is "php".
      */
     public $phpDocBlock;
+    /**
+     * @var int Mode used to create directories and files
+     */
+    public $filesystemMode = 0777;
 
     /**
      * @var array Config for messages extraction.
@@ -249,10 +255,11 @@ EOD;
      * how to customize it to fit for your needs. After customization,
      * you may use this configuration file with the "extract" command.
      *
-     * @param string $filePath output file name or alias.
+     * @param RequestApplicationInterface $app
+     * @param string                      $filePath output file name or alias.
      * @return ExtendedPromiseInterface
      */
-    public function actionConfigTemplate($filePath)
+    public function actionConfigTemplate(RequestApplicationInterface $app, $filePath)
     {
         $filePath = Reaction::getAlias($filePath);
 
@@ -278,12 +285,15 @@ EOD;
      * This command will search through source code files and extract
      * messages that need to be translated in different languages.
      *
-     * @param string $configFile the path or alias of the configuration file.
+     * @param RequestApplicationInterface $app
+     * @param string                      $configFile the path or alias of the configuration file.
      * You may use the "yii message/config" command to generate
      * this file and then customize it for your needs.
+     * @return ExtendedPromiseInterface
      * @throws Exception on failure.
+     * @throws Reaction\Exceptions\InvalidConfigException
      */
-    public function actionExtract($configFile = null)
+    public function actionExtract(RequestApplicationInterface $app, $configFile = null)
     {
         $this->initConfig($configFile);
 
@@ -297,20 +307,22 @@ EOD;
         $catalog = isset($this->config['catalog']) ? $this->config['catalog'] : 'messages';
 
         if (in_array($this->config['format'], ['php', 'po'])) {
+            $promises = [];
             foreach ($this->config['languages'] as $language) {
                 $dir = $this->config['messagePath'] . DIRECTORY_SEPARATOR . $language;
                 if (!is_dir($dir) && !@mkdir($dir)) {
                     throw new Exception("Directory '{$dir}' can not be created.");
                 }
                 if ($this->config['format'] === 'po') {
-                    return $this->saveMessagesToPO($messages, $dir, $this->config['overwrite'], $this->config['removeUnused'], $this->config['sort'], $catalog, $this->config['markUnused']);
+                    $promises[] = $this->saveMessagesToPO($messages, $dir, $this->config['overwrite'], $this->config['removeUnused'], $this->config['sort'], $catalog, $this->config['markUnused']);
                 } else {
-                    return $this->saveMessagesToPHP($messages, $dir, $this->config['overwrite'], $this->config['removeUnused'], $this->config['sort'], $this->config['markUnused']);
+                    $promises[] = $this->saveMessagesToPHP($messages, $dir, $this->config['overwrite'], $this->config['removeUnused'], $this->config['sort'], $this->config['markUnused']);
                 }
             }
+            return !empty($promises) ? all($promises) : resolve(true);
         } elseif ($this->config['format'] === 'db') {
             /** @var DatabaseInterface $db */
-            $db = Instance::ensure($this->config['db'], Connection::className());
+            $db = Instance::ensure($this->config['db'], DatabaseInterface::class);
             $sourceMessageTable = isset($this->config['sourceMessageTable']) ? $this->config['sourceMessageTable'] : '{{%source_message}}';
             $messageTable = isset($this->config['messageTable']) ? $this->config['messageTable'] : '{{%message}}';
             return $this->saveMessagesToDb(
@@ -656,11 +668,13 @@ EOD;
         foreach ($messages as $category => $msgs) {
             $file = str_replace('\\', '/', "$dirName/$category.php");
             $path = dirname($file);
-            FileHelper::createDirectory($path);
             $msgs = array_values(array_unique($msgs));
             $coloredFileName = Console::ansiFormat($file, [Console::FG_CYAN]);
             $this->stdout("Saving messages to $coloredFileName...\n");
-            $promises[] = $this->saveMessagesCategoryToPHP($msgs, $file, $overwrite, $removeUnused, $sort, $category, $markUnused);
+            $promises[] = FileHelperAsc::createDir($path, $this->filesystemMode)
+                ->then(function() use ($msgs, $file, $overwrite, $removeUnused, $sort, $category, $markUnused) {
+                    return $this->saveMessagesCategoryToPHP($msgs, $file, $overwrite, $removeUnused, $sort, $category, $markUnused);
+                });
         }
         return all($promises);
     }
@@ -738,14 +752,20 @@ return $array;
 
 EOD;
 
-        return (new Reaction\Promise\Promise(function($r, $c) use ($fileName, $content) {
-            if (file_put_contents($fileName, $content, LOCK_EX) === false) {
-                $this->stdout("Translation was NOT saved.\n\n", Console::FG_RED);
-                return Reaction\Promise\reject(new Exception("Unspecified error while translation save"));
-            }
-            return true;
+        return (new Promise(function($r) use ($fileName, $content) {
+            $promise = FileHelperAsc::exists($fileName)
+                ->then(null, function() use ($fileName) {
+                    return FileHelperAsc::create($fileName, $this->filesystemMode);
+                })->then(function() use ($fileName, $content) {
+                    return FileHelperAsc::putContents($fileName, $content);
+                });
+            $r($promise);
         }))->then(function() {
             $this->stdout("Translation saved.\n\n", Console::FG_GREEN);
+            return true;
+        }, function($error) {
+            $this->stdout("Translation was NOT saved.\n\n", Console::FG_RED);
+            return reject($error);
         });
     }
 
@@ -764,7 +784,7 @@ EOD;
     protected function saveMessagesToPO($messages, $dirName, $overwrite, $removeUnused, $sort, $catalog, $markUnused)
     {
         $file = str_replace('\\', '/', "$dirName/$catalog.po");
-        FileHelper::createDirectory(dirname($file));
+        FileHelper::createDirectory(dirname($file), $this->filesystemMode);
         $this->stdout("Saving messages to $file...\n");
 
         $poFile = new GettextPoFile();
@@ -858,7 +878,7 @@ EOD;
     protected function saveMessagesToPOT($messages, $dirName, $catalog)
     {
         $file = str_replace('\\', '/', "$dirName/$catalog.pot");
-        FileHelper::createDirectory(dirname($file));
+        FileHelper::createDirectory(dirname($file), $this->filesystemMode);
         $this->stdout("Saving messages to $file...\n");
 
         $poFile = new GettextPoFile();
@@ -877,7 +897,7 @@ EOD;
             $hasSomethingToWrite = true;
         }
         if ($hasSomethingToWrite) {
-            return new Reaction\Promise\Promise(function($r, $c) use ($poFile, $merged, $file) {
+            return new Promise(function($r, $c) use ($poFile, $merged, $file) {
                 ksort($merged);
                 $poFile->save($file, $merged);
                 $this->stdout("Translation saved.\n", Console::FG_GREEN);
