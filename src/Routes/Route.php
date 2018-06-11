@@ -94,7 +94,7 @@ class Route extends RequestAppComponent implements RouteInterface
                 $this->_action = $data[2];
             }
         }
-        return $this->_controller;
+        return $this->_action;
     }
 
     /**

@@ -440,7 +440,7 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
         $traceRow = isset($trace[$pos]) ? $trace[$pos] : end($trace);
         $file = isset($traceRow['file']) ? $traceRow['file'] : '[internal function]';
         $line = isset($traceRow['line']) ? '#' . $traceRow['line'] : '';
-        $str = $file . " #" . $line;
+        $str = $file . " " . $line;
         return $str;
     }
 
