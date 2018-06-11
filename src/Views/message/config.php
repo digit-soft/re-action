@@ -37,7 +37,7 @@ return [
         '.gitkeep',
         '.hgignore',
         '.hgkeep',
-        '/messages',
+        '/Messages',
     ],
 
     // 'php' output format is for saving messages to php files.

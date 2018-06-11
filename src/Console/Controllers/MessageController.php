@@ -240,11 +240,18 @@ class MessageController extends Reaction\Console\Routes\Controller
 return $array;
 
 EOD;
-                if (file_put_contents($filePath, $content, LOCK_EX) === false) {
-                    return reject(new Exception("Configuration file was NOT created: '{$filePath}'."));
-                }
-                $this->stdout("Configuration file created: '{$filePath}'.\n\n", Console::FG_GREEN);
-                return true;
+                return FileHelperAsc::exists($filePath)
+                    ->then(null, function() use ($filePath) {
+                        return FileHelperAsc::create($filePath, $this->filesystemMode);
+                    })->then(function() use ($filePath, $content) {
+                        return FileHelperAsc::putContents($filePath, $content);
+                    })->then(function() use ($filePath) {
+                        $this->stdout("Configuration file created: '{$filePath}'.\n\n", Console::FG_GREEN);
+                        return true;
+                    }, function($error) use ($filePath) {
+                        $this->stdout("Configuration file was NOT created: '{$filePath}'.\n\n", Console::FG_RED);
+                        return reject($error);
+                    });
             });
     }
 
