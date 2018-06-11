@@ -12,6 +12,7 @@ use Reaction\DI\ServiceLocator;
 use Reaction\DI\ServiceLocatorAutoloadInterface;
 use Reaction\Exceptions\InvalidArgumentException;
 use Reaction\Helpers\Console;
+use Reaction\I18n\I18N;
 use Reaction\Promise\ExtendedPromiseInterface;
 
 /**
@@ -367,6 +368,18 @@ abstract class StaticApplicationAbstract extends ServiceLocator implements Stati
         /** @var DatabaseInterface $db */
         $db = $this->get('db');
         return $db;
+    }
+
+    /**
+     * Get internationalization component
+     * @return I18N
+     * @throws Exceptions\InvalidConfigException
+     */
+    public function getI18n()
+    {
+        /** @var I18N $i18n */
+        $i18n = $this->get('i18n');
+        return $i18n;
     }
 
     /**

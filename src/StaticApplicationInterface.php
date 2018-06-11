@@ -8,6 +8,7 @@ use React\Promise\PromiseInterface;
 use Reaction\Base\Logger\LoggerInterface;
 use Reaction\Db\DatabaseInterface;
 use Reaction\Events\EventEmitterWildcardInterface;
+use Reaction\I18n\I18N;
 use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\Routes\UrlManager;
 use Reaction\Web\Response;
@@ -179,6 +180,12 @@ interface StaticApplicationInterface extends EventEmitterWildcardInterface
      * @return DatabaseInterface
      */
     public function getDb();
+
+    /**
+     * Get internationalization component
+     * @return I18N
+     */
+    public function getI18n();
 
     /**
      * Returns a value indicating whether the locator has the specified component definition or has instantiated the component.
