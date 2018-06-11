@@ -72,7 +72,8 @@ class PhpMessageSource extends MessageSource
             $messages = $this->loadFallbackMessages($category, $this->sourceLanguage, $messages, $messageFile);
         } else {
             if ($messages === null) {
-                Reaction::$app->logger->warning("The message file for category '$category' does not exist: $messageFile", __METHOD__);
+                $method = __METHOD__;
+                Reaction::warning("The message file for category '$category' does not exist: $messageFile in {$method}");
             }
         }
 
