@@ -50,6 +50,13 @@ interface ControllerInterface
     public function getUniqueId();
 
     /**
+     * Get current action
+     * @param RequestApplicationInterface|null $app
+     * @return string|null
+     */
+    public function getCurrentAction(RequestApplicationInterface $app = null);
+
+    /**
      * Register controller actions in router
      * @param Router $router
      */

@@ -18,6 +18,7 @@ use Reaction\Web\ResponseBuilderInterface;
 /**
  * Class Controller
  * @package Reaction\Console\Routes
+ * @property string|null $currentAction
  */
 class Controller extends \Reaction\Routes\Controller
 {
@@ -54,6 +55,17 @@ class Controller extends \Reaction\Routes\Controller
     public function resolveError(RequestApplicationInterface $app, \Throwable $exception, $asPlainText = false)
     {
         return $this->resolveErrorAsPlainText($app, $exception);
+    }
+
+    /**
+     * Get current action
+     * @param RequestApplicationInterface|null $app
+     * @return string|null
+     */
+    public function getCurrentAction(RequestApplicationInterface $app = null)
+    {
+        $app = $app !== null ? $app : $this->app;
+        return $app !== null ? $app->getRoute()->getAction() : null;
     }
 
     /**

@@ -101,6 +101,16 @@ class Controller extends Component implements ControllerInterface, ViewContextIn
     }
 
     /**
+     * Get current action
+     * @param RequestApplicationInterface|null $app
+     * @return string|null
+     */
+    public function getCurrentAction(RequestApplicationInterface $app = null)
+    {
+        return $app !== null ? $app->getRoute()->getAction() : null;
+    }
+
+    /**
      * Register controller actions in router
      * @param Router $router
      */
