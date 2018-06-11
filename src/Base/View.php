@@ -231,7 +231,9 @@ class View extends Component implements ViewInterface, DynamicContentAwareInterf
 
         $this->beforeRender($viewFile, $params);
 
-        \Reaction::$app->logger->debug("Rendering view file: $viewFile");
+        if (Reaction::isDebug()) {
+            //\Reaction::debug("Rendering view file: $viewFile");
+        }
         $ext = pathinfo($viewFile, PATHINFO_EXTENSION);
         if (isset($this->renderers[$ext])) {
             if (is_array($this->renderers[$ext]) || is_string($this->renderers[$ext])) {
