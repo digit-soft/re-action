@@ -6,6 +6,7 @@ use Reaction;
 use Reaction\Assets\ValidationAsset;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Helpers\Html;
+use Reaction\I18n\I18N;
 
 /**
  * CompareValidator compares the specified attribute value with another value.
@@ -96,28 +97,28 @@ class CompareValidator extends Validator
         if ($this->message === null) {
             switch ($this->operator) {
                 case '==':
-                    $this->message = Reaction::t('yii', '{attribute} must be equal to "{compareValueOrAttribute}".');
+                    $this->message = Reaction::t('rct', '{attribute} must be equal to "{compareValueOrAttribute}".');
                     break;
                 case '===':
-                    $this->message = Reaction::t('yii', '{attribute} must be equal to "{compareValueOrAttribute}".');
+                    $this->message = Reaction::t('rct', '{attribute} must be equal to "{compareValueOrAttribute}".');
                     break;
                 case '!=':
-                    $this->message = Reaction::t('yii', '{attribute} must not be equal to "{compareValueOrAttribute}".');
+                    $this->message = Reaction::t('rct', '{attribute} must not be equal to "{compareValueOrAttribute}".');
                     break;
                 case '!==':
-                    $this->message = Reaction::t('yii', '{attribute} must not be equal to "{compareValueOrAttribute}".');
+                    $this->message = Reaction::t('rct', '{attribute} must not be equal to "{compareValueOrAttribute}".');
                     break;
                 case '>':
-                    $this->message = Reaction::t('yii', '{attribute} must be greater than "{compareValueOrAttribute}".');
+                    $this->message = Reaction::t('rct', '{attribute} must be greater than "{compareValueOrAttribute}".');
                     break;
                 case '>=':
-                    $this->message = Reaction::t('yii', '{attribute} must be greater than or equal to "{compareValueOrAttribute}".');
+                    $this->message = Reaction::t('rct', '{attribute} must be greater than or equal to "{compareValueOrAttribute}".');
                     break;
                 case '<':
-                    $this->message = Reaction::t('yii', '{attribute} must be less than "{compareValueOrAttribute}".');
+                    $this->message = Reaction::t('rct', '{attribute} must be less than "{compareValueOrAttribute}".');
                     break;
                 case '<=':
-                    $this->message = Reaction::t('yii', '{attribute} must be less than or equal to "{compareValueOrAttribute}".');
+                    $this->message = Reaction::t('rct', '{attribute} must be less than or equal to "{compareValueOrAttribute}".');
                     break;
                 default:
                     throw new InvalidConfigException("Unknown operator: {$this->operator}");
@@ -132,7 +133,7 @@ class CompareValidator extends Validator
     {
         $value = $model->$attribute;
         if (is_array($value)) {
-            $this->addError($model, $attribute, Reaction::t('yii', '{attribute} is invalid.'));
+            $this->addError($model, $attribute, Reaction::t('rct', '{attribute} is invalid.'));
 
             return;
         }

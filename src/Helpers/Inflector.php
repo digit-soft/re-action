@@ -567,7 +567,7 @@ class Inflector
     public static function sentence(array $words, $twoWordsConnector = null, $lastWordConnector = null, $connector = ', ')
     {
         if ($twoWordsConnector === null) {
-            $twoWordsConnector = \Reaction::t('basic', ' and ');
+            $twoWordsConnector = \Reaction::t('rct', ' and ');
         }
         if ($lastWordConnector === null) {
             $lastWordConnector = $twoWordsConnector;

@@ -2,8 +2,10 @@
 
 namespace Reaction\Validators;
 
+use Reaction;
 use Reaction\Base\Component;
 use Reaction\Exceptions\NotSupportedException;
+use Reaction\I18n\I18N;
 use function Reaction\Promise\allInOrder;
 use Reaction\Promise\ExtendedPromiseInterface;
 
@@ -218,7 +220,7 @@ class Validator extends Component
             }
         }
 
-        return \Reaction::create($params);
+        return Reaction::create($params);
     }
 
     /**
@@ -310,7 +312,7 @@ class Validator extends Component
         }
 
         list($message, $params) = $result;
-        $params['attribute'] = \Reaction::t('yii', 'the input value');
+        $params['attribute'] = Reaction::t('rct', 'the input value');
         if (is_array($value)) {
             $params['value'] = 'array()';
         } elseif (is_object($value)) {

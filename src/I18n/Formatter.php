@@ -364,10 +364,10 @@ class Formatter extends Component
             $this->locale = Reaction::$app->language;
         }
         if ($this->booleanFormat === null) {
-            $this->booleanFormat = [Reaction::t('yii', 'No', [], $this->locale), Reaction::t('yii', 'Yes', [], $this->locale)];
+            $this->booleanFormat = [Reaction::t('rct', 'No', [], $this->locale), Reaction::t('rct', 'Yes', [], $this->locale)];
         }
         if ($this->nullDisplay === null) {
-            $this->nullDisplay = '<span class="not-set">' . Reaction::t('yii', '(not set)', [], $this->locale) . '</span>';
+            $this->nullDisplay = '<span class="not-set">' . Reaction::t('rct', '(not set)', [], $this->locale) . '</span>';
         }
         $this->_intlLoaded = extension_loaded('intl');
         if (!$this->_intlLoaded) {
@@ -916,47 +916,47 @@ class Formatter extends Component
 
         if ($interval->invert) {
             if ($interval->y >= 1) {
-                return Reaction::t('yii', 'in {delta, plural, =1{a year} other{# years}}', ['delta' => $interval->y], $this->locale);
+                return Reaction::t('rct', 'in {delta, plural, =1{a year} other{# years}}', ['delta' => $interval->y], $this->locale);
             }
             if ($interval->m >= 1) {
-                return Reaction::t('yii', 'in {delta, plural, =1{a month} other{# months}}', ['delta' => $interval->m], $this->locale);
+                return Reaction::t('rct', 'in {delta, plural, =1{a month} other{# months}}', ['delta' => $interval->m], $this->locale);
             }
             if ($interval->d >= 1) {
-                return Reaction::t('yii', 'in {delta, plural, =1{a day} other{# days}}', ['delta' => $interval->d], $this->locale);
+                return Reaction::t('rct', 'in {delta, plural, =1{a day} other{# days}}', ['delta' => $interval->d], $this->locale);
             }
             if ($interval->h >= 1) {
-                return Reaction::t('yii', 'in {delta, plural, =1{an hour} other{# hours}}', ['delta' => $interval->h], $this->locale);
+                return Reaction::t('rct', 'in {delta, plural, =1{an hour} other{# hours}}', ['delta' => $interval->h], $this->locale);
             }
             if ($interval->i >= 1) {
-                return Reaction::t('yii', 'in {delta, plural, =1{a minute} other{# minutes}}', ['delta' => $interval->i], $this->locale);
+                return Reaction::t('rct', 'in {delta, plural, =1{a minute} other{# minutes}}', ['delta' => $interval->i], $this->locale);
             }
             if ($interval->s == 0) {
-                return Reaction::t('yii', 'just now', [], $this->locale);
+                return Reaction::t('rct', 'just now', [], $this->locale);
             }
 
-            return Reaction::t('yii', 'in {delta, plural, =1{a second} other{# seconds}}', ['delta' => $interval->s], $this->locale);
+            return Reaction::t('rct', 'in {delta, plural, =1{a second} other{# seconds}}', ['delta' => $interval->s], $this->locale);
         }
 
         if ($interval->y >= 1) {
-            return Reaction::t('yii', '{delta, plural, =1{a year} other{# years}} ago', ['delta' => $interval->y], $this->locale);
+            return Reaction::t('rct', '{delta, plural, =1{a year} other{# years}} ago', ['delta' => $interval->y], $this->locale);
         }
         if ($interval->m >= 1) {
-            return Reaction::t('yii', '{delta, plural, =1{a month} other{# months}} ago', ['delta' => $interval->m], $this->locale);
+            return Reaction::t('rct', '{delta, plural, =1{a month} other{# months}} ago', ['delta' => $interval->m], $this->locale);
         }
         if ($interval->d >= 1) {
-            return Reaction::t('yii', '{delta, plural, =1{a day} other{# days}} ago', ['delta' => $interval->d], $this->locale);
+            return Reaction::t('rct', '{delta, plural, =1{a day} other{# days}} ago', ['delta' => $interval->d], $this->locale);
         }
         if ($interval->h >= 1) {
-            return Reaction::t('yii', '{delta, plural, =1{an hour} other{# hours}} ago', ['delta' => $interval->h], $this->locale);
+            return Reaction::t('rct', '{delta, plural, =1{an hour} other{# hours}} ago', ['delta' => $interval->h], $this->locale);
         }
         if ($interval->i >= 1) {
-            return Reaction::t('yii', '{delta, plural, =1{a minute} other{# minutes}} ago', ['delta' => $interval->i], $this->locale);
+            return Reaction::t('rct', '{delta, plural, =1{a minute} other{# minutes}} ago', ['delta' => $interval->i], $this->locale);
         }
         if ($interval->s == 0) {
-            return Reaction::t('yii', 'just now', [], $this->locale);
+            return Reaction::t('rct', 'just now', [], $this->locale);
         }
 
-        return Reaction::t('yii', '{delta, plural, =1{a second} other{# seconds}} ago', ['delta' => $interval->s], $this->locale);
+        return Reaction::t('rct', '{delta, plural, =1{a second} other{# seconds}} ago', ['delta' => $interval->s], $this->locale);
     }
 
     /**
@@ -1000,25 +1000,25 @@ class Formatter extends Component
 
         $parts = [];
         if ($interval->y > 0) {
-            $parts[] = Reaction::t('yii', '{delta, plural, =1{1 year} other{# years}}', ['delta' => $interval->y], $this->locale);
+            $parts[] = Reaction::t('rct', '{delta, plural, =1{1 year} other{# years}}', ['delta' => $interval->y], $this->locale);
         }
         if ($interval->m > 0) {
-            $parts[] = Reaction::t('yii', '{delta, plural, =1{1 month} other{# months}}', ['delta' => $interval->m], $this->locale);
+            $parts[] = Reaction::t('rct', '{delta, plural, =1{1 month} other{# months}}', ['delta' => $interval->m], $this->locale);
         }
         if ($interval->d > 0) {
-            $parts[] = Reaction::t('yii', '{delta, plural, =1{1 day} other{# days}}', ['delta' => $interval->d], $this->locale);
+            $parts[] = Reaction::t('rct', '{delta, plural, =1{1 day} other{# days}}', ['delta' => $interval->d], $this->locale);
         }
         if ($interval->h > 0) {
-            $parts[] = Reaction::t('yii', '{delta, plural, =1{1 hour} other{# hours}}', ['delta' => $interval->h], $this->locale);
+            $parts[] = Reaction::t('rct', '{delta, plural, =1{1 hour} other{# hours}}', ['delta' => $interval->h], $this->locale);
         }
         if ($interval->i > 0) {
-            $parts[] = Reaction::t('yii', '{delta, plural, =1{1 minute} other{# minutes}}', ['delta' => $interval->i], $this->locale);
+            $parts[] = Reaction::t('rct', '{delta, plural, =1{1 minute} other{# minutes}}', ['delta' => $interval->i], $this->locale);
         }
         if ($interval->s > 0) {
-            $parts[] = Reaction::t('yii', '{delta, plural, =1{1 second} other{# seconds}}', ['delta' => $interval->s], $this->locale);
+            $parts[] = Reaction::t('rct', '{delta, plural, =1{1 second} other{# seconds}}', ['delta' => $interval->s], $this->locale);
         }
         if ($interval->s === 0 && empty($parts)) {
-            $parts[] = Reaction::t('yii', '{delta, plural, =1{1 second} other{# seconds}}', ['delta' => $interval->s], $this->locale);
+            $parts[] = Reaction::t('rct', '{delta, plural, =1{1 second} other{# seconds}}', ['delta' => $interval->s], $this->locale);
             $isNegative = false;
         }
 
@@ -1317,32 +1317,32 @@ class Formatter extends Component
         if ($this->sizeFormatBase == 1024) {
             switch ($position) {
                 case 0:
-                    return Reaction::t('yii', '{nFormatted} B', $params, $this->locale);
+                    return Reaction::t('rct', '{nFormatted} B', $params, $this->locale);
                 case 1:
-                    return Reaction::t('yii', '{nFormatted} KiB', $params, $this->locale);
+                    return Reaction::t('rct', '{nFormatted} KiB', $params, $this->locale);
                 case 2:
-                    return Reaction::t('yii', '{nFormatted} MiB', $params, $this->locale);
+                    return Reaction::t('rct', '{nFormatted} MiB', $params, $this->locale);
                 case 3:
-                    return Reaction::t('yii', '{nFormatted} GiB', $params, $this->locale);
+                    return Reaction::t('rct', '{nFormatted} GiB', $params, $this->locale);
                 case 4:
-                    return Reaction::t('yii', '{nFormatted} TiB', $params, $this->locale);
+                    return Reaction::t('rct', '{nFormatted} TiB', $params, $this->locale);
                 default:
-                    return Reaction::t('yii', '{nFormatted} PiB', $params, $this->locale);
+                    return Reaction::t('rct', '{nFormatted} PiB', $params, $this->locale);
             }
         } else {
             switch ($position) {
                 case 0:
-                    return Reaction::t('yii', '{nFormatted} B', $params, $this->locale);
+                    return Reaction::t('rct', '{nFormatted} B', $params, $this->locale);
                 case 1:
-                    return Reaction::t('yii', '{nFormatted} KB', $params, $this->locale);
+                    return Reaction::t('rct', '{nFormatted} KB', $params, $this->locale);
                 case 2:
-                    return Reaction::t('yii', '{nFormatted} MB', $params, $this->locale);
+                    return Reaction::t('rct', '{nFormatted} MB', $params, $this->locale);
                 case 3:
-                    return Reaction::t('yii', '{nFormatted} GB', $params, $this->locale);
+                    return Reaction::t('rct', '{nFormatted} GB', $params, $this->locale);
                 case 4:
-                    return Reaction::t('yii', '{nFormatted} TB', $params, $this->locale);
+                    return Reaction::t('rct', '{nFormatted} TB', $params, $this->locale);
                 default:
-                    return Reaction::t('yii', '{nFormatted} PB', $params, $this->locale);
+                    return Reaction::t('rct', '{nFormatted} PB', $params, $this->locale);
             }
         }
     }
@@ -1373,32 +1373,32 @@ class Formatter extends Component
         if ($this->sizeFormatBase == 1024) {
             switch ($position) {
                 case 0:
-                    return Reaction::t('yii', '{nFormatted} {n, plural, =1{byte} other{bytes}}', $params, $this->locale);
+                    return Reaction::t('rct', '{nFormatted} {n, plural, =1{byte} other{bytes}}', $params, $this->locale);
                 case 1:
-                    return Reaction::t('yii', '{nFormatted} {n, plural, =1{kibibyte} other{kibibytes}}', $params, $this->locale);
+                    return Reaction::t('rct', '{nFormatted} {n, plural, =1{kibibyte} other{kibibytes}}', $params, $this->locale);
                 case 2:
-                    return Reaction::t('yii', '{nFormatted} {n, plural, =1{mebibyte} other{mebibytes}}', $params, $this->locale);
+                    return Reaction::t('rct', '{nFormatted} {n, plural, =1{mebibyte} other{mebibytes}}', $params, $this->locale);
                 case 3:
-                    return Reaction::t('yii', '{nFormatted} {n, plural, =1{gibibyte} other{gibibytes}}', $params, $this->locale);
+                    return Reaction::t('rct', '{nFormatted} {n, plural, =1{gibibyte} other{gibibytes}}', $params, $this->locale);
                 case 4:
-                    return Reaction::t('yii', '{nFormatted} {n, plural, =1{tebibyte} other{tebibytes}}', $params, $this->locale);
+                    return Reaction::t('rct', '{nFormatted} {n, plural, =1{tebibyte} other{tebibytes}}', $params, $this->locale);
                 default:
-                    return Reaction::t('yii', '{nFormatted} {n, plural, =1{pebibyte} other{pebibytes}}', $params, $this->locale);
+                    return Reaction::t('rct', '{nFormatted} {n, plural, =1{pebibyte} other{pebibytes}}', $params, $this->locale);
             }
         } else {
             switch ($position) {
                 case 0:
-                    return Reaction::t('yii', '{nFormatted} {n, plural, =1{byte} other{bytes}}', $params, $this->locale);
+                    return Reaction::t('rct', '{nFormatted} {n, plural, =1{byte} other{bytes}}', $params, $this->locale);
                 case 1:
-                    return Reaction::t('yii', '{nFormatted} {n, plural, =1{kilobyte} other{kilobytes}}', $params, $this->locale);
+                    return Reaction::t('rct', '{nFormatted} {n, plural, =1{kilobyte} other{kilobytes}}', $params, $this->locale);
                 case 2:
-                    return Reaction::t('yii', '{nFormatted} {n, plural, =1{megabyte} other{megabytes}}', $params, $this->locale);
+                    return Reaction::t('rct', '{nFormatted} {n, plural, =1{megabyte} other{megabytes}}', $params, $this->locale);
                 case 3:
-                    return Reaction::t('yii', '{nFormatted} {n, plural, =1{gigabyte} other{gigabytes}}', $params, $this->locale);
+                    return Reaction::t('rct', '{nFormatted} {n, plural, =1{gigabyte} other{gigabytes}}', $params, $this->locale);
                 case 4:
-                    return Reaction::t('yii', '{nFormatted} {n, plural, =1{terabyte} other{terabytes}}', $params, $this->locale);
+                    return Reaction::t('rct', '{nFormatted} {n, plural, =1{terabyte} other{terabytes}}', $params, $this->locale);
                 default:
-                    return Reaction::t('yii', '{nFormatted} {n, plural, =1{petabyte} other{petabytes}}', $params, $this->locale);
+                    return Reaction::t('rct', '{nFormatted} {n, plural, =1{petabyte} other{petabytes}}', $params, $this->locale);
             }
         }
     }

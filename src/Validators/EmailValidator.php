@@ -7,6 +7,7 @@ use Reaction\Assets\ValidationAsset;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Helpers\Json;
 use Reaction\Base\JsExpression;
+use Reaction\I18n\I18N;
 
 /**
  * EmailValidator validates that the attribute value is a valid email address.
@@ -54,7 +55,7 @@ class EmailValidator extends Validator
             throw new InvalidConfigException('In order to use IDN validation intl extension must be installed and enabled.');
         }
         if ($this->message === null) {
-            $this->message = \Reaction::t('yii', '{attribute} is not a valid email address.');
+            $this->message = \Reaction::t('rct', '{attribute} is not a valid email address.');
         }
     }
 

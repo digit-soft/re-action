@@ -9,8 +9,8 @@ use Reaction\Exceptions\InvalidConfigException;
 /**
  * I18N provides features related with internationalization (I18N) and localization (L10N).
  *
- * I18N is configured as an application component in [[\yii\base\Application]] by default.
- * You can access that instance via `Yii::$app->i18n`.
+ * I18N is configured as an application component in [[\Reaction\StaticApplicationInterface]] by default.
+ * You can access that instance via `Reaction::$app->i18n`.
  *
  * @property MessageFormatter $messageFormatter The message formatter to be used to format message via ICU
  * message format. Note that the type of this property differs in getter and setter. See
@@ -18,6 +18,8 @@ use Reaction\Exceptions\InvalidConfigException;
  */
 class I18N extends Component
 {
+    const DOMAIN_CORE = 'rct';
+
     /**
      * @var array list of [[MessageSource]] configurations or objects. The array keys are message
      * category patterns, and the array values are the corresponding [[MessageSource]] objects or the configurations
@@ -34,7 +36,7 @@ class I18N extends Component
      * The category `yii` and `app` are always defined. The former refers to the messages used in the Yii core
      * framework code, while the latter refers to the default message category for custom application code.
      * By default, both of these categories use [[PhpMessageSource]] and the corresponding message files are
-     * stored under `@yii/messages` and `@app/messages`, respectively.
+     * stored under `@reaction/Messages` and `@app/Messages`, respectively.
      *
      * You may override the configuration of both categories.
      */
@@ -47,8 +49,8 @@ class I18N extends Component
     public function init()
     {
         parent::init();
-        if (!isset($this->translations['reaction']) && !isset($this->translations['reaction*'])) {
-            $this->translations['reaction'] = [
+        if (!isset($this->translations['rct']) && !isset($this->translations['rct*'])) {
+            $this->translations['rct'] = [
                 'class' => 'Reaction\I18n\PhpMessageSource',
                 'sourceLanguage' => 'en-US',
                 'basePath' => '@reaction/Messages',

@@ -9,6 +9,7 @@ use Reaction\Db\Orm\ActiveQueryInterface;
 use Reaction\Db\Orm\ActiveRecord;
 use Reaction\Db\Orm\ActiveRecordInterface;
 use Reaction\Helpers\Inflector;
+use Reaction\I18n\I18N;
 use Reaction\Promise\ExtendedPromiseInterface;
 use function Reaction\Promise\resolve;
 
@@ -90,9 +91,9 @@ class UniqueValidator extends Validator
             return;
         }
         if (is_array($this->targetAttribute) && count($this->targetAttribute) > 1) {
-            $this->message = Reaction::t('yii', 'The combination {values} of {attributes} has already been taken.');
+            $this->message = Reaction::t('rct', 'The combination {values} of {attributes} has already been taken.');
         } else {
-            $this->message = Reaction::t('yii', '{attribute} "{value}" has already been taken.');
+            $this->message = Reaction::t('rct', '{attribute} "{value}" has already been taken.');
         }
     }
 
@@ -109,7 +110,7 @@ class UniqueValidator extends Validator
 
         foreach ($rawConditions as $key => $value) {
             if (is_array($value)) {
-                $this->addError($model, $attribute, Reaction::t('yii', '{attribute} is invalid.'));
+                $this->addError($model, $attribute, Reaction::t('rct', '{attribute} is invalid.'));
                 return resolve(false);
             }
             $conditions[] = [$key => $value];

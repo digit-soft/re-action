@@ -57,14 +57,14 @@ class NumberValidator extends Validator
     {
         parent::init();
         if ($this->message === null) {
-            $this->message = $this->integerOnly ? Yii::t('yii', '{attribute} must be an integer.')
-                : Reaction::t('yii', '{attribute} must be a number.');
+            $this->message = $this->integerOnly ? Reaction::t('rct', '{attribute} must be an integer.')
+                : Reaction::t('rct', '{attribute} must be a number.');
         }
         if ($this->min !== null && $this->tooSmall === null) {
-            $this->tooSmall = Reaction::t('yii', '{attribute} must be no less than {min}.');
+            $this->tooSmall = Reaction::t('rct', '{attribute} must be no less than {min}.');
         }
         if ($this->max !== null && $this->tooBig === null) {
-            $this->tooBig = Reaction::t('yii', '{attribute} must be no greater than {max}.');
+            $this->tooBig = Reaction::t('rct', '{attribute} must be no greater than {max}.');
         }
     }
 
@@ -97,7 +97,7 @@ class NumberValidator extends Validator
     protected function validateValue($value)
     {
         if ($this->isNotNumber($value)) {
-            return [Reaction::t('yii', '{attribute} is invalid.'), []];
+            return [Reaction::t('rct', '{attribute} is invalid.'), []];
         }
         $pattern = $this->integerOnly ? $this->integerPattern : $this->numberPattern;
         if (!preg_match($pattern, StringHelper::normalizeNumber($value))) {

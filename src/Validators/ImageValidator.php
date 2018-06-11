@@ -90,19 +90,19 @@ class ImageValidator extends FileValidator
         parent::init();
 
         if ($this->notImage === null) {
-            $this->notImage = Reaction::t('yii', 'The file "{file}" is not an image.');
+            $this->notImage = Reaction::t('rct', 'The file "{file}" is not an image.');
         }
         if ($this->underWidth === null) {
-            $this->underWidth = Reaction::t('yii', 'The image "{file}" is too small. The width cannot be smaller than {limit, number} {limit, plural, one{pixel} other{pixels}}.');
+            $this->underWidth = Reaction::t('rct', 'The image "{file}" is too small. The width cannot be smaller than {limit, number} {limit, plural, one{pixel} other{pixels}}.');
         }
         if ($this->underHeight === null) {
-            $this->underHeight = Reaction::t('yii', 'The image "{file}" is too small. The height cannot be smaller than {limit, number} {limit, plural, one{pixel} other{pixels}}.');
+            $this->underHeight = Reaction::t('rct', 'The image "{file}" is too small. The height cannot be smaller than {limit, number} {limit, plural, one{pixel} other{pixels}}.');
         }
         if ($this->overWidth === null) {
-            $this->overWidth = Reaction::t('yii', 'The image "{file}" is too large. The width cannot be larger than {limit, number} {limit, plural, one{pixel} other{pixels}}.');
+            $this->overWidth = Reaction::t('rct', 'The image "{file}" is too large. The width cannot be larger than {limit, number} {limit, plural, one{pixel} other{pixels}}.');
         }
         if ($this->overHeight === null) {
-            $this->overHeight = Reaction::t('yii', 'The image "{file}" is too large. The height cannot be larger than {limit, number} {limit, plural, one{pixel} other{pixels}}.');
+            $this->overHeight = Reaction::t('rct', 'The image "{file}" is too large. The height cannot be larger than {limit, number} {limit, plural, one{pixel} other{pixels}}.');
         }
     }
 

@@ -1,7 +1,6 @@
 <?php
 
 use Reaction\Exceptions\InvalidConfigException;
-use Reaction\Helpers\Console;
 use Reaction\StaticApplicationInterface;
 
 /**
@@ -136,7 +135,7 @@ class Reaction
      */
     public static function getVersion()
     {
-        return '0.2.1';
+        return '0.2.2';
     }
 
     /**

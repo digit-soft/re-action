@@ -6,6 +6,7 @@ use Reaction;
 use Reaction\Assets\ValidationAsset;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Helpers\ArrayHelper;
+use Reaction\I18n\I18N;
 
 /**
  * RangeValidator validates that the attribute value is among a list of values.
@@ -56,7 +57,7 @@ class RangeValidator extends Validator
             throw new InvalidConfigException('The "range" property must be set.');
         }
         if ($this->message === null) {
-            $this->message = Reaction::t('yii', '{attribute} is invalid.');
+            $this->message = Reaction::t('rct', '{attribute} is invalid.');
         }
     }
 

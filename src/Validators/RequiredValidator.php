@@ -4,6 +4,7 @@ namespace Reaction\Validators;
 
 use Reaction;
 use Reaction\Assets\ValidationAsset;
+use Reaction\I18n\I18N;
 
 /**
  * RequiredValidator validates that the specified attribute does not have null or empty value.
@@ -52,8 +53,8 @@ class RequiredValidator extends Validator
     {
         parent::init();
         if ($this->message === null) {
-            $this->message = $this->requiredValue === null ? Reaction::t('yii', '{attribute} cannot be blank.')
-                : Reaction::t('yii', '{attribute} must be "{requiredValue}".');
+            $this->message = $this->requiredValue === null ? Reaction::t('rct', '{attribute} cannot be blank.')
+                : Reaction::t('rct', '{attribute} must be "{requiredValue}".');
         }
     }
 

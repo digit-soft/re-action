@@ -4,6 +4,7 @@ namespace Reaction\Validators;
 
 use Reaction;
 use Reaction\Assets\ValidationAsset;
+use Reaction\I18n\I18N;
 
 /**
  * StringValidator validates that the attribute value is of certain length.
@@ -54,7 +55,7 @@ class StringValidator extends Validator
     public $notEqual;
     /**
      * @var string the encoding of the string value to be validated (e.g. 'UTF-8').
-     * If this property is not set, [[\yii\base\Application::charset]] will be used.
+     * If this property is not set, [[\Reaction\StaticApplicationInterface::charset]] will be used.
      */
     public $encoding;
 
@@ -78,16 +79,16 @@ class StringValidator extends Validator
             $this->encoding = Reaction::$app ? Reaction::$app->charset : 'UTF-8';
         }
         if ($this->message === null) {
-            $this->message = Reaction::t('yii', '{attribute} must be a string.');
+            $this->message = Reaction::t('rct', '{attribute} must be a string.');
         }
         if ($this->min !== null && $this->tooShort === null) {
-            $this->tooShort = Reaction::t('yii', '{attribute} should contain at least {min, number} {min, plural, one{character} other{characters}}.');
+            $this->tooShort = Reaction::t('rct', '{attribute} should contain at least {min, number} {min, plural, one{character} other{characters}}.');
         }
         if ($this->max !== null && $this->tooLong === null) {
-            $this->tooLong = Reaction::t('yii', '{attribute} should contain at most {max, number} {max, plural, one{character} other{characters}}.');
+            $this->tooLong = Reaction::t('rct', '{attribute} should contain at most {max, number} {max, plural, one{character} other{characters}}.');
         }
         if ($this->length !== null && $this->notEqual === null) {
-            $this->notEqual = Reaction::t('yii', '{attribute} should contain {length, number} {length, plural, one{character} other{characters}}.');
+            $this->notEqual = Reaction::t('rct', '{attribute} should contain {length, number} {length, plural, one{character} other{characters}}.');
         }
     }
 

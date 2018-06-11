@@ -171,7 +171,7 @@ class Progress extends Widget
 
         $out = $this->htmlHlp->beginTag('div', $options);
         $out .= $label;
-        $out .= $this->htmlHlp->tag('span', \Reaction::t('yii', '{percent}% Complete', ['percent' => $percent]), [
+        $out .= $this->htmlHlp->tag('span', \Reaction::t('rct', '{percent}% Complete', ['percent' => $percent]), [
             'class' => 'sr-only'
         ]);
         $out .= Html::endTag('div');

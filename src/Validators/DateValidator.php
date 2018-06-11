@@ -6,6 +6,7 @@ use IntlDateFormatter;
 use Reaction;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Helpers\FormatConverter;
+use Reaction\I18n\I18N;
 
 /**
  * DateValidator verifies if the attribute represents a date, time or datetime in a proper [[format]].
@@ -195,7 +196,7 @@ class DateValidator extends Validator
     {
         parent::init();
         if ($this->message === null) {
-            $this->message = Reaction::t('yii', 'The format of {attribute} is invalid.');
+            $this->message = Reaction::t('rct', 'The format of {attribute} is invalid.');
         }
         if ($this->format === null) {
             if ($this->type === self::TYPE_DATE) {
@@ -215,10 +216,10 @@ class DateValidator extends Validator
             $this->timeZone = Reaction::$app->timeZone;
         }
         if ($this->min !== null && $this->tooSmall === null) {
-            $this->tooSmall = Reaction::t('yii', '{attribute} must be no less than {min}.');
+            $this->tooSmall = Reaction::t('rct', '{attribute} must be no less than {min}.');
         }
         if ($this->max !== null && $this->tooBig === null) {
-            $this->tooBig = Reaction::t('yii', '{attribute} must be no greater than {max}.');
+            $this->tooBig = Reaction::t('rct', '{attribute} must be no greater than {max}.');
         }
         if ($this->maxString === null) {
             $this->maxString = (string) $this->max;

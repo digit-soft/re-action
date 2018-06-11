@@ -1281,7 +1281,7 @@ class Html
         if(!isset($encoding)) {
             $encoding = Reaction::$app ? Reaction::$app->charset : 'UTF-8';
         }
-        $header = isset($options['header']) ? $options['header'] : '<p>' . Reaction::t('yii', 'Please fix the following errors:') . '</p>';
+        $header = isset($options['header']) ? $options['header'] : '<p>' . Reaction::t('rct', 'Please fix the following errors:') . '</p>';
         $footer = ArrayHelper::remove($options, 'footer', '');
         $encode = ArrayHelper::remove($options, 'encode', true);
         $showAllErrors = ArrayHelper::remove($options, 'showAllErrors', false);

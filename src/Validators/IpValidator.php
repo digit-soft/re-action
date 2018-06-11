@@ -208,25 +208,25 @@ class IpValidator extends Validator
             throw new InvalidConfigException('Both IPv4 and IPv6 checks can not be disabled at the same time');
         }
         if ($this->message === null) {
-            $this->message = Reaction::t('yii', '{attribute} must be a valid IP address.');
+            $this->message = Reaction::t('rct', '{attribute} must be a valid IP address.');
         }
         if ($this->ipv6NotAllowed === null) {
-            $this->ipv6NotAllowed = Reaction::t('yii', '{attribute} must not be an IPv6 address.');
+            $this->ipv6NotAllowed = Reaction::t('rct', '{attribute} must not be an IPv6 address.');
         }
         if ($this->ipv4NotAllowed === null) {
-            $this->ipv4NotAllowed = Reaction::t('yii', '{attribute} must not be an IPv4 address.');
+            $this->ipv4NotAllowed = Reaction::t('rct', '{attribute} must not be an IPv4 address.');
         }
         if ($this->wrongCidr === null) {
-            $this->wrongCidr = Reaction::t('yii', '{attribute} contains wrong subnet mask.');
+            $this->wrongCidr = Reaction::t('rct', '{attribute} contains wrong subnet mask.');
         }
         if ($this->noSubnet === null) {
-            $this->noSubnet = Reaction::t('yii', '{attribute} must be an IP address with specified subnet.');
+            $this->noSubnet = Reaction::t('rct', '{attribute} must be an IP address with specified subnet.');
         }
         if ($this->hasSubnet === null) {
-            $this->hasSubnet = Reaction::t('yii', '{attribute} must not be a subnet.');
+            $this->hasSubnet = Reaction::t('rct', '{attribute} must not be a subnet.');
         }
         if ($this->notInRange === null) {
-            $this->notInRange = Reaction::t('yii', '{attribute} is not in the allowed range.');
+            $this->notInRange = Reaction::t('rct', '{attribute} is not in the allowed range.');
         }
     }
 

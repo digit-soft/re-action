@@ -514,7 +514,7 @@ class User extends Reaction\Base\RequestAppServiceLocator implements UserInterfa
                 return $this->app->response->redirect($this->loginUrl);
             }
         }
-        throw new ForbiddenException(Reaction::t('yii', 'Login Required'));
+        throw new ForbiddenException(Reaction::t('rct', 'Login Required'));
     }
 
     /**

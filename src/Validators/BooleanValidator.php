@@ -4,6 +4,7 @@ namespace Reaction\Validators;
 
 use Reaction;
 use Reaction\Assets\ValidationAsset;
+use Reaction\I18n\I18N;
 
 /**
  * BooleanValidator checks if the attribute value is a boolean value.
@@ -36,7 +37,7 @@ class BooleanValidator extends Validator
     {
         parent::init();
         if ($this->message === null) {
-            $this->message = Reaction::t('yii', '{attribute} must be either "{true}" or "{false}".');
+            $this->message = Reaction::t('rct', '{attribute} must be either "{true}" or "{false}".');
         }
     }
 

@@ -2,7 +2,6 @@
 
 namespace Reaction\Web;
 
-use Psr\Http\Message\ResponseInterface;
 use Reaction;
 use Reaction\Exceptions\ErrorException;
 use Reaction\Exceptions\Exception;
@@ -127,7 +126,7 @@ class ErrorHandler extends \Reaction\Base\ErrorHandler
     protected function convertExceptionToArray($exception)
     {
         if (!Reaction::isDebug() && !$exception instanceof UserException && !$exception instanceof HttpException) {
-            $exception = new HttpException(500, Reaction::t('yii', 'An internal server error occurred.'));
+            $exception = new HttpException(500, Reaction::t('rct', 'An internal server error occurred.'));
         }
 
         $array = [

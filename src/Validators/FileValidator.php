@@ -9,6 +9,7 @@ use Reaction\Helpers\FileHelper;
 use Reaction\Helpers\Html;
 use Reaction\Helpers\Json;
 use Reaction\Base\JsExpression;
+use Reaction\I18n\I18N;
 use yii\web\UploadedFile;
 
 /**
@@ -160,25 +161,25 @@ class FileValidator extends Validator
     {
         parent::init();
         if ($this->message === null) {
-            $this->message = Reaction::t('yii', 'File upload failed.');
+            $this->message = Reaction::t('rct', 'File upload failed.');
         }
         if ($this->uploadRequired === null) {
-            $this->uploadRequired = Reaction::t('yii', 'Please upload a file.');
+            $this->uploadRequired = Reaction::t('rct', 'Please upload a file.');
         }
         if ($this->tooMany === null) {
-            $this->tooMany = Reaction::t('yii', 'You can upload at most {limit, number} {limit, plural, one{file} other{files}}.');
+            $this->tooMany = Reaction::t('rct', 'You can upload at most {limit, number} {limit, plural, one{file} other{files}}.');
         }
         if ($this->tooFew === null) {
-            $this->tooFew = Reaction::t('yii', 'You should upload at least {limit, number} {limit, plural, one{file} other{files}}.');
+            $this->tooFew = Reaction::t('rct', 'You should upload at least {limit, number} {limit, plural, one{file} other{files}}.');
         }
         if ($this->wrongExtension === null) {
-            $this->wrongExtension = Reaction::t('yii', 'Only files with these extensions are allowed: {extensions}.');
+            $this->wrongExtension = Reaction::t('rct', 'Only files with these extensions are allowed: {extensions}.');
         }
         if ($this->tooBig === null) {
-            $this->tooBig = Reaction::t('yii', 'The file "{file}" is too big. Its size cannot exceed {formattedLimit}.');
+            $this->tooBig = Reaction::t('rct', 'The file "{file}" is too big. Its size cannot exceed {formattedLimit}.');
         }
         if ($this->tooSmall === null) {
-            $this->tooSmall = Reaction::t('yii', 'The file "{file}" is too small. Its size cannot be smaller than {formattedLimit}.');
+            $this->tooSmall = Reaction::t('rct', 'The file "{file}" is too small. Its size cannot be smaller than {formattedLimit}.');
         }
         if (!is_array($this->extensions)) {
             $this->extensions = preg_split('/[\s,]+/', strtolower($this->extensions), -1, PREG_SPLIT_NO_EMPTY);
@@ -186,7 +187,7 @@ class FileValidator extends Validator
             $this->extensions = array_map('strtolower', $this->extensions);
         }
         if ($this->wrongMimeType === null) {
-            $this->wrongMimeType = Reaction::t('yii', 'Only files with these MIME types are allowed: {mimeTypes}.');
+            $this->wrongMimeType = Reaction::t('rct', 'Only files with these MIME types are allowed: {mimeTypes}.');
         }
         if (!is_array($this->mimeTypes)) {
             $this->mimeTypes = preg_split('/[\s,]+/', strtolower($this->mimeTypes), -1, PREG_SPLIT_NO_EMPTY);

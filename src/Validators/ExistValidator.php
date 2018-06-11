@@ -10,6 +10,7 @@ use Reaction\Base\Model;
 use Reaction\Db\Orm\ActiveQuery;
 use Reaction\Db\Orm\ActiveRecord;
 use Reaction\Db\QueryInterface;
+use Reaction\I18n\I18N;
 use Reaction\Promise\ExtendedPromiseInterface;
 use function Reaction\Promise\reject;
 
@@ -86,7 +87,7 @@ class ExistValidator extends Validator
     {
         parent::init();
         if ($this->message === null) {
-            $this->message = Reaction::t('yii', '{attribute} is invalid.');
+            $this->message = Reaction::t('rct', '{attribute} is invalid.');
         }
     }
 
@@ -140,7 +141,7 @@ class ExistValidator extends Validator
         if (!$this->allowArray) {
             foreach ($params as $key => $value) {
                 if (is_array($value)) {
-                    $this->addError($model, $attribute, Reaction::t('yii', '{attribute} is invalid.'));
+                    $this->addError($model, $attribute, Reaction::t('rct', '{attribute} is invalid.'));
 
                     return null;
                 }

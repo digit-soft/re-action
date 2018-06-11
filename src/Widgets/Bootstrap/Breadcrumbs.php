@@ -126,7 +126,7 @@ class Breadcrumbs extends Widget
         $links = [];
         if ($this->homeLink === null) {
             $links[] = $this->renderItem([
-                'label' => Reaction::t('yii', 'Home'),
+                'label' => Reaction::t('rct', 'Home'),
                 'url' => $this->app->homeUrl,
             ], $this->itemTemplate);
         } elseif ($this->homeLink !== false) {

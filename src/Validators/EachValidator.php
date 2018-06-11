@@ -9,6 +9,7 @@ namespace Reaction\Validators;
 
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Base\Model;
+use Reaction\I18n\I18N;
 
 /**
  * EachValidator validates an array by checking each of its elements against an embedded validation rule.
@@ -82,7 +83,7 @@ class EachValidator extends Validator
     {
         parent::init();
         if ($this->message === null) {
-            $this->message = \Reaction::t('yii', '{attribute} is invalid.');
+            $this->message = \Reaction::t('rct', '{attribute} is invalid.');
         }
     }
 
