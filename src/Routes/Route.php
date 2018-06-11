@@ -75,8 +75,23 @@ class Route extends RequestAppComponent implements RouteInterface
     {
         if (!isset($this->_controller)) {
             $data = $this->_dispatchedData;
-            if (isset($data[1]) && is_array($data[1]) && count($data[1]) >= 2 && $data[1][0] instanceof ControllerInterface) {
-                $this->_controller = $data[1][0];
+            if (isset($data[1]) && $data[1] instanceof ControllerInterface) {
+                $this->_controller = $data[1];
+            }
+        }
+        return $this->_controller;
+    }
+
+    /**
+     * Get controller action if applicable
+     * @return string
+     */
+    public function getAction()
+    {
+        if (!isset($this->_action)) {
+            $data = $this->_dispatchedData;
+            if (isset($data[2]) && is_string($data[2])) {
+                $this->_action = $data[2];
             }
         }
         return $this->_controller;

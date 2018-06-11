@@ -11,6 +11,7 @@ use Reaction\RequestApplicationInterface;
  * @package Reaction\Routes
  * @property RequestApplicationInterface $app
  * @property Controller                  $controller
+ * @property string                      $action
  */
 interface RouteInterface extends RequestAppComponentInterface
 {
@@ -25,6 +26,12 @@ interface RouteInterface extends RequestAppComponentInterface
      * @return Controller|null
      */
     public function getController();
+
+    /**
+     * Get controller action if applicable
+     * @return string
+     */
+    public function getAction();
 
     /**
      * Get controller route path (With possible regex)
