@@ -438,7 +438,9 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
      */
     private function getCalleeData($trace, $pos = 0) {
         $traceRow = isset($trace[$pos]) ? $trace[$pos] : end($trace);
-        $str = $traceRow['file'] . " #" . $traceRow['line'];
+        $file = isset($traceRow['file']) ? $traceRow['file'] : '[internal function]';
+        $line = isset($traceRow['line']) ? '#' . $traceRow['line'] : '';
+        $str = $file . " #" . $line;
         return $str;
     }
 
