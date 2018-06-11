@@ -95,7 +95,10 @@ class FileHelperAsc
         $modeStr = static::permissionsAsString($mode);
         $time = is_int($time) ? $time : time();
         $file = static::file($filePath);
-        return $file->create($modeStr, $time);
+        return $file->create($modeStr, $time)
+            ->then(function() use ($file, $mode) {
+                return $file->chmod($mode);
+            });
     }
 
     /**
@@ -208,13 +211,13 @@ class FileHelperAsc
         if ($mode === null) {
             $mode = static::$fileCreateMode;
         }
-        return $file->exists()->then(
-            null,
-            function () use ($dir, $mode, $recursive) {
+        return $file->exists()
+            ->then(null, function() use ($dir, $mode, $recursive) {
                 $createMode = FileHelper::permissionsAsString($mode);
                 return $recursive ? $dir->createRecursive($createMode) : $dir->create($mode);
-            }
-        );
+            })->then(function() use ($dir, $mode) {
+                return $dir->chmod($mode);
+            });
     }
 
     /**
