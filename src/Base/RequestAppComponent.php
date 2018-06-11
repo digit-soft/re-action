@@ -14,13 +14,4 @@ class RequestAppComponent extends Component implements RequestAppComponentInterf
 {
     /** @var RequestApplicationInterface An request application instance reference */
     public $app;
-
-    /**
-     * Getter for $hlp
-     * @return HelpersGroup
-     */
-    protected function getHlp()
-    {
-        return $this->app->helpers;
-    }
 }

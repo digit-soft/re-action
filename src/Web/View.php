@@ -38,6 +38,8 @@ use Reaction\Helpers\Json;
  */
 class View extends \Reaction\Base\View implements Reaction\Base\RequestAppComponentInterface
 {
+    use Reaction\Helpers\Request\RequestAppHelpersExtractedTrait;
+
     /**
      * @event Event an event that is triggered by [[beginBody()]].
      */

@@ -66,7 +66,7 @@ class InputWidget extends Widget
             throw new InvalidConfigException("Either 'name', or 'model' and 'attribute' properties must be specified.");
         }
         if (!isset($this->options['id'])) {
-            $this->options['id'] = $this->hasModel() ? $this->hlp->html->getInputId($this->model, $this->attribute) : $this->getId();
+            $this->options['id'] = $this->hasModel() ? $this->htmlHlp->getInputId($this->model, $this->attribute) : $this->getId();
         }
         parent::init();
     }
@@ -93,8 +93,8 @@ class InputWidget extends Widget
     protected function renderInputHtml($type)
     {
         if ($this->hasModel()) {
-            return $this->hlp->html->activeInput($type, $this->model, $this->attribute, $this->options);
+            return $this->htmlHlp->activeInput($type, $this->model, $this->attribute, $this->options);
         }
-        return $this->hlp->html->input($type, $this->name, $this->value, $this->options);
+        return $this->htmlHlp->input($type, $this->name, $this->value, $this->options);
     }
 }

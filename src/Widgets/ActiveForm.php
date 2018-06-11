@@ -207,14 +207,14 @@ class ActiveForm extends Widget
         }
 
         $content = ob_get_clean();
-        echo $this->hlp->html->beginForm($this->action, $this->method, $this->options);
+        echo $this->htmlHlp->beginForm($this->action, $this->method, $this->options);
         echo $content;
 
         if ($this->enableClientScript) {
             $this->registerClientScript();
         }
 
-        echo $this->hlp->html->endForm();
+        echo $this->htmlHlp->endForm();
     }
 
     /**
@@ -223,8 +223,8 @@ class ActiveForm extends Widget
     public function registerClientScript()
     {
         $id = $this->options['id'];
-        $options = $this->hlp->json->htmlEncode($this->getClientOptions());
-        $attributes = $this->hlp->json->htmlEncode($this->attributes);
+        $options = $this->jsonHlp->htmlEncode($this->getClientOptions());
+        $attributes = $this->jsonHlp->htmlEncode($this->attributes);
         $view = $this->getView();
         ActiveFormAsset::register($view);
         $view->registerJs("jQuery('#$id').yiiActiveForm($attributes, $options);");
@@ -250,7 +250,7 @@ class ActiveForm extends Widget
             'validationStateOn' => $this->validationStateOn,
         ];
         if ($this->validationUrl !== null) {
-            $options['validationUrl'] = $this->hlp->url->to($this->validationUrl);
+            $options['validationUrl'] = $this->urlHlp->to($this->validationUrl);
         }
 
         // only get the options that are different from the default ones (set in yii.activeForm.js)
@@ -285,9 +285,9 @@ class ActiveForm extends Widget
      */
     public function errorSummary($models, $options = [])
     {
-        $this->hlp->html->addCssClass($options, $this->errorSummaryCssClass);
+        $this->htmlHlp->addCssClass($options, $this->errorSummaryCssClass);
         $options['encode'] = $this->encodeErrorSummary;
-        return $this->hlp->html->errorSummary($models, $options);
+        return $this->htmlHlp->errorSummary($models, $options);
     }
 
     /**

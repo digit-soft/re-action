@@ -21,6 +21,8 @@ use Reaction;
  */
 class Widget extends RequestAppComponent implements ViewContextInterface
 {
+    use Reaction\Helpers\Request\RequestAppHelpersExtractedTrait;
+
     /**
      * @event Event an event that is triggered when the widget is initialized via [[init()]].
      */
@@ -147,7 +149,7 @@ class Widget extends RequestAppComponent implements ViewContextInterface
     public function getId($autoGenerate = true)
     {
         if ($autoGenerate && $this->_id === null) {
-            $this->_id = static::$autoIdPrefix . $this->hlp->html->counter++;
+            $this->_id = static::$autoIdPrefix . $this->htmlHlp->counter++;
         }
 
         return $this->_id;
