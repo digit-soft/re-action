@@ -100,7 +100,7 @@ class Dropdown extends Widget
                 throw new InvalidConfigException("The 'label' option is required.");
             }
             $encodeLabel = isset($item['encode']) ? $item['encode'] : $this->encodeLabels;
-            $label = $encodeLabel ? $this->hlp->html->encode($item['label']) : $item['label'];
+            $label = $encodeLabel ? $this->htmlHlp->encode($item['label']) : $item['label'];
             $itemOptions = ArrayHelper::getValue($item, 'options', []);
             $linkOptions = ArrayHelper::getValue($item, 'linkOptions', []);
             $itemOptions = ArrayHelper::merge($itemOptions, $linkOptions);
@@ -110,13 +110,13 @@ class Dropdown extends Widget
                 Html::addCssClass($itemOptions, ['widget' => 'dropdown-header']);
                 $content = $this->renderHeader($label);
             } else {
-                $content = $this->hlp->html->a($label, $url, $itemOptions);
+                $content = $this->htmlHlp->a($label, $url, $itemOptions);
             }
 
             $lines[] = $content;
         }
 
-        return $this->hlp->html->tag('div', implode("\n", $lines), $options);
+        return $this->htmlHlp->tag('div', implode("\n", $lines), $options);
     }
 
     /**
@@ -125,7 +125,7 @@ class Dropdown extends Widget
      * @return string
      */
     protected function renderDivider($tag = 'div') {
-        return $this->hlp->html->tag($tag, '', ['class' => 'dropdown-divider']);
+        return $this->htmlHlp->tag($tag, '', ['class' => 'dropdown-divider']);
     }
 
     /**
@@ -135,6 +135,6 @@ class Dropdown extends Widget
      * @return string
      */
     protected function renderHeader($content = '', $tag = 'h6') {
-        return $this->hlp->html->tag($tag, $content, ['class' => 'dropdown-header']);
+        return $this->htmlHlp->tag($tag, $content, ['class' => 'dropdown-header']);
     }
 }

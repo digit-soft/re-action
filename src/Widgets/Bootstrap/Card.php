@@ -52,13 +52,13 @@ class Card extends Widget
     public function run()
     {
         $content = [];
-        $content[] = $this->hlp->html->beginTag($this->tag, $this->options);
+        $content[] = $this->htmlHlp->beginTag($this->tag, $this->options);
         $content[] = $this->renderHeader();
         $content[] = $this->renderHeaderImage();
         $content[] = $this->renderOverlayImage();
         $content[] = $this->renderBody(null, true);
         $content[] = $this->renderFooter();
-        $content[] = $this->hlp->html->endTag($this->tag);
+        $content[] = $this->htmlHlp->endTag($this->tag);
         return implode("\n", $content);
     }
 
@@ -85,7 +85,7 @@ class Card extends Widget
     protected function renderHeaderImage() {
         if(!isset($this->headerImage)) return '';
         Html::addCssClass($this->headerImageOptions, ['widget' => 'card-img-top']);
-        return $this->hlp->html->img($this->headerImage, $this->headerImageOptions);
+        return $this->htmlHlp->img($this->headerImage, $this->headerImageOptions);
     }
 
     /**
@@ -95,7 +95,7 @@ class Card extends Widget
     protected function renderFooterImage() {
         if(!isset($this->footerImage)) return '';
         Html::addCssClass($this->footerImageOptions, ['widget' => 'card-img-bottom']);
-        return $this->hlp->html->img($this->footerImage, $this->footerImageOptions);
+        return $this->htmlHlp->img($this->footerImage, $this->footerImageOptions);
     }
 
     /**
@@ -105,7 +105,7 @@ class Card extends Widget
     protected function renderOverlayImage() {
         if(!isset($this->overlayImage)) return '';
         Html::addCssClass($this->footerImageOptions, ['widget' => 'card-img-bottom']);
-        return $this->hlp->html->img($this->overlayImage, ['class' => 'card-img']);
+        return $this->htmlHlp->img($this->overlayImage, ['class' => 'card-img']);
     }
 
     /**
@@ -143,7 +143,7 @@ class Card extends Widget
         if($includeOb) {
             $bodyContent .= ob_get_clean();
         }
-        return isset($bodyOptions) ? $this->hlp->html->tag($bodyTag, $bodyContent, $bodyOptions) : $bodyContent;
+        return isset($bodyOptions) ? $this->htmlHlp->tag($bodyTag, $bodyContent, $bodyOptions) : $bodyContent;
     }
 
     /**
@@ -155,7 +155,7 @@ class Card extends Widget
         if(isset($this->footerOptions)) {
             Html::addCssClass($this->footerOptions, ['widget' => 'card-footer']);
             $tag = ArrayHelper::remove($this->footerOptions, 'tag', 'div');
-            $footer = $this->hlp->html->tag($tag, $this->footer, $this->footerOptions);
+            $footer = $this->htmlHlp->tag($tag, $this->footer, $this->footerOptions);
         } else {
             $footer = $this->footer;
         }

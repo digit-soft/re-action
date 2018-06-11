@@ -67,7 +67,7 @@ class Alert extends Widget
 
         $this->initOptions();
 
-        echo $this->hlp->html->beginTag('div', $this->options) . "\n";
+        echo $this->htmlHlp->beginTag('div', $this->options) . "\n";
         echo $this->renderBodyBegin() . "\n";
     }
 
@@ -77,7 +77,7 @@ class Alert extends Widget
     public function run()
     {
         echo "\n" . $this->renderBodyEnd();
-        echo "\n" . $this->hlp->html->endTag('div');
+        echo "\n" . $this->htmlHlp->endTag('div');
 
         $this->registerPlugin('alert');
     }
@@ -113,7 +113,7 @@ class Alert extends Widget
                 $closeButton['type'] = 'button';
             }
 
-            return $this->hlp->html->tag($tag, $label, $closeButton);
+            return $this->htmlHlp->tag($tag, $label, $closeButton);
         } else {
             return null;
         }
@@ -125,10 +125,10 @@ class Alert extends Widget
      */
     protected function initOptions()
     {
-        $this->hlp->html->addCssClass($this->options, ['alert']);
+        $this->htmlHlp->addCssClass($this->options, ['alert']);
 
         if ($this->closeButton !== false) {
-            $this->hlp->html->addCssClass($this->options, ['alert-dismissible', 'fade', 'show']);
+            $this->htmlHlp->addCssClass($this->options, ['alert-dismissible', 'fade', 'show']);
             $this->closeButton = array_merge([
                 'data-dismiss' => 'alert',
                 'aria-hidden' => 'true',

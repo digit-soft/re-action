@@ -138,8 +138,8 @@ class Breadcrumbs extends Widget
             }
             $links[] = $this->renderItem($link, isset($link['url']) ? $this->itemTemplate : $this->activeItemTemplate);
         }
-        $list = $this->hlp->html->tag($this->tag, implode('', $links), $this->options);
-        echo $this->hlp->html->tag('nav', $list, ['aria-label' => 'breadcrumb']);
+        $list = $this->htmlHlp->tag($this->tag, implode('', $links), $this->options);
+        echo $this->htmlHlp->tag('nav', $list, ['aria-label' => 'breadcrumb']);
     }
 
     /**
@@ -153,7 +153,7 @@ class Breadcrumbs extends Widget
     {
         $encodeLabel = ArrayHelper::remove($link, 'encode', $this->encodeLabels);
         if (array_key_exists('label', $link)) {
-            $label = $encodeLabel ? $this->hlp->html->encode($link['label']) : $link['label'];
+            $label = $encodeLabel ? $this->htmlHlp->encode($link['label']) : $link['label'];
         } else {
             throw new InvalidConfigException('The "label" element is required for each link.');
         }
@@ -163,7 +163,7 @@ class Breadcrumbs extends Widget
         if (isset($link['url'])) {
             $options = $link;
             unset($options['template'], $options['label'], $options['url']);
-            $link = $this->hlp->html->a($label, $link['url'], $options);
+            $link = $this->htmlHlp->a($label, $link['url'], $options);
         } else {
             $link = $label;
         }

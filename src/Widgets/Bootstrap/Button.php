@@ -40,7 +40,7 @@ class Button extends Widget
     {
         parent::init();
         $this->clientOptions = false;
-        $this->hlp->html->addCssClass($this->options, ['widget' => 'btn']);
+        $this->htmlHlp->addCssClass($this->options, ['widget' => 'btn']);
     }
 
     /**
@@ -49,6 +49,6 @@ class Button extends Widget
     public function run()
     {
         $this->registerPlugin('button');
-        return $this->hlp->html->tag($this->tagName, $this->encodeLabel ? Html::encode($this->label) : $this->label, $this->options);
+        return $this->htmlHlp->tag($this->tagName, $this->encodeLabel ? Html::encode($this->label) : $this->label, $this->options);
     }
 }

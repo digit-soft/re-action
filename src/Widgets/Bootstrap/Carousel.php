@@ -72,9 +72,9 @@ class Carousel extends Widget
         Html::addCssClass($this->options, ['widget' => 'carousel slide']);
         if(isset($this->controls) && empty($this->controls)) {
             $this->controls[] = Html::tag('span', '', ['class' => 'carousel-control-prev-icon'])
-                . $this->hlp->html->tag('span', $this->controlsLabels[0], ['class' => 'sr-only']);
+                . $this->htmlHlp->tag('span', $this->controlsLabels[0], ['class' => 'sr-only']);
             $this->controls[] = Html::tag('span', '', ['class' => 'carousel-control-next-icon'])
-                . $this->hlp->html->tag('span', $this->controlsLabels[1], ['class' => 'sr-only']);
+                . $this->htmlHlp->tag('span', $this->controlsLabels[1], ['class' => 'sr-only']);
         }
     }
 
@@ -85,11 +85,11 @@ class Carousel extends Widget
     {
         $this->registerPlugin('carousel');
         return implode("\n", [
-            $this->hlp->html->beginTag('div', $this->options),
+            $this->htmlHlp->beginTag('div', $this->options),
             $this->renderIndicators(),
             $this->renderItems(),
             $this->renderControls(),
-            $this->hlp->html->endTag('div')
+            $this->htmlHlp->endTag('div')
         ]) . "\n";
     }
 
@@ -108,10 +108,10 @@ class Carousel extends Widget
             if ($i === 0) {
                 Html::addCssClass($options, 'active');
             }
-            $indicators[] = $this->hlp->html->tag('li', '', $options);
+            $indicators[] = $this->htmlHlp->tag('li', '', $options);
         }
 
-        return $this->hlp->html->tag('ol', implode("\n", $indicators), ['class' => 'carousel-indicators']);
+        return $this->htmlHlp->tag('ol', implode("\n", $indicators), ['class' => 'carousel-indicators']);
     }
 
     /**
@@ -125,7 +125,7 @@ class Carousel extends Widget
             $items[] = $this->renderItem($this->items[$i], $i);
         }
 
-        return $this->hlp->html->tag('div', implode("\n", $items), ['class' => 'carousel-inner']);
+        return $this->htmlHlp->tag('div', implode("\n", $items), ['class' => 'carousel-inner']);
     }
 
     /**
@@ -147,7 +147,7 @@ class Carousel extends Widget
             if ($caption !== null) {
                 $captionOptions = ArrayHelper::getValue($item, 'captionOptions', []);
                 Html::addCssClass($captionOptions, ['widget' => 'carousel-caption']);
-                $caption = $this->hlp->html->tag('div', $caption, ['class' => $captionOptions]);
+                $caption = $this->htmlHlp->tag('div', $caption, ['class' => $captionOptions]);
             }
             $options = ArrayHelper::getValue($item, 'options', []);
         } else {
@@ -159,7 +159,7 @@ class Carousel extends Widget
             Html::addCssClass($options, 'active');
         }
 
-        return $this->hlp->html->tag('div', $content . "\n" . $caption, $options);
+        return $this->htmlHlp->tag('div', $content . "\n" . $caption, $options);
     }
 
     /**
@@ -169,11 +169,11 @@ class Carousel extends Widget
     public function renderControls()
     {
         if (isset($this->controls[0], $this->controls[1])) {
-            return $this->hlp->html->a($this->controls[0], '#' . $this->options['id'], [
+            return $this->htmlHlp->a($this->controls[0], '#' . $this->options['id'], [
                 'class' => 'carousel-control-prev',
                 'data-slide' => 'prev',
             ]) . "\n"
-            . $this->hlp->html->a($this->controls[1], '#' . $this->options['id'], [
+            . $this->htmlHlp->a($this->controls[1], '#' . $this->options['id'], [
                 'class' => 'carousel-control-next',
                 'data-slide' => 'next',
             ]);
