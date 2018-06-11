@@ -13,6 +13,7 @@ use Reaction\Helpers\ArrayHelper;
  *
  * ```php
  * echo Carousel::widget([
+ *     'app' => $this->app,
  *     'items' => [
  *         // the item contains only the image
  *         '<img src="http://twitter.github.io/bootstrap/assets/img/bootstrap-mdo-sfmoma-01.jpg"/>',
@@ -71,9 +72,9 @@ class Carousel extends Widget
         Html::addCssClass($this->options, ['widget' => 'carousel slide']);
         if(isset($this->controls) && empty($this->controls)) {
             $this->controls[] = Html::tag('span', '', ['class' => 'carousel-control-prev-icon'])
-                . Html::tag('span', $this->controlsLabels[0], ['class' => 'sr-only']);
+                . $this->hlp->html->tag('span', $this->controlsLabels[0], ['class' => 'sr-only']);
             $this->controls[] = Html::tag('span', '', ['class' => 'carousel-control-next-icon'])
-                . Html::tag('span', $this->controlsLabels[1], ['class' => 'sr-only']);
+                . $this->hlp->html->tag('span', $this->controlsLabels[1], ['class' => 'sr-only']);
         }
     }
 
