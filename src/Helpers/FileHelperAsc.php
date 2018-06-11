@@ -12,6 +12,7 @@ use React\Filesystem\Node\GenericOperationInterface;
 use React\Stream\WritableStreamInterface;
 use Reaction\Promise\Deferred;
 use Reaction\Promise\ExtendedPromiseInterface;
+use Reaction\Promise\Promise;
 use function Reaction\Promise\resolve;
 
 /**
@@ -82,19 +83,37 @@ class FileHelperAsc
     }
 
     /**
+     * Create a file
+     * @param string $filePath
+     * @param int|null   $mode
+     * @param int|null   $time
+     * @return \React\Promise\PromiseInterface
+     */
+    public static function create($filePath, $mode = null, $time = null)
+    {
+        $mode = isset($mode) ? $mode : static::$fileCreateMode;
+        $modeStr = static::permissionsAsString($mode);
+        $time = is_int($time) ? $time : time();
+        $file = static::file($filePath);
+        return $file->create($modeStr, $time);
+    }
+
+    /**
      * Put contents into file
      * @param string|File $filePath
      * @param string      $contents
      * @param string      $openFlags
      * @param bool|int    $lock Lock file for operation and check for a lock OR lock timeout
+     * @param int|null    $createMode
      * @return ExtendedPromiseInterface
      */
-    public static function putContents($filePath, $contents, $openFlags = 'cwt', $lock = true)
+    public static function putContents($filePath, $contents, $openFlags = 'cwt', $lock = true, $createMode = null)
     {
         $lockTimeout = is_int($lock) && !empty($lock) ? $lock : null;
         $lock = !empty($lock);
         $file = static::ensureFileObject($filePath);
-        $createMode = FileHelper::permissionsAsString(static::$fileCreateMode);
+        $createMode = isset($createMode) ? $createMode : static::$fileCreateMode;
+        $createModeStr = FileHelper::permissionsAsString($createMode);
         $unlockCallback = function ($result = null) use ($filePath, $lock) {
             if ($lock) {
                 static::unlock($filePath);
@@ -104,15 +123,13 @@ class FileHelperAsc
             }
             return $result;
         };
-        return static::onUnlock($filePath)->then(
-            function () use (&$file, $filePath, $lockTimeout, $openFlags, $createMode, $lock) {
+        return static::onUnlock($filePath)
+            ->then(function() use (&$file, $filePath, $lockTimeout, $openFlags, $createModeStr, $lock) {
                 if ($lock) {
                     static::lock($filePath, $lockTimeout);
                 }
-                return $file->open($openFlags, $createMode);
-            }
-        )
-            ->then(function (WritableStreamInterface $stream) use(&$file, $contents) {
+                return $file->open($openFlags, $createModeStr);
+            })->then(function(WritableStreamInterface $stream) use (&$file, $contents) {
                 $stream->write($contents);
                 return $file->close();
             })->then($unlockCallback, $unlockCallback);
