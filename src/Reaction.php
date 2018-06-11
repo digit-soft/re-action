@@ -115,12 +115,13 @@ class Reaction
     }
 
     /**
-     * Translate function (Just a placeholder for later i18n implementation)
+     * Translates a message to the specified language.
+     *
      * @param string $domain
      * @param string $message
      * @param array  $params
      * @param string $language
-     * @return mixed
+     * @return string
      */
     public static function t($domain, $message, $params = [], $language = null)
     {
@@ -138,7 +139,7 @@ class Reaction
      */
     public static function getVersion()
     {
-        return '0.2.2';
+        return '0.2.3';
     }
 
     /**

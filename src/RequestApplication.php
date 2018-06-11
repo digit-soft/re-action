@@ -167,4 +167,19 @@ class RequestApplication extends ServiceLocator implements RequestApplicationInt
             throw new InvalidConfigException("Unexpected configuration type for the \"$id\" component: ".gettype($definition));
         }
     }
+
+    /**
+     * Translates a message to the specified language.
+     *
+     * @param string $domain
+     * @param string $message
+     * @param array  $params
+     * @param string $language
+     * @return string
+     */
+    public function t($domain, $message, $params = [], $language = null)
+    {
+        $language = isset($language) ? $language : $this->language;
+        return Reaction::t($domain, $message, $params, $language);
+    }
 }
