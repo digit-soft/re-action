@@ -126,7 +126,7 @@ class MessageController extends Reaction\Console\Routes\Controller
      */
     public $catalog = 'messages';
     /**
-     * @var array message categories to ignore. For example, 'yii', 'app*', 'widgets/menu', etc.
+     * @var array message categories to ignore. For example, 'rct', 'app*', 'widgets.menu', etc.
      * @see isCategoryIgnored
      */
     public $ignoreCategories = [];
