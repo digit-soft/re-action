@@ -124,6 +124,9 @@ class Reaction
      */
     public static function t($domain, $message, $params = [], $language = null)
     {
+        if (static::$app !== null && static::$app->getI18n() !== null) {
+            return static::$app->getI18n()->translate($domain, $message, $params, $language ?: static::$app->language);
+        }
         $_params = [];
         foreach ($params as $key => $value) { $_params['{' . $key . '}'] = $value; }
         return !empty($params) ? strtr($message, $_params) : $message;
@@ -316,9 +319,10 @@ class Reaction
 
     /**
      * Print backtrace
-     * @param bool $withArgs
+     * @param bool $withArgs Show arguments names and content
+     * @param bool $useEcho Use direct call to `echo` function instead of Stream::write()
      */
-    public static function dbg($withArgs = false)
+    public static function dbg($withArgs = false, $useEcho = false)
     {
         \Reaction\Base\Logger\Debugger::backTrace($withArgs, 1);
     }

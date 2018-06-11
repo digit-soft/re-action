@@ -2,6 +2,7 @@
 
 namespace Reaction\Base\Logger;
 
+use React\Stream\WritableStreamInterface;
 use Reaction\Helpers\Console;
 use Reaction\Helpers\StringHelper;
 
@@ -13,10 +14,11 @@ class Debugger
 {
     /**
      * Print backtrace to console
-     * @param bool $withArgs
-     * @param int  $traceShift
+     * @param bool $withArgs Show arguments names and content
+     * @param int  $traceShift Shift trace for number positions
+     * @param bool $useEcho Use direct call to `echo` function instead of Stream::write()
      */
-    public static function backTrace($withArgs = false, $traceShift = 0)
+    public static function backTrace($withArgs = false, $traceShift = 0, $useEcho = false)
     {
         $trace = debug_backtrace();
         if ($traceShift > 0) {
@@ -96,7 +98,13 @@ class Debugger
         }
         $str = "\n" . implode("\n", $functions) . "\n";
         $str .= Console::ansiFormat("Called from " . $called['file'] . ' #' . $called['line'], [Console::FG_YELLOW]) . "\n";
-        echo $str . "\n";
+        if ($useEcho) {
+            echo $str . "\n";
+        } else {
+            /** @var WritableStreamInterface $stream */
+            $stream = \Reaction::create('stdoutWriteStream');
+            $stream->write($str . "\n");
+        }
     }
 
     /**
@@ -113,10 +121,14 @@ class Debugger
         $argsStrLength = 0;
         if (!empty($row['args'])) {
             if (!$isClosure) {
-                $funcRef = isset($row['class']) && $row['class'] !== ""
-                    ? new \ReflectionMethod($row['class'], $row['function'])
-                    : new \ReflectionFunction($row['function']);
-                $funcParams = $funcRef->getParameters();
+                try {
+                    $funcRef = isset($row['class']) && $row['class'] !== ""
+                        ? new \ReflectionMethod($row['class'], $row['function'])
+                        : new \ReflectionFunction($row['function']);
+                    $funcParams = $funcRef->getParameters();
+                } catch (\ReflectionException $exception) {
+                    $funcParams = [];
+                }
             } else {
                 $funcParams = [];
             }
