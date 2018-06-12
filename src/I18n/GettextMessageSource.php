@@ -2,6 +2,9 @@
 namespace Reaction\I18n;
 
 use Reaction;
+use Reaction\Promise\ExtendedPromiseInterface;
+use function Reaction\Promise\reject;
+use function Reaction\Promise\resolve;
 
 /**
  * GettextMessageSource represents a message source that is based on GNU Gettext.
@@ -29,7 +32,7 @@ class GettextMessageSource extends MessageSource
     /**
      * @var string
      */
-    public $catalog = 'Messages';
+    public $catalog = 'messages';
     /**
      * @var bool
      */
@@ -38,6 +41,14 @@ class GettextMessageSource extends MessageSource
      * @var bool
      */
     public $useBigEndian = false;
+    /**
+     * @var array|null All used categories
+     */
+    protected $_categories;
+    /**
+     * @var GettextFile[]
+     */
+    protected $_gettextFiles = [];
 
 
     /**
@@ -51,29 +62,30 @@ class GettextMessageSource extends MessageSource
      *
      * @param string $category the message category
      * @param string $language the target language
-     * @return array the loaded messages. The keys are original messages, and the values are translated messages.
+     * @return ExtendedPromiseInterface with array the loaded messages. The keys are original messages, and the values are translated messages.
      * @see loadFallbackMessages
      * @see sourceLanguage
      */
     protected function loadMessages($category, $language)
     {
         $messageFile = $this->getMessageFilePath($language);
-        $messages = $this->loadMessagesFromFile($messageFile, $category);
+        return $this->loadMessagesFromFile($messageFile, $category)
+            ->otherwise(function() { return null; })
+            ->then(function($messages) use ($category, $language, $messageFile) {
+                $fallbackLanguage = substr($language, 0, 2);
+                $fallbackSourceLanguage = substr($this->sourceLanguage, 0, 2);
 
-        $fallbackLanguage = substr($language, 0, 2);
-        $fallbackSourceLanguage = substr($this->sourceLanguage, 0, 2);
-
-        if ($fallbackLanguage !== $language) {
-            $messages = $this->loadFallbackMessages($category, $fallbackLanguage, $messages, $messageFile);
-        } elseif ($language === $fallbackSourceLanguage) {
-            $messages = $this->loadFallbackMessages($category, $this->sourceLanguage, $messages, $messageFile);
-        } else {
-            if ($messages === null) {
-                Reaction::$app->logger->error("The message file for category '$category' does not exist: $messageFile");
-            }
-        }
-
-        return (array) $messages;
+                if ($fallbackLanguage !== $language) {
+                    return $this->loadFallbackMessages($category, $fallbackLanguage, $messages, $messageFile);
+                } elseif ($language === $fallbackSourceLanguage) {
+                    return $this->loadFallbackMessages($category, $this->sourceLanguage, $messages, $messageFile);
+                } else {
+                    if ($messages === null) {
+                        Reaction::warning("The message file for category '$category' does not exist: $messageFile");
+                    }
+                    return (array)$messages;
+                }
+            });
     }
 
     /**
@@ -86,31 +98,33 @@ class GettextMessageSource extends MessageSource
      * The keys are original messages, and the values are the translated messages.
      * @param string $originalMessageFile the path to the file with messages. Used to log an error message
      * in case when no translations were found.
-     * @return array the loaded messages. The keys are original messages, and the values are the translated messages.
+     * @return ExtendedPromiseInterface with array the loaded messages. The keys are original messages, and the values are the translated messages.
      */
     protected function loadFallbackMessages($category, $fallbackLanguage, $messages, $originalMessageFile)
     {
         $fallbackMessageFile = $this->getMessageFilePath($fallbackLanguage);
-        $fallbackMessages = $this->loadMessagesFromFile($fallbackMessageFile, $category);
-
-        if (
-            $messages === null && $fallbackMessages === null
-            && $fallbackLanguage !== $this->sourceLanguage
-            && $fallbackLanguage !== substr($this->sourceLanguage, 0, 2)
-        ) {
-            Reaction::$app->logger->error("The message file for category '$category' does not exist: $originalMessageFile "
-                . "Fallback file does not exist as well: $fallbackMessageFile");
-        } elseif (empty($messages)) {
-            return $fallbackMessages;
-        } elseif (!empty($fallbackMessages)) {
-            foreach ($fallbackMessages as $key => $value) {
-                if (!empty($value) && empty($messages[$key])) {
-                    $messages[$key] = $fallbackMessages[$key];
+        return $this->loadMessagesFromFile($fallbackMessageFile, $category)
+            ->otherwise(function() { return null; })
+            ->then(function($fallbackMessages) use ($category, $fallbackLanguage, $messages, $originalMessageFile, $fallbackMessageFile) {
+                if (
+                    $messages === null && $fallbackMessages === null
+                    && $fallbackLanguage !== $this->sourceLanguage
+                    && $fallbackLanguage !== substr($this->sourceLanguage, 0, 2)
+                ) {
+                    Reaction::warning("The message file for category '$category' does not exist: $originalMessageFile "
+                        . "Fallback file does not exist as well: $fallbackMessageFile");
+                } elseif (empty($messages)) {
+                    return $fallbackMessages;
+                } elseif (!empty($fallbackMessages)) {
+                    foreach ($fallbackMessages as $key => $value) {
+                        if (!empty($value) && empty($messages[$key])) {
+                            $messages[$key] = $fallbackMessages[$key];
+                        }
+                    }
                 }
-            }
-        }
 
-        return (array) $messages;
+                return (array)$messages;
+            });
     }
 
     /**
@@ -136,24 +150,69 @@ class GettextMessageSource extends MessageSource
      *
      * @param string $messageFile path to message file
      * @param string $category the message category
-     * @return array|null array of messages or null if file not found
+     * @return ExtendedPromiseInterface with array array of messages or null if file not found
      */
     protected function loadMessagesFromFile($messageFile, $category)
     {
-        if (is_file($messageFile)) {
-            if ($this->useMoFile) {
-                $gettextFile = new GettextMoFile(['useBigEndian' => $this->useBigEndian]);
-            } else {
-                $gettextFile = new GettextPoFile();
-            }
-            $messages = $gettextFile->load($messageFile, $category);
-            if (!is_array($messages)) {
-                $messages = [];
-            }
-
-            return $messages;
+        $gettextFile = $this->getGettextFile($messageFile);
+        if ($gettextFile === null) {
+            return reject(new Reaction\Exceptions\Error("Message file '{$messageFile}' not found"));
+        }
+        $messages = $gettextFile->load($category);
+        if (!is_array($messages)) {
+            $messages = [];
         }
 
-        return null;
+        return resolve($messages);
+    }
+
+    /**
+     * Get gettext file class
+     * @param string $messageFile
+     * @return GettextFile|null
+     */
+    protected function getGettextFile($messageFile)
+    {
+        if (isset($this->_gettextFiles[$messageFile])) {
+            return $this->_gettextFiles[$messageFile];
+        }
+        if (!is_file($messageFile)) {
+            return null;
+        }
+        if ($this->useMoFile) {
+            $gettextFile = new GettextMoFile(['filePath' => $messageFile, 'useBigEndian' => $this->useBigEndian]);
+        } else {
+            $gettextFile = new GettextPoFile(['filePath' => $messageFile]);
+        }
+        return $this->_gettextFiles[$messageFile] = $gettextFile;
+    }
+
+    /**
+     * Find all categories used in message source
+     * @return ExtendedPromiseInterface
+     */
+    protected function findAllCategories()
+    {
+        if (isset($this->_categories)) {
+            return resolve($this->_categories);
+        }
+        $languages = Reaction::$app->getI18n()->languages;
+        $messageFiles = [];
+        foreach ($languages as $language) {
+            $messageFiles[] = $this->getMessageFilePath($language);
+        }
+
+        //Use resolve()->then() to convert PromiseInterface to ExtendedPromiseInterface
+        return resolve(true)
+            ->then(function() use ($messageFiles) {
+                $categories = [];
+                foreach ($messageFiles as $messageFile) {
+                    $gettext = $this->getGettextFile($messageFile);
+                    $categories = Reaction\Helpers\ArrayHelper::merge($categories, $gettext->getCategories());
+                }
+                $this->_categories = array_unique($categories);
+                sort($this->_categories);
+                return $this->_categories;
+            });
     }
 }
