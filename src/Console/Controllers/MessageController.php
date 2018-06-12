@@ -805,7 +805,7 @@ EOD;
             $msgs = array_values(array_unique($msgs));
 
             if (is_file($file)) {
-                $existingMessages = $poFile->load($file, $category);
+                $existingMessages = $poFile->load($category, $file);
 
                 sort($msgs);
                 ksort($existingMessages);
@@ -866,7 +866,7 @@ EOD;
             $hasSomethingToWrite = true;
         }
         if ($hasSomethingToWrite) {
-            $poFile->save($file, $merged);
+            $poFile->save($merged, $file);
             $this->stdout("Translation saved.\n", Console::FG_GREEN);
         } else {
             $this->stdout("Nothing to save.\n", Console::FG_GREEN);
@@ -906,7 +906,7 @@ EOD;
         if ($hasSomethingToWrite) {
             return new Promise(function($r, $c) use ($poFile, $merged, $file) {
                 ksort($merged);
-                $poFile->save($file, $merged);
+                $poFile->save($merged, $file);
                 $this->stdout("Translation saved.\n", Console::FG_GREEN);
                 return true;
             });
