@@ -3,6 +3,7 @@
 namespace Reaction\I18n;
 
 use Reaction;
+use Reaction\Exceptions\InvalidConfigException;
 
 /**
  * GettextPoFile represents a PO Gettext message file.
@@ -11,41 +12,39 @@ class GettextPoFile extends GettextFile
 {
     /**
      * Loads messages from a PO file.
-     * @param string $filePath file path
-     * @param string $context message context
+     * @param string      $context message context
+     * @param string|null $filePath file path
      * @return array message translations. Array keys are source messages and array values are translated messages:
      * source message => translated message.
+     * @throws InvalidConfigException
      */
-    public function load($filePath, $context)
+    public function load($context, $filePath = null)
     {
-        $pattern = '/(msgctxt\s+"(.*?(?<!\\\\))")?\s+' // context
-            . 'msgid\s+((?:".*(?<!\\\\)"\s*)+)\s+' // message ID, i.e. original string
-            . 'msgstr\s+((?:".*(?<!\\\\)"\s*)+)/'; // translated string
-        $content = file_get_contents($filePath);
-        $matches = [];
-        $matchCount = preg_match_all($pattern, $content, $matches);
-
-        $messages = [];
-        for ($i = 0; $i < $matchCount; ++$i) {
-            if ($matches[2][$i] === $context) {
-                $id = $this->decode($matches[3][$i]);
-                $message = $this->decode($matches[4][$i]);
-                $messages[$id] = $message;
-            }
+        if (isset($filePath)) {
+            $this->filePath = $filePath;
         }
-
-        return $messages;
+        if (!isset($this->_messages)) {
+            $this->loadAll();
+        }
+        return isset($this->_messages[$context]) ? $this->_messages[$context] : [];
     }
 
     /**
      * Saves messages to a PO file.
-     * @param string $filePath file path
-     * @param array $messages message translations. Array keys are source messages and array values are
+     * @param array       $messages message translations. Array keys are source messages and array values are
      * translated messages: source message => translated message. Note if the message has a context,
      * the message ID must be prefixed with the context with chr(4) as the separator.
+     * @param string|null $filePath file path
+     * @throws InvalidConfigException
      */
-    public function save($filePath, $messages)
+    public function save($messages, $filePath = null)
     {
+        if (!isset($filePath)) {
+            $filePath = $this->filePath;
+        }
+        if (!isset($this->filePath)) {
+            throw new InvalidConfigException("Not specified '\$filePath' parameter");
+        }
         $language = str_replace('-', '_', basename(dirname($filePath)));
         $headers = [
             'msgid ""',
@@ -71,6 +70,52 @@ class GettextPoFile extends GettextFile
             $content .= 'msgstr "' . $this->encode($message) . "\"\n\n";
         }
         file_put_contents($filePath, $content);
+    }
+
+    /**
+     * Get all categories list
+     * @return string[]
+     */
+    public function getCategories()
+    {
+        if (!isset($this->_messages)) {
+            $this->loadAll();
+        }
+        $categories = array_keys($this->_messages);
+        sort($categories);
+        return $categories;
+    }
+
+    /**
+     * Get all messages from file
+     * @return array
+     * @throws InvalidConfigException
+     */
+    protected function loadAll()
+    {
+        if (!isset($this->filePath)) {
+            throw new InvalidConfigException("Not specified '\$filePath' parameter");
+        }
+        $pattern = '/(msgctxt\s+"(.*?(?<!\\\\))")?\s+' // context
+            . 'msgid\s+((?:".*(?<!\\\\)"\s*)+)\s+' // message ID, i.e. original string
+            . 'msgstr\s+((?:".*(?<!\\\\)"\s*)+)/'; // translated string
+        $content = file_get_contents($this->filePath);
+        $matches = [];
+        $matchCount = preg_match_all($pattern, $content, $matches);
+
+        $this->_messages = [];
+
+        for ($i = 0; $i < $matchCount; ++$i) {
+            $id = $this->decode($matches[3][$i]);
+            $message = $this->decode($matches[4][$i]);
+            $context = $matches[2][$i];
+            if (!isset($this->_messages[$context])) {
+                $this->_messages[$context] = [];
+            }
+            $this->_messages[$context][$id] = $message;
+        }
+
+        return $this->_messages;
     }
 
     /**

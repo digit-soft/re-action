@@ -8,6 +8,7 @@
 namespace Reaction\I18n;
 
 use Reaction\Exceptions\Exception;
+use Reaction\Exceptions\InvalidConfigException;
 
 /**
  * GettextMoFile represents an MO Gettext message file.
@@ -51,89 +52,32 @@ class GettextMoFile extends GettextFile
 
     /**
      * Loads messages from an MO file.
-     * @param string $filePath file path
      * @param string $context message context
      * @return array message translations. Array keys are source messages and array values are translated messages:
      * source message => translated message.
+     * @param string|null $filePath file path
      * @throws Exception if unable to read the MO file
      */
-    public function load($filePath, $context)
+    public function load($context, $filePath = null)
     {
-        if (false === ($fileHandle = @fopen($filePath, 'rb'))) {
-            throw new Exception('Unable to read file "' . $filePath . '".');
+        if (isset($filePath)) {
+            $this->filePath = $filePath;
         }
-        if (false === @flock($fileHandle, LOCK_SH)) {
-            throw new Exception('Unable to lock file "' . $filePath . '" for reading.');
+        if (!isset($this->_messages)) {
+            $this->loadAll();
         }
-
-        // magic
-        $array = unpack('c', $this->readBytes($fileHandle, 4));
-        $magic = current($array);
-        if ($magic == -34) {
-            $this->useBigEndian = false;
-        } elseif ($magic == -107) {
-            $this->useBigEndian = true;
-        } else {
-            throw new Exception('Invalid MO file: ' . $filePath . ' (magic: ' . $magic . ').');
-        }
-
-        // revision
-        $revision = $this->readInteger($fileHandle);
-        if ($revision !== 0) {
-            throw new Exception('Invalid MO file revision: ' . $revision . '.');
-        }
-
-        $count = $this->readInteger($fileHandle);
-        $sourceOffset = $this->readInteger($fileHandle);
-        $targetOffset = $this->readInteger($fileHandle);
-
-        $sourceLengths = [];
-        $sourceOffsets = [];
-        fseek($fileHandle, $sourceOffset);
-        for ($i = 0; $i < $count; ++$i) {
-            $sourceLengths[] = $this->readInteger($fileHandle);
-            $sourceOffsets[] = $this->readInteger($fileHandle);
-        }
-
-        $targetLengths = [];
-        $targetOffsets = [];
-        fseek($fileHandle, $targetOffset);
-        for ($i = 0; $i < $count; ++$i) {
-            $targetLengths[] = $this->readInteger($fileHandle);
-            $targetOffsets[] = $this->readInteger($fileHandle);
-        }
-
-        $messages = [];
-        for ($i = 0; $i < $count; ++$i) {
-            $id = $this->readString($fileHandle, $sourceLengths[$i], $sourceOffsets[$i]);
-            $separatorPosition = strpos($id, chr(4));
-
-
-            if ((!$context && $separatorPosition === false) || ($context && $separatorPosition !== false && strncmp($id, $context, $separatorPosition) === 0)) {
-                if ($separatorPosition !== false) {
-                    $id = substr($id, $separatorPosition + 1);
-                }
-
-                $message = $this->readString($fileHandle, $targetLengths[$i], $targetOffsets[$i]);
-                $messages[$id] = $message;
-            }
-        }
-
-        @flock($fileHandle, LOCK_UN);
-        @fclose($fileHandle);
-
-        return $messages;
+        return isset($this->_messages[$context]) ? $this->_messages[$context] : [];
     }
 
     /**
      * Saves messages to an MO file.
-     * @param string $filePath file path
-     * @param array $messages message translations. Array keys are source messages and array values are
+     * @param array       $messages message translations. Array keys are source messages and array values are
      * translated messages: source message => translated message. Note if the message has a context,
      * the message ID must be prefixed with the context with chr(4) as the separator.
+     * @param string|null $filePath file path
      * @throws Exception if unable to save the MO file
      */
-    public function save($filePath, $messages)
+    public function save($messages, $filePath = null)
     {
         if (false === ($fileHandle = @fopen($filePath, 'wb'))) {
             throw new Exception('Unable to write file "' . $filePath . '".');
@@ -271,5 +215,81 @@ class GettextMoFile extends GettextFile
     protected function writeString($fileHandle, $string)
     {
         return $this->writeBytes($fileHandle, $string . "\0");
+    }
+
+    /**
+     * Get all messages from file
+     * @return array
+     * @throws Exception
+     */
+    protected function loadAll()
+    {
+        if (!isset($this->filePath)) {
+            throw new InvalidConfigException("Not specified '\$filePath' parameter");
+        }
+        if (false === ($fileHandle = @fopen($this->filePath, 'rb'))) {
+            throw new Exception('Unable to read file "' . $filePath . '".');
+        }
+        if (false === @flock($fileHandle, LOCK_SH)) {
+            throw new Exception('Unable to lock file "' . $filePath . '" for reading.');
+        }
+
+        // magic
+        $array = unpack('c', $this->readBytes($fileHandle, 4));
+        $magic = current($array);
+        if ($magic == -34) {
+            $this->useBigEndian = false;
+        } elseif ($magic == -107) {
+            $this->useBigEndian = true;
+        } else {
+            throw new Exception('Invalid MO file: ' . $filePath . ' (magic: ' . $magic . ').');
+        }
+
+        // revision
+        $revision = $this->readInteger($fileHandle);
+        if ($revision !== 0) {
+            throw new Exception('Invalid MO file revision: ' . $revision . '.');
+        }
+
+        $count = $this->readInteger($fileHandle);
+        $sourceOffset = $this->readInteger($fileHandle);
+        $targetOffset = $this->readInteger($fileHandle);
+
+        $sourceLengths = [];
+        $sourceOffsets = [];
+        fseek($fileHandle, $sourceOffset);
+        for ($i = 0; $i < $count; ++$i) {
+            $sourceLengths[] = $this->readInteger($fileHandle);
+            $sourceOffsets[] = $this->readInteger($fileHandle);
+        }
+
+        $targetLengths = [];
+        $targetOffsets = [];
+        fseek($fileHandle, $targetOffset);
+        for ($i = 0; $i < $count; ++$i) {
+            $targetLengths[] = $this->readInteger($fileHandle);
+            $targetOffsets[] = $this->readInteger($fileHandle);
+        }
+
+        for ($i = 0; $i < $count; ++$i) {
+            $id = $this->readString($fileHandle, $sourceLengths[$i], $sourceOffsets[$i]);
+            $separatorPosition = strpos($id, chr(4));
+
+            if ($separatorPosition !== false) {
+                $context = substr($id, 0, $separatorPosition);
+                $id = substr($id, $separatorPosition + 1);
+            }
+            if (!isset($context)) {
+                continue;
+            }
+
+            $message = $this->readString($fileHandle, $targetLengths[$i], $targetOffsets[$i]);
+            $this->_messages[$context][$id] = $message;
+        }
+
+        @flock($fileHandle, LOCK_UN);
+        @fclose($fileHandle);
+
+        return $this->_messages;
     }
 }
