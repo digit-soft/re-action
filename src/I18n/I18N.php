@@ -2,9 +2,15 @@
 
 namespace Reaction\I18n;
 
+use React\Promise\PromiseInterface;
 use Reaction;
 use Reaction\Base\Component;
+use Reaction\Base\ComponentAutoloadInterface;
+use Reaction\Base\ComponentInitBlockingInterface;
 use Reaction\Exceptions\InvalidConfigException;
+use function Reaction\Promise\all;
+use function Reaction\Promise\reject;
+use function Reaction\Promise\resolve;
 
 /**
  * I18N provides features related with internationalization (I18N) and localization (L10N).
@@ -16,7 +22,7 @@ use Reaction\Exceptions\InvalidConfigException;
  * message format. Note that the type of this property differs in getter and setter. See
  * [[getMessageFormatter()]] and [[setMessageFormatter()]] for details.
  */
-class I18N extends Component
+class I18N extends Component implements ComponentAutoloadInterface, ComponentInitBlockingInterface
 {
     const DOMAIN_CORE = 'rct';
 
@@ -41,6 +47,14 @@ class I18N extends Component
      * You may override the configuration of both categories.
      */
     public $translations;
+    /**
+     * @var string[] List of used languages to preload messages on init
+     */
+    public $languages = [];
+    /**
+     * @var bool
+     */
+    protected $_initialized = false;
 
 
     /**
@@ -109,7 +123,7 @@ class I18N extends Component
             $result = $formatter->format($message, $params, $language);
             if ($result === false) {
                 $errorMessage = $formatter->getErrorMessage();
-                Reaction::$app->logger->warning("Formatting message for language '$language' failed with error: $errorMessage. The message being formatted was: $message.", __METHOD__);
+                Reaction::warning("Formatting message for language '$language' failed with error: $errorMessage. The message being formatted was: $message.");
 
                 return $message;
             }
@@ -193,5 +207,49 @@ class I18N extends Component
         }
 
         throw new InvalidConfigException("Unable to locate message source for category '$category'.");
+    }
+
+    /**
+     * Init callback. Called by parent container/service/component on init and must return a fulfilled Promise
+     * @return PromiseInterface
+     */
+    public function initComponent()
+    {
+        return resolve(true)
+            ->then(function() {
+                $promises = [];
+                foreach ($this->translations as $category => $config) {
+                    $source = $this->getMessageSource($category);
+                    $promises[] = $source
+                        ->preloadMessages($category, $this->languages)
+                        ->otherwise(function($error) {
+                            echo gettype($error);
+                        });
+                }
+                if (empty($promises)) {
+                    return true;
+                }
+                return all($promises);
+            })->then(function() {
+                $initMessage = sprintf("%s initialized", __CLASS__);
+                if (!Reaction::isConsoleApp()) {
+                    Reaction::info($initMessage);
+                }
+                return $this->_initialized = true;
+            })->otherwise(function($error) {
+                if ($error instanceof \Throwable) {
+                    Reaction::error($error->getMessage());
+                }
+                return reject($error);
+            });
+    }
+
+    /**
+     * Check that component was initialized earlier
+     * @return bool
+     */
+    public function isInitialized()
+    {
+        return $this->_initialized;
     }
 }
