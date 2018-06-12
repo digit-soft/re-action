@@ -1,5 +1,7 @@
 <?php
 
+namespace Reaction\I18n\Migrations;
+
 use Reaction\Db\ConnectionInterface;
 use Reaction\Db\Migration;
 use function Reaction\Promise\allInOrder;
