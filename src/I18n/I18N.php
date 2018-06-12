@@ -63,6 +63,9 @@ class I18N extends Component implements ComponentAutoloadInterface, ComponentIni
     public function init()
     {
         parent::init();
+        if (empty($this->languages)) {
+            $this->languages = [Reaction::$app->language];
+        }
         if (!isset($this->translations['rct']) && !isset($this->translations['rct*'])) {
             $this->translations['rct'] = [
                 'class' => 'Reaction\I18n\PhpMessageSource',
@@ -71,7 +74,7 @@ class I18N extends Component implements ComponentAutoloadInterface, ComponentIni
             ];
         }
 
-        if (!isset($this->translations['app']) && !isset($this->translations['app*'])) {
+        if (!isset($this->translations['app']) && !isset($this->translations['app*']) && !isset($this->translations['*'])) {
             $this->translations['app'] = [
                 'class' => 'Reaction\I18n\PhpMessageSource',
                 'sourceLanguage' => Reaction::$app->sourceLanguage,
