@@ -307,7 +307,19 @@ class Reaction
     {
         $config = static::$config->get('appStatic');
         $config['class'] = StaticApplicationInterface::class;
+        //Use config after creation, so Reaction::$app will be available inside StaticApplicationInterface components
+        $appLateConfig = [];
+        $appLateConfigKeys = ['components'];
+        foreach ($appLateConfigKeys as $appKey) {
+            if (isset($config[$appKey])) {
+                $appLateConfig[$appKey] = $config[$appKey];
+                unset($config[$appKey]);
+            }
+        }
         static::$app = static::create($config);
+        if(!empty($appLateConfig)) {
+            static::configure(static::$app, $appLateConfig);
+        }
     }
 
     /**
@@ -325,6 +337,6 @@ class Reaction
      */
     public static function dbg($withArgs = false, $useEcho = false)
     {
-        \Reaction\Base\Logger\Debugger::backTrace($withArgs, 1);
+        \Reaction\Base\Logger\Debugger::backTrace($withArgs, 1, $useEcho);
     }
 }
