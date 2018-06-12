@@ -42,7 +42,7 @@ class GettextPoFile extends GettextFile
         if (!isset($filePath)) {
             $filePath = $this->filePath;
         }
-        if (!isset($this->filePath)) {
+        if (!isset($filePath)) {
             throw new InvalidConfigException("Not specified '\$filePath' parameter");
         }
         $language = str_replace('-', '_', basename(dirname($filePath)));
