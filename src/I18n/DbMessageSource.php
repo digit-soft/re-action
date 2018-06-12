@@ -29,6 +29,12 @@ use function Reaction\Promise\resolve;
  * console migrate --migrationPath=@reaction/I18n/Migrations/
  * ```
  *
+ * or, if you added 'Reaction\I18n\Migrations' namespace to console 'migrate' controller settings, then just
+ *
+ * ```
+ * console migrate
+ * ```
+ *
  * If you don't want to use migration and need SQL instead, files for all databases are in migrations directory.
  */
 class DbMessageSource extends MessageSource
