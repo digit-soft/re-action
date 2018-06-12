@@ -1,16 +1,17 @@
 <?php
-//TODO: Come back after DB component development
 
 namespace Reaction\I18n;
 
 use Reaction;
+use Reaction\Cache\ExpiringCacheInterface;
 use Reaction\Exceptions\InvalidConfigException;
-use yii\caching\CacheInterface;
-use yii\db\Connection;
-use yii\db\Expression;
-use yii\db\Query;
+use Reaction\Db\DatabaseInterface;
+use Reaction\Db\Expressions\Expression;
+use Reaction\Db\Query;
 use Reaction\DI\Instance;
 use Reaction\Helpers\ArrayHelper;
+use Reaction\Promise\ExtendedPromiseInterface;
+use function Reaction\Promise\resolve;
 
 /**
  * DbMessageSource extends [[MessageSource]] and represents a message source that stores translated
@@ -25,7 +26,7 @@ use Reaction\Helpers\ArrayHelper;
  * The database connection is specified by [[db]]. Database schema could be initialized by applying migration:
  *
  * ```
- * yii migrate --migrationPath=@reaction/I18n/Migrations/
+ * console migrate --migrationPath=@reaction/I18n/Migrations/
  * ```
  *
  * If you don't want to use migration and need SQL instead, files for all databases are in migrations directory.
@@ -33,29 +34,23 @@ use Reaction\Helpers\ArrayHelper;
 class DbMessageSource extends MessageSource
 {
     /**
-     * Prefix which would be used when generating cache key.
-     * @deprecated This constant has never been used and will be removed in 2.1.0.
-     */
-    const CACHE_KEY_PREFIX = 'DbMessageSource';
-
-    /**
-     * @var Connection|array|string the DB connection object or the application component ID of the DB connection.
+     * @var DatabaseInterface|array|string the DB connection object or the application component ID of the DB connection.
      *
      * After the DbMessageSource object is created, if you want to change this property, you should only assign
      * it with a DB connection object.
      *
-     * Starting from version 2.0.2, this can also be a configuration array for creating the object.
+     * This can also be a configuration array for creating the object.
      */
     public $db = 'db';
     /**
-     * @var CacheInterface|array|string the cache object or the application component ID of the cache object.
+     * @var ExpiringCacheInterface|array|string the cache object or the application component ID of the cache object.
      * The messages data will be cached using this cache object.
      * Note, that to enable caching you have to set [[enableCaching]] to `true`, otherwise setting this property has no effect.
      *
      * After the DbMessageSource object is created, if you want to change this property, you should only assign
      * it with a cache object.
      *
-     * Starting from version 2.0.2, this can also be a configuration array for creating the object.
+     * This can also be a configuration array for creating the object.
      * @see cachingDuration
      * @see enableCaching
      */
@@ -70,14 +65,17 @@ class DbMessageSource extends MessageSource
     public $messageTable = '{{%message}}';
     /**
      * @var int the time in seconds that the messages can remain valid in cache.
-     * Use 0 to indicate that the cached data will never expire.
      * @see enableCaching
      */
-    public $cachingDuration = 0;
+    public $cachingDuration = 3600;
     /**
      * @var bool whether to enable caching translated messages
      */
     public $enableCaching = false;
+    /**
+     * @var array|null All used categories
+     */
+    protected $_categories;
 
 
     /**
@@ -89,9 +87,9 @@ class DbMessageSource extends MessageSource
     public function init()
     {
         parent::init();
-        $this->db = Instance::ensure($this->db, Connection::className());
+        $this->db = Instance::ensure($this->db, DatabaseInterface::class);
         if ($this->enableCaching) {
-            $this->cache = Instance::ensure($this->cache, 'yii\caching\CacheInterface');
+            $this->cache = Instance::ensure($this->cache, 'Reaction\Cache\ExpiringCacheInterface');
         }
     }
 
@@ -102,24 +100,29 @@ class DbMessageSource extends MessageSource
      *
      * @param string $category the message category
      * @param string $language the target language
-     * @return array the loaded messages. The keys are original messages, and the values
+     * @return ExtendedPromiseInterface array the loaded messages. The keys are original messages, and the values
      * are translated messages.
      */
     protected function loadMessages($category, $language)
     {
         if ($this->enableCaching) {
-            $key = [
+            $cacheKey = [
                 __CLASS__,
                 $category,
                 $language,
             ];
-            $messages = $this->cache->get($key);
-            if ($messages === false) {
-                $messages = $this->loadMessagesFromDb($category, $language);
-                $this->cache->set($key, $messages, $this->cachingDuration);
-            }
-
-            return $messages;
+            return $this->cache
+                ->get($cacheKey)
+                ->otherwise(function() use ($category, $language, $cacheKey) {
+                    $messages = [];
+                    return $this->loadMessagesFromDb($category, $language)
+                        ->then(function($messagesDb) use (&$messages, $cacheKey) {
+                            $messages = $messagesDb;
+                            return $this->cache->set($cacheKey, $messagesDb, $this->cachingDuration);
+                        })->then(function() use (&$messages) {
+                            return $messages;
+                        });
+                });
         }
 
         return $this->loadMessagesFromDb($category, $language);
@@ -130,7 +133,7 @@ class DbMessageSource extends MessageSource
      * You may override this method to customize the message storage in the database.
      * @param string $category the message category.
      * @param string $language the target language.
-     * @return array the messages loaded from database.
+     * @return ExtendedPromiseInterface with array the messages loaded from database.
      */
     protected function loadMessagesFromDb($category, $language)
     {
@@ -151,9 +154,11 @@ class DbMessageSource extends MessageSource
             $mainQuery->union($this->createFallbackQuery($category, $language, $fallbackSourceLanguage), true);
         }
 
-        $messages = $mainQuery->createCommand($this->db)->queryAll();
-
-        return ArrayHelper::map($messages, 'message', 'translation');
+        return $mainQuery->createCommand($this->db)
+            ->queryAll()
+            ->then(function($messages) {
+                return ArrayHelper::map($messages, 'message', 'translation');
+            });
     }
 
     /**
@@ -165,7 +170,6 @@ class DbMessageSource extends MessageSource
      * @param string $fallbackLanguage the target fallback language
      * @return Query
      * @see loadMessagesFromDb
-     * @since 2.0.7
      */
     protected function createFallbackQuery($category, $language, $fallbackLanguage)
     {
@@ -178,5 +182,24 @@ class DbMessageSource extends MessageSource
             ])->andWhere([
                 'NOT IN', 't2.id', (new Query())->select('[[id]]')->from($this->messageTable)->where(['language' => $language]),
             ]);
+    }
+
+    /**
+     * Find all categories used in message source
+     * @return ExtendedPromiseInterface
+     */
+    protected function findAllCategories()
+    {
+        if (isset($this->_categories)) {
+            return resolve($this->_categories);
+        }
+        return (new Query())->select(['category'])
+            ->from($this->sourceMessageTable)
+            ->orderBy(['category' => SORT_ASC])
+            ->groupBy(['category'])
+            ->column($this->db)
+            ->then(function($categories) {
+                return $this->_categories = $categories;
+            });
     }
 }
