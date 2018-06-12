@@ -1,7 +1,6 @@
 <?php
 
 namespace Reaction\Exceptions;
-use Throwable;
 
 /**
  * Class Exception
@@ -13,7 +12,7 @@ class Exception extends \Exception
      * Exception constructor.
      * @param string         $message
      * @param int            $code
-     * @param Throwable|null $previous
+     * @param \Throwable|null $previous
      */
     public function __construct($message = "", $code = 0, $previous = null)
     {
