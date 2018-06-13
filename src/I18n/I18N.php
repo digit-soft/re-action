@@ -16,7 +16,26 @@ use function Reaction\Promise\resolve;
  * I18N provides features related with internationalization (I18N) and localization (L10N).
  *
  * I18N is configured as an application component in [[\Reaction\StaticApplicationInterface]] by default.
- * You can access that instance via `Reaction::$app->i18n`.
+ * You can access that instance via `Reaction::$app->i18n` || `Reaction::$app->getI18n()`.
+ *
+ * If you are using DbMessageSource, then add database component as dependency so it will init first,
+ * for example:
+ *
+ * ```
+ * ...
+ * //Internationalization
+ *  'i18n' => [
+ *      'class' => 'Reaction\I18n\I18N',
+ *      'languages' => ['uk', 'ru'],
+ *      'translations' => [
+ *          '*' => [
+ *              'class' => 'Reaction\I18n\GettextMessageSource',
+ *              'basePath' => '@app/Messages',
+ *          ],
+ *      ],
+ *      'dependsOn' => ['db'], //'i18n' component depends on 'db' component
+ *  ],
+ * ...
  *
  * @property MessageFormatter $messageFormatter The message formatter to be used to format message via ICU
  * message format. Note that the type of this property differs in getter and setter. See
