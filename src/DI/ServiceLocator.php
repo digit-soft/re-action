@@ -276,6 +276,7 @@ class ServiceLocator extends Component
      */
     public function setComponents(array $components = [])
     {
+        $this->sortComponentByDependencies($components);
         foreach ($components as $id => $component) {
             $this->set($id, $component);
         }
@@ -285,6 +286,7 @@ class ServiceLocator extends Component
      * Load components after init (Function is called manually).
      * Returns a promise which will be resolved after all components are initialized
      * if components implementing ComponentInitBlockingInterface or immediately if not.
+     * Warning: Initializes component one by one in given order
      * @return Reaction\Promise\ExtendedPromiseInterface
      * @throws InvalidConfigException
      * @throws \Reaction\Exceptions\NotInstantiableException
@@ -303,7 +305,9 @@ class ServiceLocator extends Component
                 $component = $this->get($componentName);
             }
             if ($component instanceof ComponentInitBlockingInterface && !$component->isInitialized()) {
-                $promises[] = $component->initComponent()->then(null, function() { return true; });
+                $promises[] = new Reaction\Promise\LazyPromise(function() use ($component) {
+                    return $component->initComponent()->then(null, function() { return true; });
+                });
                 if(Reaction::isDebug()) {
                     Reaction::$app->loop->addTimer(3, function() use ($component, $componentName) {
                         if (!$component->isInitialized()) {
@@ -317,7 +321,7 @@ class ServiceLocator extends Component
             }
         }
         if (!empty($promises)) {
-            return \Reaction\Promise\all($promises);
+            return \Reaction\Promise\allInOrder($promises);
         } else {
             return \Reaction\Promise\resolve(true);
         }
@@ -351,5 +355,37 @@ class ServiceLocator extends Component
             $this->_checkComponentsAutoload = $this instanceof ServiceLocatorAutoloadInterface;
         }
         return $this->_checkComponentsAutoload;
+    }
+
+    /**
+     * Sort components by their dependencies. Used for ComponentInitBlockingInterface loading
+     * @param array $components
+     * @see setComponents()
+     * @see loadComponents()
+     */
+    protected function sortComponentByDependencies(&$components = [])
+    {
+        $dependencies = [];
+        foreach ($components as $id => $definition) {
+            $dependency = is_array($definition) ? ArrayHelper::remove($components[$id], 'dependsOn', []) : [];
+            if (empty($dependency)) {
+                continue;
+            }
+            $dependencies[$id] = (array)$dependency;
+        }
+        uksort($components, function($a, $b) use ($dependencies) {
+            $aDepends = isset($dependencies[$a]) && in_array($b, $dependencies[$a]);
+            $bDepends = isset($dependencies[$b]) && in_array($a, $dependencies[$b]);
+            if ($aDepends && $bDepends) {
+                $class = get_called_class();
+                throw new InvalidConfigException("Circular dependency detected between '$a' and '$b' in '$class'");
+            } elseif ($aDepends) {
+                return 1;
+            } elseif ($bDepends) {
+                return -1;
+            } else {
+                return 0;
+            }
+        });
     }
 }
