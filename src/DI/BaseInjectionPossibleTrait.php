@@ -113,6 +113,6 @@ trait BaseInjectionPossibleTrait
      */
     private function isInjectionCall($value)
     {
-        return strlen($value) > 2 && substr_compare($value, '()', -2, 2);
+        return strlen($value) > 2 && substr_compare($value, '()', -2, 2) === 0;
     }
 }
