@@ -86,11 +86,13 @@ class Url
         $route = (array) $route;
         $route[0] = static::normalizeRoutePath($route[0], $app);
 
+        $urlManager = $app->getUrlManager();
+
         if ($scheme !== false) {
-            return static::getUrlManager()->createAbsoluteUrl($route, is_string($scheme) ? $scheme : null);
+            return $urlManager->createAbsoluteUrl($route, is_string($scheme) ? $scheme : null);
         }
 
-        return static::getUrlManager()->createUrl($route);
+        return $urlManager->createUrl($route);
     }
 
     /**
