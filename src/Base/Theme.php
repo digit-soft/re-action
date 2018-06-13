@@ -78,7 +78,7 @@ class Theme extends Component
 
 
     /**
-     * @return string the base URL (without ending slash) for this theme. All resources of this theme are considered
+     * @return string|null the base URL (without ending slash) for this theme. All resources of this theme are considered
      * to be under this base URL.
      */
     public function getBaseUrl()
@@ -87,7 +87,7 @@ class Theme extends Component
     }
 
     /**
-     * @param string $url the base URL or [path alias](guide:concept-aliases) for this theme. All resources of this theme are considered
+     * @param string|null $url the base URL or [path alias](guide:concept-aliases) for this theme. All resources of this theme are considered
      * to be under this base URL.
      */
     public function setBaseUrl($url)
@@ -98,7 +98,7 @@ class Theme extends Component
     private $_basePath;
 
     /**
-     * @return string the root path of this theme. All resources of this theme are located under this directory.
+     * @return string|null the root path of this theme. All resources of this theme are located under this directory.
      * @see pathMap
      */
     public function getBasePath()
