@@ -3,6 +3,7 @@
 namespace Reaction\Helpers\Request;
 
 use Reaction\Base\RequestAppComponent;
+use Reaction\I18n\TranslationPromise;
 
 /**
  * Class RequestHelperProxy
@@ -87,6 +88,34 @@ class RequestAppHelperProxy extends RequestAppComponent
         }
         if (!isset($arguments[$position]) && $position >= 0 && $position <= $argsCount) {
            $arguments[$position] = $variable;
+        }
+    }
+
+    /**
+     * Ensure that string is not a Translation promise
+     * @param string|$string
+     */
+    protected function ensureTranslated(&$string)
+    {
+        if (is_object($string) && $string instanceof TranslationPromise) {
+            $string = $string->translate($this->app->language);
+        }
+    }
+
+    protected function ensureTranslatedArray(&$array, $path = null)
+    {
+        $checkValues = isset($path) ? \Reaction\Helpers\ArrayHelper::getValue($array, $path) : $array;
+        if (!is_array($checkValues) || empty($checkValues)) {
+            return;
+        }
+        foreach ($checkValues as $key => $value) {
+            $this->ensureTranslated($value);
+            $checkValues[$key] = $value;
+        }
+        if (isset($path)) {
+            \Reaction\Helpers\ArrayHelper::setValue($array, $path, $checkValues);
+        } else {
+            $array = $checkValues;
         }
     }
 }

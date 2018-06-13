@@ -35,6 +35,7 @@ class HtmlHelper extends RequestAppHelperProxy
      */
     public function encode($content, $doubleEncode = true, $encoding = null)
     {
+        $this->ensureTranslated($content);
         return $this->proxyWithCharset(__FUNCTION__, [$content, $doubleEncode, $encoding]);
     }
 
@@ -49,6 +50,7 @@ class HtmlHelper extends RequestAppHelperProxy
      */
     public function decode($content)
     {
+        $this->ensureTranslated($content);
         return $this->proxy(__FUNCTION__, [$content]);
     }
 
@@ -74,6 +76,7 @@ class HtmlHelper extends RequestAppHelperProxy
      */
     public function tag($name, $content = '', $options = [], $encoding = null)
     {
+        $this->ensureTranslated($content);
         return $this->proxyWithCharset(__FUNCTION__, [$name, $content, $options, $encoding]);
     }
 
@@ -264,6 +267,7 @@ class HtmlHelper extends RequestAppHelperProxy
      */
     public function a($text, $url = null, $options = [], $encoding = null)
     {
+        $this->ensureTranslated($text);
         $arguments = [$text, $url, $options, $encoding];
         $this->injectVariableToArguments($this->app->charset, $arguments, -1);
         $arguments[] = $this->app;
@@ -287,6 +291,8 @@ class HtmlHelper extends RequestAppHelperProxy
      */
     public function mailto($text, $email = null, $options = [], $encoding = null)
     {
+        $this->ensureTranslated($text);
+        $this->ensureTranslated($email);
         return $this->proxyWithCharset(__FUNCTION__, [$text, $email, $options, $encoding]);
     }
 
@@ -329,6 +335,7 @@ class HtmlHelper extends RequestAppHelperProxy
      */
     public function label($content, $for = null, $options = [], $encoding = null)
     {
+        $this->ensureTranslated($content);
         return $this->proxyWithCharset(__FUNCTION__, [$content, $for, $options, $encoding]);
     }
 
@@ -347,6 +354,7 @@ class HtmlHelper extends RequestAppHelperProxy
      */
     public function button($content = 'Button', $options = [], $encoding = null)
     {
+        $this->ensureTranslated($content);
         return $this->proxyWithCharset(__FUNCTION__, [$content, $options, $encoding]);
     }
 
@@ -369,6 +377,7 @@ class HtmlHelper extends RequestAppHelperProxy
      */
     public function submitButton($content = 'Submit', $options = [], $encoding = null)
     {
+        $this->ensureTranslated($content);
         return $this->proxyWithCharset(__FUNCTION__, [$content, $options, $encoding]);
     }
 
@@ -387,6 +396,7 @@ class HtmlHelper extends RequestAppHelperProxy
      */
     public function resetButton($content = 'Reset', $options = [], $encoding = null)
     {
+        $this->ensureTranslated($content);
         return $this->proxyWithCharset(__FUNCTION__, [$content, $options, $encoding]);
     }
 
@@ -421,6 +431,7 @@ class HtmlHelper extends RequestAppHelperProxy
      */
     public function buttonInput($label = 'Button', $options = [], $encoding = null)
     {
+        $this->ensureTranslated($label);
         return $this->proxyWithCharset(__FUNCTION__, [$label, $options, $encoding]);
     }
 
@@ -441,6 +452,7 @@ class HtmlHelper extends RequestAppHelperProxy
      */
     public function submitInput($label = 'Submit', $options = [], $encoding = null)
     {
+        $this->ensureTranslated($label);
         return $this->proxyWithCharset(__FUNCTION__, [$label, $options, $encoding]);
     }
 
@@ -456,6 +468,7 @@ class HtmlHelper extends RequestAppHelperProxy
      */
     public function resetInput($label = 'Reset', $options = [], $encoding = null)
     {
+        $this->ensureTranslated($label);
         return $this->proxyWithCharset(__FUNCTION__, [$label, $options, $encoding]);
     }
 
@@ -632,6 +645,7 @@ class HtmlHelper extends RequestAppHelperProxy
      */
     public function dropDownList($name, $selection = null, $items = [], $options = [], $encoding = null)
     {
+        $this->ensureTranslatedArray($items);
         return $this->proxyWithCharset(__FUNCTION__, [$name, $selection, $items, $options, $encoding]);
     }
 
@@ -686,6 +700,7 @@ class HtmlHelper extends RequestAppHelperProxy
      */
     public function listBox($name, $selection = null, $items = [], $options = [], $encoding = null)
     {
+        $this->ensureTranslatedArray($items);
         return $this->proxyWithCharset(__FUNCTION__, [$name, $selection, $items, $options, $encoding]);
     }
 
@@ -727,6 +742,7 @@ class HtmlHelper extends RequestAppHelperProxy
      */
     public function checkboxList($name, $selection = null, $items = [], $options = [], $encoding = null)
     {
+        $this->ensureTranslatedArray($items);
         return $this->proxyWithCharset(__FUNCTION__, [$name, $selection, $items, $options, $encoding]);
     }
 
@@ -767,6 +783,7 @@ class HtmlHelper extends RequestAppHelperProxy
      */
     public function radioList($name, $selection = null, $items = [], $options = [], $encoding = null)
     {
+        $this->ensureTranslatedArray($items);
         return $this->proxyWithCharset(__FUNCTION__, [$name, $selection, $items, $options, $encoding]);
     }
 
@@ -799,6 +816,7 @@ class HtmlHelper extends RequestAppHelperProxy
      */
     public function ul($items, $options = [], $encoding = null)
     {
+        $this->ensureTranslatedArray($items);
         return $this->proxyWithCharset(__FUNCTION__, [$items, $options, $encoding]);
     }
 
@@ -829,6 +847,7 @@ class HtmlHelper extends RequestAppHelperProxy
      */
     public function ol($items, $options = [], $encoding = null)
     {
+        $this->ensureTranslatedArray($items);
         return $this->proxyWithCharset(__FUNCTION__, [$items, $options, $encoding]);
     }
 
@@ -855,7 +874,13 @@ class HtmlHelper extends RequestAppHelperProxy
      */
     public function activeLabel($model, $attribute, $options = [], $encoding = null)
     {
-        return $this->proxyWithCharset(__FUNCTION__, [$model, $attribute, $options, $encoding]);
+        if(!isset($encoding)) {
+            $encoding = $this->app->charset;
+        }
+        $for = \Reaction\Helpers\ArrayHelper::remove($options, 'for', $this->getInputId($model, $attribute));
+        $attribute = $this->getAttributeName($attribute);
+        $label = \Reaction\Helpers\ArrayHelper::remove($options, 'label', $this->encode($model->getAttributeLabel($attribute), true, $encoding));
+        return $this->label($label, $for, $options, $encoding);
     }
 
     /**
@@ -882,7 +907,14 @@ class HtmlHelper extends RequestAppHelperProxy
      */
     public function activeHint($model, $attribute, $options = [], $encoding = null)
     {
-        return $this->proxyWithCharset(__FUNCTION__, [$model, $attribute, $options, $encoding]);
+        $attribute = $this->getAttributeName($attribute);
+        $hint = isset($options['hint']) ? $options['hint'] : $model->getAttributeHint($attribute);
+        if (empty($hint)) {
+            return '';
+        }
+        $tag = \Reaction\Helpers\ArrayHelper::remove($options, 'tag', 'div');
+        unset($options['hint']);
+        return $this->tag($tag, $hint, $options, $encoding);
     }
 
     /**
@@ -1223,6 +1255,7 @@ class HtmlHelper extends RequestAppHelperProxy
      */
     public function activeListBox($model, $attribute, $items, $options = [], $encoding = null)
     {
+        $this->ensureTranslatedArray($items);
         return $this->proxyWithCharset(__FUNCTION__, [$model, $attribute, $items, $options, $encoding]);
     }
 
@@ -1268,6 +1301,7 @@ class HtmlHelper extends RequestAppHelperProxy
      */
     public function activeCheckboxList($model, $attribute, $items, $options = [], $encoding = null)
     {
+        $this->ensureTranslatedArray($items);
         return $this->proxyWithCharset(__FUNCTION__, [$model, $attribute, $items, $options, $encoding]);
     }
 
@@ -1312,6 +1346,7 @@ class HtmlHelper extends RequestAppHelperProxy
      */
     public function activeRadioList($model, $attribute, $items, $options = [], $encoding = null)
     {
+        $this->ensureTranslatedArray($items);
         return $this->proxyWithCharset(__FUNCTION__, [$model, $attribute, $items, $options, $encoding]);
     }
 
@@ -1328,9 +1363,11 @@ class HtmlHelper extends RequestAppHelperProxy
      *
      * @return string generated HTML
      * @see http://getbootstrap.com/css/#forms-controls-static
+     * @see Html::staticControl()
      */
     public function staticControl($value, $options = [])
     {
+        $this->ensureTranslated($value);
         return $this->proxy(__FUNCTION__, [$value, $options]);
     }
 
@@ -1342,9 +1379,13 @@ class HtmlHelper extends RequestAppHelperProxy
      * @param array $options the tag options in terms of name-value pairs. See [[staticControl()]] for details.
      * @return string generated HTML
      * @see staticControl()
+     * @see Html::activeStaticControl()
      */
     public function activeStaticControl($model, $attribute, $options = [])
     {
+        if (isset($options['value'])) {
+            $this->ensureTranslated($options['value']);
+        }
         return $this->proxy(__FUNCTION__, [$model, $attribute, $options]);
     }
 
@@ -1369,6 +1410,7 @@ class HtmlHelper extends RequestAppHelperProxy
      */
     public function renderSelectOptions($selection, $items, &$tagOptions = [], $encoding = null)
     {
+        $this->ensureTranslatedArray($items);
         return $this->proxyWithCharset(__FUNCTION__, [$selection, $items, &$tagOptions, $encoding]);
     }
 
