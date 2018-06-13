@@ -37,29 +37,11 @@ use Reaction\Helpers\HtmlPurifier;
  */
 class Formatter extends Component
 {
-    /**
-     * @since 2.0.13
-     */
     const UNIT_SYSTEM_METRIC = 'metric';
-    /**
-     * @since 2.0.13
-     */
     const UNIT_SYSTEM_IMPERIAL = 'imperial';
-    /**
-     * @since 2.0.13
-     */
     const FORMAT_WIDTH_LONG = 'long';
-    /**
-     * @since 2.0.13
-     */
     const FORMAT_WIDTH_SHORT = 'short';
-    /**
-     * @since 2.0.13
-     */
     const UNIT_LENGTH = 'length';
-    /**
-     * @since 2.0.13
-     */
     const UNIT_WEIGHT = 'mass';
 
     /**
