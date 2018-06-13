@@ -4,7 +4,6 @@ namespace Reaction\Base;
 
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\IndexedReader;
-use Doctrine\Common\Annotations\SimpleAnnotationReader;
 use Reaction\Exceptions\InvalidArgumentException;
 use Reaction\Helpers\ClassFinderHelper;
 use Reaction\Helpers\ReflectionHelper;
@@ -12,7 +11,7 @@ use Reaction\Helpers\ReflectionHelper;
 /**
  * Class AnnotationsReader
  * @package Reaction\Base
- * @property SimpleAnnotationReader $reader
+ * @property AnnotationReader|IndexedReader $reader
  */
 class AnnotationsReader extends BaseObject
 {
@@ -20,8 +19,10 @@ class AnnotationsReader extends BaseObject
         'Reaction\Annotations',
     ];
     /** @var string Annotation reader class name */
-    public $readerClass = 'Doctrine\Common\Annotations\SimpleAnnotationReader';
-    /** @var SimpleAnnotationReader Annotation reader */
+    public $readerClass = 'Doctrine\Common\Annotations\AnnotationReader';
+    /**
+     * @var AnnotationReader|IndexedReader Annotation reader
+     */
     protected $_reader;
     /** @var array Cached annotations */
     protected $_cache = [];
@@ -39,6 +40,7 @@ class AnnotationsReader extends BaseObject
         if (!$refresh && $this->cacheExists($cacheKey)) {
             return $this->getFromCache($cacheKey);
         }
+        /** @var array|null $annotations */
         $annotations = $this->reader->getClassAnnotations($reflector);
         $annotations = is_array($annotations) ? $annotations : [];
         $this->setToCache($cacheKey, $annotations);
@@ -78,6 +80,7 @@ class AnnotationsReader extends BaseObject
         if (!$refresh && $this->cacheExists($cacheKey)) {
             return $this->getFromCache($cacheKey);
         }
+        /** @var array|null $annotations */
         $annotations = $this->reader->getPropertyAnnotations($propertyReflection);
         $annotations = is_array($annotations) ? $annotations : [];
         $this->setToCache($cacheKey, $annotations);
@@ -118,6 +121,7 @@ class AnnotationsReader extends BaseObject
         if (!$refresh && $this->cacheExists($cacheKey)) {
             return $this->getFromCache($cacheKey);
         }
+        /** @var array|null $annotations */
         $annotations = $this->reader->getMethodAnnotations($methodReflection);
         $annotations = is_array($annotations) ? $annotations : [];
         $this->setToCache($cacheKey, $annotations);
