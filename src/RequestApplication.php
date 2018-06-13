@@ -26,7 +26,7 @@ class RequestApplication extends ServiceLocator implements RequestApplicationInt
     /**
      * @var string Application request language
      */
-    public $language = 'en_US';
+    public $language = 'en-US';
     /**
      * @var string Application home URL
      */

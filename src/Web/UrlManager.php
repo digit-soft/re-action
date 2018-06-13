@@ -37,7 +37,7 @@ use Reaction\Helpers\Url;
  * @property string $scriptUrl The entry script URL that is used by [[createUrl()]] to prepend to created
  * URLs.
  */
-class UrlManager extends RequestAppComponent
+class UrlManager extends RequestAppComponent implements Reaction\Base\ComponentAutoloadInterface
 {
     /**
      * @var array the rules for creating and parsing URLs when [[enablePrettyUrl]] is `true`.
@@ -130,6 +130,30 @@ class UrlManager extends RequestAppComponent
     public function init()
     {
         parent::init();
+        $this->processRequest();
+    }
+
+    /**
+     * Process current request
+     */
+    protected function processRequest()
+    {
+        if (!Reaction::$app->getI18n()->detectLanguageByUrl) {
+            return;
+        }
+        $langPrefixes = Reaction::$app->getI18n()->languagePrefixes;
+        $rawUrl = trim($this->app->reqHelper->getPathInfo(), '/');
+        $requestPrefix = '';
+        $rawUrlParts = explode('/', $rawUrl);
+        if (!empty($rawUrlParts) && isset($langPrefixes[$rawUrlParts[0]])) {
+            $requestPrefix = $rawUrlParts[0];
+            $this->baseUrl = $requestPrefix;
+            array_shift($rawUrlParts);
+        }
+        $rawUrl = '/' . trim(implode('/', $rawUrlParts), '/');
+        $requestLanguage = $langPrefixes[$requestPrefix];
+        $this->app->reqHelper->setPathInfo($rawUrl);
+        $this->app->language = $requestLanguage;
     }
 
     /**
@@ -189,7 +213,10 @@ class UrlManager extends RequestAppComponent
         }
 
         $route = ltrim($route, '/');
-        return "$baseUrl/{$route}{$anchor}";
+        $url = "{$baseUrl}/{$route}";
+        $url = $url !== "/" ? rtrim($url, '/') : $url;
+
+        return "{$url}{$anchor}";
     }
 
     /**
@@ -253,7 +280,7 @@ class UrlManager extends RequestAppComponent
      */
     public function setBaseUrl($value)
     {
-        $this->_baseUrl = $value === null ? null : rtrim(Reaction::$app->getAlias($value), '/');
+        $this->_baseUrl = $value === null ? null : '/' . trim(Reaction::$app->getAlias($value), '/');
     }
 
     /**

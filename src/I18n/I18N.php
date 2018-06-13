@@ -79,6 +79,10 @@ class I18N extends Component implements ComponentAutoloadInterface, ComponentIni
      */
     public $languagePrefixes = ['' => 'uk'];
     /**
+     * @var bool Detect application language by URL prefix or not
+     */
+    public $detectLanguageByUrl = true;
+    /**
      * @var bool
      */
     protected $_initialized = false;

@@ -757,7 +757,7 @@ class RequestHelper extends RequestAppComponent
      */
     public function setPathInfo($value)
     {
-        $this->_pathInfo = $value === null ? null : ltrim($value, '/');
+        $this->_pathInfo = $value === null ? null : trim($value);
     }
 
     /**

@@ -30,6 +30,7 @@ return [
                 'class' => 'Reaction\Routes\UrlManagerInterface',
                 'baseUrl' => '',
                 'hostInfo' => 'http://vitrager.loc',
+                'dependsOn' => ['i18n'],
             ],
             'logger' => 'stdioLogger',
             'formatter' => 'formatterDefault',
@@ -145,10 +146,6 @@ return [
             //Default array cache
             'arrayCacheDefault' => [
                 'class' => 'Reaction\Cache\ArrayExpiringCache'
-            ],
-            //Session handler
-            'fileSystemDefault' => [
-                'class' => 'React\Filesystem\FilesystemInterface',
             ],
         ],
     ],
