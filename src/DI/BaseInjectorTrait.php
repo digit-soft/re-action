@@ -1,6 +1,7 @@
 <?php
 
 namespace Reaction\DI;
+use Reaction\Events\EventEmitterWildcardInterface;
 
 /**
  * Trait BaseInjectorTrait
@@ -103,4 +104,22 @@ trait BaseInjectorTrait
             }
         });
     }
+
+    /**
+     * Remove all listeners for event
+     * Class must implement EventEmitterInterface or EventEmitterWildcardInterface!
+     * @param string $event
+     * @see EventEmitterWildcardInterface::removeAllListeners()
+     */
+    abstract public function removeAllListeners($event = null);
+
+    /**
+     * Register event listener
+     * Class must implement EventEmitterInterface or EventEmitterWildcardInterface!
+     * @param string $event
+     * @param callable $listener
+     * @return $this
+     * @see EventEmitterWildcardInterface::on()
+     */
+    abstract public function on($event, callable $listener);
 }
