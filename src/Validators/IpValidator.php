@@ -264,7 +264,7 @@ class IpValidator extends Validator
      */
     public function setRanges($ranges)
     {
-        $this->_ranges = $this->prepareRanges((array) $ranges);
+        $this->_ranges = $this->prepareRanges((array)$ranges);
     }
 
     /**
@@ -558,8 +558,8 @@ class IpValidator extends Validator
             'ipv4Pattern' => new JsExpression(Html::escapeJsRegularExpression($this->ipv4Pattern)),
             'ipv6Pattern' => new JsExpression(Html::escapeJsRegularExpression($this->ipv6Pattern)),
             'messages' => $messages,
-            'ipv4' => (bool) $this->ipv4,
-            'ipv6' => (bool) $this->ipv6,
+            'ipv4' => (bool)$this->ipv4,
+            'ipv6' => (bool)$this->ipv6,
             'ipParsePattern' => new JsExpression(Html::escapeJsRegularExpression($this->getIpParsePattern())),
             'negation' => $this->negation,
             'subnet' => $this->subnet,

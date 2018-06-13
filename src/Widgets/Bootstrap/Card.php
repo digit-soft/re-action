@@ -67,7 +67,9 @@ class Card extends Widget
      * @return string
      */
     protected function renderHeader() {
-        if(!isset($this->header)) return '';
+        if (!isset($this->header)) {
+            return '';
+        }
         if(isset($this->headerOptions)) {
             Html::addCssClass($this->headerOptions, ['widget' => 'card-header']);
             $tag = ArrayHelper::remove($this->headerOptions, 'tag', 'div');
@@ -83,7 +85,9 @@ class Card extends Widget
      * @return string
      */
     protected function renderHeaderImage() {
-        if(!isset($this->headerImage)) return '';
+        if (!isset($this->headerImage)) {
+            return '';
+        }
         Html::addCssClass($this->headerImageOptions, ['widget' => 'card-img-top']);
         return $this->htmlHlp->img($this->headerImage, $this->headerImageOptions);
     }
@@ -93,7 +97,9 @@ class Card extends Widget
      * @return string
      */
     protected function renderFooterImage() {
-        if(!isset($this->footerImage)) return '';
+        if (!isset($this->footerImage)) {
+            return '';
+        }
         Html::addCssClass($this->footerImageOptions, ['widget' => 'card-img-bottom']);
         return $this->htmlHlp->img($this->footerImage, $this->footerImageOptions);
     }
@@ -103,7 +109,9 @@ class Card extends Widget
      * @return string
      */
     protected function renderOverlayImage() {
-        if(!isset($this->overlayImage)) return '';
+        if (!isset($this->overlayImage)) {
+            return '';
+        }
         Html::addCssClass($this->footerImageOptions, ['widget' => 'card-img-bottom']);
         return $this->htmlHlp->img($this->overlayImage, ['class' => 'card-img']);
     }
@@ -122,7 +130,9 @@ class Card extends Widget
             $bodyRows = [];
             foreach ($body as $bodyRow) {
                 $bodyRowContent = $this->renderBody($bodyRow);
-                if(empty($bodyRowContent)) continue;
+                if (empty($bodyRowContent)) {
+                    continue;
+                }
                 $bodyRows[] = $bodyRowContent;
             }
             $bodyContent = implode("\n", $bodyRows);
@@ -151,7 +161,9 @@ class Card extends Widget
      * @return string
      */
     protected function renderFooter() {
-        if(!isset($this->footer)) return '';
+        if (!isset($this->footer)) {
+            return '';
+        }
         if(isset($this->footerOptions)) {
             Html::addCssClass($this->footerOptions, ['widget' => 'card-footer']);
             $tag = ArrayHelper::remove($this->footerOptions, 'tag', 'div');

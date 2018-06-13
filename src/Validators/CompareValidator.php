@@ -184,11 +184,11 @@ class CompareValidator extends Validator
     protected function compareValues($operator, $type, $value, $compareValue)
     {
         if ($type === self::TYPE_NUMBER) {
-            $value = (float) $value;
-            $compareValue = (float) $compareValue;
+            $value = (float)$value;
+            $compareValue = (float)$compareValue;
         } else {
-            $value = (string) $value;
-            $compareValue = (string) $compareValue;
+            $value = (string)$value;
+            $compareValue = (string)$compareValue;
         }
         switch ($operator) {
             case '==':

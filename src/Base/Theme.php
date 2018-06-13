@@ -137,7 +137,7 @@ class Theme extends Component
             $from = FileHelper::normalizePath(Reaction::$app->getAlias($from)) . DIRECTORY_SEPARATOR;
             if (strpos($path, $from) === 0) {
                 $n = strlen($from);
-                foreach ((array) $tos as $to) {
+                foreach ((array)$tos as $to) {
                     $to = FileHelper::normalizePath(Reaction::$app->getAlias($to)) . DIRECTORY_SEPARATOR;
                     $file = $to . substr($path, $n);
                     if (is_file($file)) {

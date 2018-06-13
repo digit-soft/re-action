@@ -153,7 +153,9 @@ class SessionArchiveInFiles extends SessionArchiveAbstract
                 $expiredTime = time() - $lifeTime;
                 foreach ($list as $node) {
                     /** @var FileInterface $node */
-                    if (!($node instanceof FileInterface)) continue;
+                    if (!($node instanceof FileInterface)) {
+                        continue;
+                    }
                     $promises[] = $node->time()->then(
                         function($data) use ($expiredTime, $node) {
                             /** @var \DateTime $date */

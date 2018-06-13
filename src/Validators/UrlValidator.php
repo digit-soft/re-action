@@ -90,7 +90,7 @@ class UrlValidator extends Validator
             }
 
             if ($this->enableIDN) {
-                $value = preg_replace_callback('/:\/\/([^\/]+)/', function ($matches) {
+                $value = preg_replace_callback('/:\/\/([^\/]+)/', function($matches) {
                     return '://' . $this->idnToAscii($matches[1]);
                 }, $value);
             }
@@ -138,7 +138,7 @@ class UrlValidator extends Validator
             'message' => $this->formatMessage($this->message, [
                 'attribute' => $model->getAttributeLabel($attribute),
             ]),
-            'enableIDN' => (bool) $this->enableIDN,
+            'enableIDN' => (bool)$this->enableIDN,
         ];
         if ($this->skipOnEmpty) {
             $options['skipOnEmpty'] = 1;

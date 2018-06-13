@@ -114,7 +114,7 @@ class RangeValidator extends Validator
     {
         $range = [];
         foreach ($this->range as $value) {
-            $range[] = (string) $value;
+            $range[] = (string)$value;
         }
         $options = [
             'range' => $range,

@@ -11,6 +11,7 @@ return [
         'charset' => 'utf-8',
         'hostname' => '127.0.0.1',
         'port' => 4000,
+        'language' => 'uk',
         //Initial app aliases
         'aliases' => [
             '@root' => getcwd(),
@@ -40,7 +41,22 @@ return [
                 'class' => 'Reaction\Web\Sessions\SessionHandlerInterface',
                 'archive' => 'Reaction\Web\Sessions\SessionArchiveInterface',
             ],
-            'fs' => 'fileSystemDefault',
+            //File system
+            'fs' => [
+                'class' => 'React\Filesystem\FilesystemInterface',
+            ],
+            //Internationalization
+            'i18n' => [
+                'class' => 'Reaction\I18n\I18N',
+                'languages' => ['uk', 'ru'],
+                'translations' => [
+                    '*' => [
+                        'class' => 'Reaction\I18n\GettextMessageSource',
+                        'basePath' => '@app/Messages',
+                    ],
+                ],
+            ],
+            //Database
             'db' => [
                 'class' => 'Reaction\Db\Pgsql\Database',
                 'username' => 'reaction',

@@ -164,10 +164,12 @@ class Progress extends Widget
         ];
         $options = array_merge($defaultOptions, $options);
         Html::addCssClass($options, ['widget' => 'progress-bar']);
-        if($animated)
+        if ($animated) {
             Html::addCssClass($options, ['animated' => 'progress-bar-animated']);
-        if($striped)
+        }
+        if ($striped) {
             Html::addCssClass($options, ['striped' => 'progress-bar-striped']);
+        }
 
         $out = $this->htmlHlp->beginTag('div', $options);
         $out .= $label;

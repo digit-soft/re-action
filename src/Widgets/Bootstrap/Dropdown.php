@@ -89,8 +89,11 @@ class Dropdown extends Widget
         $lines = [];
         foreach ($items as $item) {
             if (is_string($item)) {
-                if($item === static::DIVIDER) $lines[] = $this->renderDivider();
-                else $lines[] = $item;
+                if ($item === static::DIVIDER) {
+                    $lines[] = $this->renderDivider();
+                } else {
+                    $lines[] = $item;
+                }
                 continue;
             }
             if (isset($item['visible']) && !$item['visible']) {

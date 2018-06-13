@@ -436,7 +436,7 @@ class View extends \Reaction\Base\View implements Reaction\Base\RequestAppCompon
                 'baseUrl' => '',
                 'css' => [strncmp($url, '//', 2) === 0 ? $url : ltrim($url, '/')],
                 'cssOptions' => $options,
-                'depends' => (array) $depends,
+                'depends' => (array)$depends,
             ]);
             $this->registerAssetBundle($key);
         }
@@ -510,7 +510,7 @@ class View extends \Reaction\Base\View implements Reaction\Base\RequestAppCompon
                 'baseUrl' => '',
                 'js' => [strncmp($url, '//', 2) === 0 ? $url : ltrim($url, '/')],
                 'jsOptions' => $options,
-                'depends' => (array) $depends,
+                'depends' => (array)$depends,
             ]);
             $this->registerAssetBundle($key);
         }
