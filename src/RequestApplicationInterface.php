@@ -8,6 +8,7 @@ use Reaction\Base\ErrorHandler;
 use Reaction\DI\ServiceLocator;
 use Reaction\Events\EventEmitterWildcardInterface;
 use Reaction\Helpers\Request\HelpersGroup;
+use Reaction\I18n\TranslatorInterface;
 use Reaction\Routes\RouteInterface;
 use Reaction\Web\AssetManager;
 use Reaction\Web\RequestHelper;
@@ -35,7 +36,7 @@ use Reaction\Web\View;
  * @property HelpersGroup             $helpers
  * @property ErrorHandler             $errorHandler
  */
-interface RequestApplicationInterface extends EventEmitterWildcardInterface
+interface RequestApplicationInterface extends EventEmitterWildcardInterface, TranslatorInterface
 {
     const EVENT_REQUEST_INIT    = 'requestInit';
     const EVENT_REQUEST_END     = 'requestEnd';
@@ -91,17 +92,6 @@ interface RequestApplicationInterface extends EventEmitterWildcardInterface
      * @see ServiceLocator::loadComponents()
      */
     public function loadComponents();
-
-    /**
-     * Translates a message to the specified language.
-     *
-     * @param string $domain
-     * @param string $message
-     * @param array  $params
-     * @param string $language
-     * @return string
-     */
-    public function t($domain, $message, $params = [], $language = null);
 
     /**
      * Returns a value indicating whether the locator has the specified component definition or has instantiated the component.

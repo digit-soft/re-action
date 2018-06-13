@@ -8,6 +8,7 @@ use Reaction\Db\DbConnectionGetterInterface;
 use Reaction\Db\Expressions\ExpressionInterface;
 use Reaction\Db\Query;
 use Reaction\Db\QueryInterface;
+use Reaction\DI\BaseInjectorTrait;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\Promise\LazyPromise;
@@ -77,6 +78,7 @@ class ActiveQuery extends Query implements ActiveQueryInterface
 {
     use ActiveQueryTrait;
     use ActiveRelationTrait;
+    use BaseInjectorTrait;
 
     /**
      * @event Event an event that is triggered when the query is initialized via [[init()]].
@@ -276,6 +278,9 @@ class ActiveQuery extends Query implements ActiveQueryInterface
                 }
             }
             return parent::populate($models);
+        })->then(function($models) {
+            $this->emit($this->eventChildrenInject, [&$models]);
+            return $models;
         });
     }
 

@@ -171,15 +171,15 @@ class RequestApplication extends ServiceLocator implements RequestApplicationInt
     /**
      * Translates a message to the specified language.
      *
-     * @param string $domain
-     * @param string $message
-     * @param array  $params
-     * @param string $language
+     * @param string $category Message category
+     * @param string $message  Message for translation
+     * @param array  $params   Parameters array
+     * @param string $language Language translate to
      * @return string
      */
-    public function t($domain, $message, $params = [], $language = null)
+    public function t($category, $message, $params = [], $language = null)
     {
         $language = isset($language) ? $language : $this->language;
-        return Reaction::t($domain, $message, $params, $language);
+        return Reaction::t($category, $message, $params, $language);
     }
 }

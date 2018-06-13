@@ -12,6 +12,8 @@ use Reaction\Exceptions\Model\ValidationError;
 use Reaction\Exceptions\InvalidArgumentException;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Helpers\Inflector;
+use Reaction\I18n\TranslatorInterface;
+use Reaction\RequestApplicationInterface;
 use Reaction\Validators\RequiredValidator;
 use Reaction\Validators\Validator;
 use function Reaction\Promise\reject;
@@ -53,7 +55,7 @@ use ReflectionClass;
  *
  * Borrowed from yii2
  */
-class Model extends Component implements StaticInstanceInterface, IteratorAggregate, ArrayAccess, Arrayable
+class Model extends Component implements StaticInstanceInterface, IteratorAggregate, TranslatorInterface, ArrayAccess, Arrayable
 {
     use ArrayableTrait;
     use StaticInstanceTrait;
@@ -71,6 +73,11 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
      * @event Event an event raised at the end of [[validate()]]
      */
     const EVENT_AFTER_VALIDATE = 'afterValidate';
+
+    /**
+     * @var RequestApplicationInterface|null
+     */
+    public $app;
 
     /**
      * @var array validation errors (attribute name => array of errors)
@@ -1076,5 +1083,35 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
     public function offsetUnset($offset)
     {
         $this->$offset = null;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function getInjectionRules()
+    {
+        return [
+            RequestApplicationInterface::class => 'app',
+        ];
+    }
+
+    /**
+     * Translates a message to the specified language.
+     * Or returns a TranslationPromise for further translation
+     *
+     * @param string $category Message category
+     * @param string $message Message for translation
+     * @param array  $params Parameters array
+     * @param string $language Language translate to
+     * @return string|Reaction\I18n\TranslationPromise
+     */
+    public function t($category, $message, $params = [], $language = null)
+    {
+        if (!isset($language) && isset($this->app)) {
+            $language = $this->app->language;
+        }
+        return isset($language)
+            ? Reaction::t($category, $message, $params, $language)
+            : Reaction::tp($category, $message, $params, $language);
     }
 }
