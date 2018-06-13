@@ -346,7 +346,7 @@ class Tabs extends Widget
 
         BootstrapPluginAsset::register($view);
 
-        if($this->hasDropDown && !isset($this->clientEvents['shown.bs.tab'])) {
+        if ($this->hasDropDown && !isset($this->clientEvents['shown.bs.tab'])) {
             //FIX dropdown links
             $this->clientEvents['shown.bs.tab'] = ['a', new JsExpression("function(e) {
             var btn = $(this), nav = btn.parents('.nav:first'), dropDown = btn.parents('.dropdown-menu:first');
@@ -369,7 +369,7 @@ class Tabs extends Widget
             $id = $this->options['id'];
             $js = [];
             foreach ($this->clientEvents as $event => $handler) {
-                if(is_array($handler) && count($handler) === 2) {
+                if (is_array($handler) && count($handler) === 2) {
                     $subSelector = $handler[0];
                     $handlerCallback = $handler[1];
                     $js[] = "jQuery('#$id').on('$event', '$subSelector', $handlerCallback);";

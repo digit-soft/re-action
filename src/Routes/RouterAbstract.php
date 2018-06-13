@@ -215,7 +215,7 @@ abstract class RouterAbstract extends Component implements RouterInterface
      */
     protected function registerControllerWithAnnotations($className, Ctrl $ctrlAnnotation) {
         $actions = (new \ReflectionClass($className))->getMethods(\ReflectionMethod::IS_PUBLIC);
-        $actions = array_filter($actions, function ($value) {
+        $actions = array_filter($actions, function($value) {
             return $value->name !== 'actions' && strpos($value->name, 'action') === 0 ? $value : false;
         });
         $actions = Reaction\Helpers\ArrayHelper::getColumn($actions, 'name', false);

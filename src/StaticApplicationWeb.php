@@ -23,7 +23,7 @@ class StaticApplicationWeb extends StaticApplicationAbstract
         $this->http = Reaction::create(Http::class, [$this->middleware]);
         $this->http->listen($this->socket);
         //Exception handler
-        $this->http->on('error', function (\Throwable $error) {
+        $this->http->on('error', function(\Throwable $error) {
             $this->logger->alert($error);
         });
         parent::run();

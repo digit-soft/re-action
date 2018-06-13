@@ -169,7 +169,7 @@ class QueryBuilder extends \Reaction\Db\QueryBuilder
                 $key = $this->db->quoteColumnName(reset($tableSchema->primaryKey));
                 $value = "(SELECT COALESCE(MAX({$key}),0) FROM {$tableName})+1";
             } else {
-                $value = (int) $value;
+                $value = (int)$value;
             }
 
             return "SELECT SETVAL('$sequence',$value,false)";
@@ -356,7 +356,7 @@ class QueryBuilder extends \Reaction\Db\QueryBuilder
     protected function newUpsert($table, $insertColumns, $updateColumns, &$params)
     {
         $insertSql = $this->insert($table, $insertColumns, $params);
-        list($uniqueNames, , $updateNames) = $this->prepareUpsertColumns($table, $insertColumns, $updateColumns);
+        list($uniqueNames,, $updateNames) = $this->prepareUpsertColumns($table, $insertColumns, $updateColumns);
         if (empty($uniqueNames)) {
             return $insertSql;
         }
@@ -449,7 +449,7 @@ class QueryBuilder extends \Reaction\Db\QueryBuilder
         list($updates, $params) = $this->prepareUpdateSets($table, $updateColumns, $params);
         $updateSql = 'UPDATE ' . $this->db->quoteTableName($table) . ' SET ' . implode(', ', $updates)
             . ' FROM "EXCLUDED" ' . $this->buildWhere($updateCondition, $params)
-            . ' RETURNING ' . $this->db->quoteTableName($table) .'.*';
+            . ' RETURNING ' . $this->db->quoteTableName($table) . '.*';
         $selectUpsertSubQuery = (new Query())
             ->select(new Expression('1'))
             ->from('upsert')

@@ -210,7 +210,7 @@ class Database extends Component implements DatabaseInterface, DbConnectionGette
     {
         return preg_replace_callback(
             '/(\\{\\{(%?[\w\-\. ]+%?)\\}\\}|\\[\\[([\w\-\. ]+)\\]\\])/',
-            function ($matches) {
+            function($matches) {
                 if (isset($matches[3])) {
                     return $this->quoteColumnName($matches[3]);
                 }
@@ -305,10 +305,10 @@ class Database extends Component implements DatabaseInterface, DbConnectionGette
             throw new InvalidConfigException($message);
         }
         $className = $this->componentsConfig[$interface];
-        $_config = is_array($className) ? $className : [ 'class' => $className ];
+        $_config = is_array($className) ? $className : ['class' => $className];
         $_config = ArrayHelper::merge($_config, $config);
         if ($injectDb) {
-            $_config = ArrayHelper::merge([ 'db' => $this ], $_config);
+            $_config = ArrayHelper::merge(['db' => $this], $_config);
         }
         return \Reaction::create($_config);
     }

@@ -138,7 +138,7 @@ class XmlResponseFormatter extends Component implements ResponseFormatterInterfa
         if (is_float($value)) {
             return StringHelper::floatToString($value);
         }
-        return (string) $value;
+        return (string)$value;
     }
 
     /**

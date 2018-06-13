@@ -226,7 +226,7 @@ class ActiveField extends Reaction\Base\RequestAppComponent
         $inputID = $this->getInputId();
         $attribute = Html::getAttributeName($this->attribute);
         $options = $this->options;
-        $class = isset($options['class']) ? (array) $options['class'] : [];
+        $class = isset($options['class']) ? (array)$options['class'] : [];
         $class[] = "field-$inputID";
         if ($this->model->isAttributeRequired($attribute)) {
             $class[] = $this->form->requiredCssClass;

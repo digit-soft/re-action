@@ -187,8 +187,8 @@ class UrlManager extends RequestAppComponent implements Reaction\Base\ComponentA
      */
     public function createUrl($params)
     {
-        $params = (array) $params;
-        $anchor = isset($params['#']) ? '#'.$params['#'] : '';
+        $params = (array)$params;
+        $anchor = isset($params['#']) ? '#' . $params['#'] : '';
         if (isset($params['#'])) {
             unset($params['#']);
         }
@@ -198,10 +198,10 @@ class UrlManager extends RequestAppComponent implements Reaction\Base\ComponentA
 
         $baseUrl = $this->getBaseUrl();
 
-        $cacheKey = $route.'?';
+        $cacheKey = $route . '?';
         foreach ($params as $key => $value) {
             if ($value !== null) {
-                $cacheKey .= $key.'&';
+                $cacheKey .= $key . '&';
             }
         }
 
@@ -209,7 +209,7 @@ class UrlManager extends RequestAppComponent implements Reaction\Base\ComponentA
             $route .= $this->suffix;
         }
         if (!empty($params) && ($query = http_build_query($params)) !== '') {
-            $route .= '?'.$query;
+            $route .= '?' . $query;
         }
 
         $route = ltrim($route, '/');
@@ -238,14 +238,14 @@ class UrlManager extends RequestAppComponent implements Reaction\Base\ComponentA
      */
     public function createAbsoluteUrl($params, $scheme = null)
     {
-        $params = (array) $params;
+        $params = (array)$params;
         $url = $this->createUrl($params);
         if (strpos($url, '://') === false) {
             $hostInfo = $this->getHostInfo();
             if (strncmp($url, '//', 2) === 0) {
-                $url = substr($hostInfo, 0, strpos($hostInfo, '://')).':'.$url;
+                $url = substr($hostInfo, 0, strpos($hostInfo, '://')) . ':' . $url;
             } else {
-                $url = $hostInfo.$url;
+                $url = $hostInfo . $url;
             }
         }
 

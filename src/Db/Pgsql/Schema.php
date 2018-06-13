@@ -446,7 +446,7 @@ SQL;
         $column->name = $info['column_name'];
         $column->precision = $info['numeric_precision'];
         $column->scale = $info['numeric_scale'];
-        $column->size = $info['size'] === null ? null : (int) $info['size'];
+        $column->size = $info['size'] === null ? null : (int)$info['size'];
         $column->dimension = (int)$info['dimension'];
         if (isset($this->typeMap[$column->dbType])) {
             $column->type = $this->typeMap[$column->dbType];
@@ -638,8 +638,8 @@ SQL;
                 $result = [];
                 foreach ($indexes as $name => $index) {
                     $result[] = new IndexConstraint([
-                        'isPrimary' => (bool) $index[0]['index_is_primary'],
-                        'isUnique' => (bool) $index[0]['index_is_unique'],
+                        'isPrimary' => (bool)$index[0]['index_is_primary'],
+                        'isUnique' => (bool)$index[0]['index_is_unique'],
                         'name' => $name,
                         'columnNames' => ArrayHelper::getColumn($index, 'column_name'),
                     ]);

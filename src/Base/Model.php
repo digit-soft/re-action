@@ -784,7 +784,7 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
     public function onUnsafeAttribute($name, $value)
     {
         if (Reaction::isDebug()) {
-            Reaction::debug("Failed to set unsafe attribute '$name' in '".get_class($this)."'.");
+            Reaction::debug("Failed to set unsafe attribute '$name' in '" . get_class($this) . "'.");
         }
     }
 
@@ -825,7 +825,7 @@ class Model extends Component implements StaticInstanceInterface, IteratorAggreg
         }
         $attributes = [];
         foreach ($scenarios[$scenario] as $attribute) {
-            if ($attribute[0] !== '!' && !in_array('!'.$attribute, $scenarios[$scenario])) {
+            if ($attribute[0] !== '!' && !in_array('!' . $attribute, $scenarios[$scenario])) {
                 $attributes[] = $attribute;
             }
         }

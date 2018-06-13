@@ -21,7 +21,7 @@ class BootstrapAsset extends AssetBundle
     {
         $isProd = \Reaction::isProd();
         $cssFile = $isProd ? 'bootstrap.min.css' : 'bootstrap.css';
-        $this->css[] = 'css/' .$cssFile;
+        $this->css[] = 'css/' . $cssFile;
         parent::init();
     }
 }

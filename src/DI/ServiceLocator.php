@@ -139,7 +139,7 @@ class ServiceLocator extends Component
                 $config = is_array($definition[0]) ? $definition[0] : ['class' => $definition[0]];
                 unset($definition[0]);
                 if (isset($definition[1])) {
-                    $params = (array) $definition[1];
+                    $params = (array)$definition[1];
                     unset($definition[1]);
                 }
                 $definition = ArrayHelper::merge($definition, $config);
@@ -220,7 +220,7 @@ class ServiceLocator extends Component
                 throw new InvalidConfigException("The configuration for the \"$id\" component must contain a \"class\" element.");
             }
         } else {
-            throw new InvalidConfigException("Unexpected configuration type for the \"$id\" component: ".gettype($definition));
+            throw new InvalidConfigException("Unexpected configuration type for the \"$id\" component: " . gettype($definition));
         }
         //Check components autoloading possibility
         if ($this->componentsAutoloadEnabled) {
@@ -308,7 +308,7 @@ class ServiceLocator extends Component
                 $promises[] = new Reaction\Promise\LazyPromise(function() use ($component) {
                     return $component->initComponent()->then(null, function() { return true; });
                 });
-                if(Reaction::isDebug()) {
+                if (Reaction::isDebug()) {
                     Reaction::$app->loop->addTimer(3, function() use ($component, $componentName) {
                         if (!$component->isInitialized()) {
                             Reaction::error("Component '{name}' ({className}) initialization is to long (more then 3 sec.)", [

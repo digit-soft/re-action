@@ -222,10 +222,10 @@ class DateValidator extends Validator
             $this->tooBig = Reaction::t('rct', '{attribute} must be no greater than {max}.');
         }
         if ($this->maxString === null) {
-            $this->maxString = (string) $this->max;
+            $this->maxString = (string)$this->max;
         }
         if ($this->minString === null) {
-            $this->minString = (string) $this->min;
+            $this->minString = (string)$this->min;
         }
         if ($this->max !== null && is_string($this->max)) {
             $timestamp = $this->parseDateValueFormat($this->max, $this->format);

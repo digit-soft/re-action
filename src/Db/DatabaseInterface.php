@@ -130,5 +130,5 @@ interface DatabaseInterface extends ComponentAutoloadInterface, ComponentInitBlo
      * Get dedicated connection (Not used in shared pool)
      * @return ConnectionInterface
      */
-    public function getDedicatedConnection() ;
+    public function getDedicatedConnection();
 }

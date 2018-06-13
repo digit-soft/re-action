@@ -68,7 +68,7 @@ class UrlManager extends Component implements UrlManagerInterface
      */
     public function createUrl($params, $app = null)
     {
-        $params = (array) $params;
+        $params = (array)$params;
         $anchor = isset($params['#']) ? '#' . $params['#'] : '';
         unset($params['#']);
 
@@ -108,7 +108,7 @@ class UrlManager extends Component implements UrlManagerInterface
      */
     public function createAbsoluteUrl($params, $scheme = null, $app = null)
     {
-        $params = (array) $params;
+        $params = (array)$params;
         $url = $this->createUrl($params);
         if (strpos($url, '://') === false) {
             $hostInfo = $this->getHostInfo($app);
@@ -265,7 +265,7 @@ class UrlManager extends Component implements UrlManagerInterface
         if (strpos($path, '{') === false) {
             return $path;
         }
-        $path = preg_replace_callback('/(\{([a-zA-Z0-9]+)\})/i', function ($matches) use (&$params) {
+        $path = preg_replace_callback('/(\{([a-zA-Z0-9]+)\})/i', function($matches) use (&$params) {
             $match = $matches[1];
             $key = $matches[2];
             if (!isset($params[$key])) {

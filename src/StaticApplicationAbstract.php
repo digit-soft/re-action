@@ -96,7 +96,7 @@ abstract class StaticApplicationAbstract extends ServiceLocator implements Stati
      * @param callable|array $middleware
      */
     public function addMiddleware($middleware) {
-        if(!is_callable($middleware) && !is_array($middleware)) {
+        if (!is_callable($middleware) && !is_array($middleware)) {
             throw new InvalidArgumentException("Middleware must be a valid callable");
         } else {
             $this->middleware[] = $middleware;
@@ -196,7 +196,7 @@ abstract class StaticApplicationAbstract extends ServiceLocator implements Stati
         if (isset($this->aliases[$root])) {
             if (is_string($this->aliases[$root])) {
                 $aliasResolved = $this->aliases[$root];
-                if(strncmp($this->aliases[$root], '@', 1) === 0) {
+                if (strncmp($this->aliases[$root], '@', 1) === 0) {
                     $aliasResolved = $this->getAlias($aliasResolved);
                 }
                 return $pos === false ? $aliasResolved : $aliasResolved . substr($alias, $pos);
@@ -415,13 +415,13 @@ abstract class StaticApplicationAbstract extends ServiceLocator implements Stati
     protected function getErrorLogLevel($code)
     {
         $levels = [
-            E_ERROR => ['error', [Console::FG_RED, Console::BOLD] ],
-            E_WARNING => ['warning', [Console::FG_YELLOW, Console::BOLD] ],
-            E_PARSE => ['parse error', Console::FG_RED ],
-            E_NOTICE => ['notice', Console::FG_YELLOW ],
-            E_CORE_ERROR => ['core error', Console::FG_RED ],
-            E_CORE_WARNING => ['core warning', Console::FG_YELLOW ],
-            E_STRICT => ['strict warning', Console::FG_BLUE ],
+            E_ERROR => ['error', [Console::FG_RED, Console::BOLD]],
+            E_WARNING => ['warning', [Console::FG_YELLOW, Console::BOLD]],
+            E_PARSE => ['parse error', Console::FG_RED],
+            E_NOTICE => ['notice', Console::FG_YELLOW],
+            E_CORE_ERROR => ['core error', Console::FG_RED],
+            E_CORE_WARNING => ['core warning', Console::FG_YELLOW],
+            E_STRICT => ['strict warning', Console::FG_BLUE],
         ];
         foreach ($levels as $mask => $level) {
             if ($mask & $code) {

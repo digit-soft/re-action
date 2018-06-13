@@ -420,7 +420,7 @@ class Controller extends \Reaction\Routes\Controller
         $methodName = static::getActionMethod($actionId);
         $method = ReflectionHelper::getMethodReflection($this, $methodName);
         $tags = ReflectionHelper::getMethodDocTags($method, $this);
-        $params = isset($tags['param']) ? (array) $tags['param'] : [];
+        $params = isset($tags['param']) ? (array)$tags['param'] : [];
 
         $args = [];
 

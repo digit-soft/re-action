@@ -80,7 +80,7 @@ class HeaderCollection extends BaseObject implements \IteratorAggregate, \ArrayA
     public function set($name, $value = '')
     {
         $name = strtolower($name);
-        $this->_headers[$name] = (array) $value;
+        $this->_headers[$name] = (array)$value;
 
         return $this;
     }

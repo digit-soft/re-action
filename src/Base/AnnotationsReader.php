@@ -74,7 +74,7 @@ class AnnotationsReader extends BaseObject
     {
         $propertyReflection = $this->getPropertyReflection($property, $class);
         $classReflection = $propertyReflection->getDeclaringClass();
-        $cacheKey = $classReflection->getName().'$'.$propertyReflection->getName();
+        $cacheKey = $classReflection->getName() . '$' . $propertyReflection->getName();
         if (!$refresh && $this->cacheExists($cacheKey)) {
             return $this->getFromCache($cacheKey);
         }
@@ -114,7 +114,7 @@ class AnnotationsReader extends BaseObject
     {
         $methodReflection = $this->getMethodReflection($method, $class);
         $classReflection = $methodReflection->getDeclaringClass();
-        $cacheKey = $classReflection->getName().'#'.$methodReflection->getName();
+        $cacheKey = $classReflection->getName() . '#' . $methodReflection->getName();
         if (!$refresh && $this->cacheExists($cacheKey)) {
             return $this->getFromCache($cacheKey);
         }
@@ -150,7 +150,7 @@ class AnnotationsReader extends BaseObject
      */
     protected function getReader()
     {
-        if(!isset($this->_reader)) {
+        if (!isset($this->_reader)) {
             ClassFinderHelper::findClassesPsr4($this->annotationNamespaces);
             $this->_reader = new IndexedReader(new AnnotationReader());
         }

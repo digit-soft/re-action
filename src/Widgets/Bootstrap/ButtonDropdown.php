@@ -74,7 +74,7 @@ class ButtonDropdown extends Widget
     {
         unset($this->options['id']);
         Html::addCssClass($this->options, ['widget' => 'btn-group']);
-        if($this->dropUp) {
+        if ($this->dropUp) {
             Html::addCssClass($this->options, 'dropup');
         }
         $options = $this->options;

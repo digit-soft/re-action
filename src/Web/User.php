@@ -509,7 +509,7 @@ class User extends Reaction\Base\RequestAppServiceLocator implements UserInterfa
             $this->setReturnUrl($request->getUrl());
         }
         if ($this->loginUrl !== null && $canRedirect) {
-            $loginUrl = (array) $this->loginUrl;
+            $loginUrl = (array)$this->loginUrl;
             if ($loginUrl[0] !== $this->app->getRoute()->getRoutePath(true)) {
                 return $this->app->response->redirect($this->loginUrl);
             }
@@ -590,7 +590,7 @@ class User extends Reaction\Base\RequestAppServiceLocator implements UserInterfa
                 $cookie = Reaction::create(array_merge($this->identityCookie, [
                     'class' => 'Reaction\Web\Cookie',
                     'value' => $value,
-                    'expire' => time() + (int) $data[2],
+                    'expire' => time() + (int)$data[2],
                 ]));
                 $this->app->response->getCookies()->add($cookie);
             }

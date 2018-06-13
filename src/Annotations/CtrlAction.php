@@ -41,7 +41,7 @@ class CtrlAction
         if (count($values) === 1 && isset($values['value'])) {
             $values = $values['value'];
         }
-        if(is_string($values)) {
+        if (is_string($values)) {
             $this->path = $values;
         } elseif (is_array($values)) {
             if (!empty($values['method'])) {
@@ -52,7 +52,7 @@ class CtrlAction
             }
         }
 
-        if(empty($this->path)) {
+        if (empty($this->path)) {
             throw new \Exception("Property 'path' is required");
         }
     }

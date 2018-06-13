@@ -240,11 +240,11 @@ class MigrateController extends BaseMigrateController
                 } else {
                     $row['canonicalVersion'] = $row['version'];
                 }
-                $row['apply_time'] = (int) $row['apply_time'];
+                $row['apply_time'] = (int)$row['apply_time'];
                 $history[] = $row;
             }
 
-            usort($history, function ($a, $b) {
+            usort($history, function($a, $b) {
                 if ($a['apply_time'] === $b['apply_time']) {
                     if (($compareResult = strcasecmp($b['canonicalVersion'], $a['canonicalVersion'])) !== 0) {
                         return $compareResult;

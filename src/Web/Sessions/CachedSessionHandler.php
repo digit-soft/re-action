@@ -49,15 +49,15 @@ class CachedSessionHandler extends SessionHandlerAbstract
     {
         $key = $this->getSessionKey($id);
         return $this->getDataFromCache($key)->then(
-            function ($record) {
+            function($record) {
                 return $this->extractData($record, true);
             }
         )->then(
             null,
-            function ($error = null) use ($id) {
+            function($error = null) use ($id) {
                 //return $self->restoreSessionData($id, true)->then(
                 return $this->archive->get($id)->then(
-                    function ($data) use ($id, $error) {
+                    function($data) use ($id, $error) {
                         if (is_array($data)) {
                             return $this->write($id, $data);
                         } else {
@@ -68,7 +68,7 @@ class CachedSessionHandler extends SessionHandlerAbstract
             }
         )->then(
             null,
-            function ($error = null) use ($id) {
+            function($error = null) use ($id) {
                 $message = sprintf('Failed to read session data for "%s"', $id);
                 throw new SessionException($message, 0, $error);
             }
@@ -86,11 +86,11 @@ class CachedSessionHandler extends SessionHandlerAbstract
         $key = $this->getSessionKey($id);
         $record = $this->packRecord($data);
         return $this->writeDataToCache($key, $record)->then(
-            function () use ($id) {
+            function() use ($id) {
                 $this->keys[$id] = time();
                 return $this->read($id);
             },
-            function ($error = null) use ($id) {
+            function($error = null) use ($id) {
                 $message = sprintf('Failed to write session data for "%s"', $id);
                 throw new SessionException($message, 0, $error);
             }
@@ -110,8 +110,8 @@ class CachedSessionHandler extends SessionHandlerAbstract
         }
         $key = $this->getSessionKey($id);
         return $this->cache->remove($key)->then(
-            function () use ($id) { return $id; },
-            function ($error = null) use ($id) {
+            function() use ($id) { return $id; },
+            function($error = null) use ($id) {
                 $message = sprintf('Failed to destroy session "%s"', $id);
                 throw new SessionException($message, 0, $error);
             }
@@ -140,11 +140,11 @@ class CachedSessionHandler extends SessionHandlerAbstract
                         continue;
                     }
                     $promise = $this->read($id)->then(
-                        function ($data) use ($id) {
+                        function($data) use ($id) {
                             return $this->archive->set($id, $data);
                         }
                     )->then(
-                        function () use ($id) {
+                        function() use ($id) {
                             return $this->destroy($id, false);
                         }
                     );
@@ -155,7 +155,7 @@ class CachedSessionHandler extends SessionHandlerAbstract
         }
         if (!empty($promises)) {
             \Reaction\Promise\all($promises)->always(
-                function () {
+                function() {
                     $this->_gcIsRunning = false;
                 }
             );
@@ -178,14 +178,14 @@ class CachedSessionHandler extends SessionHandlerAbstract
     {
         $self = $this;
         return $this->read($id)->then(
-            function ($dataStored) use ($self, $id, $data) {
+            function($dataStored) use ($self, $id, $data) {
                 if (isset($data)) {
                     $dataStored = $data;
                 }
                 return $self->write($id, $dataStored);
             }
         )->then(
-            function () { return true; }
+            function() { return true; }
         );
     }
 
@@ -226,12 +226,12 @@ class CachedSessionHandler extends SessionHandlerAbstract
      */
     protected function getDataFromCache($key) {
         $self = $this;
-        return (new Promise(function ($r, $c) use ($self, $key) {
+        return (new Promise(function($r, $c) use ($self, $key) {
             $self->cache->get($key)->then(
-                function ($data) use ($r, $c) {
+                function($data) use ($r, $c) {
                     $r($data);
                 },
-                function ($error = null) use (&$c, $key) {
+                function($error = null) use (&$c, $key) {
                     $message = sprintf('Failed to get session data from cache for "%s"', $key);
                     $c(new SessionException($message));
                 }
@@ -249,12 +249,12 @@ class CachedSessionHandler extends SessionHandlerAbstract
         $record[$this->timestampKey] = isset($ts) ? $ts : time();
 
         $cache = $this->cache;
-        return new Promise(function ($r, $c) use ($cache, $key, $record) {
+        return new Promise(function($r, $c) use ($cache, $key, $record) {
             $cache->set($key, $record)->then(
-                function () use ($r) {
+                function() use ($r) {
                     $r(true);
                 },
-                function ($error = null) use (&$c, $key) {
+                function($error = null) use (&$c, $key) {
                     $message = sprintf('Failed to write session data to cache for "%s"', $key);
                     $c(new SessionException($message));
                 }

@@ -56,7 +56,7 @@ class ColumnSchema extends \Reaction\Db\ColumnSchema
 
         if ($this->dimension > 0) {
             return $this->disableArraySupport
-                ? (string) $value
+                ? (string)$value
                 : new ArrayExpression($value, $this->dbType, $this->dimension);
         }
         if (!$this->disableJsonSupport && in_array($this->dbType, [Schema::TYPE_JSON, Schema::TYPE_JSONB], true)) {
@@ -79,7 +79,7 @@ class ColumnSchema extends \Reaction\Db\ColumnSchema
                 $value = $this->getArrayParser()->parse($value);
             }
             if (is_array($value)) {
-                array_walk_recursive($value, function (&$val, $key) {
+                array_walk_recursive($value, function(&$val, $key) {
                     $val = $this->phpTypecastValue($val);
                 });
             } elseif ($value === null) {
@@ -116,7 +116,7 @@ class ColumnSchema extends \Reaction\Db\ColumnSchema
                     case 'false':
                         return false;
                 }
-                return (bool) $value;
+                return (bool)$value;
             case Schema::TYPE_JSON:
                 return $this->disableJsonSupport ? $value : json_decode($value, true);
         }

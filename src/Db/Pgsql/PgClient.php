@@ -77,7 +77,7 @@ class PgClient extends BaseObject
      */
     public function query($s)
     {
-        return Observable::defer(function () use ($s) {
+        return Observable::defer(function() use ($s) {
             $conn = $this->getLeastBusyConnection();
 
             return $conn->query($s);
@@ -92,7 +92,7 @@ class PgClient extends BaseObject
      */
     public function executeStatement(string $queryString, array $parameters = [])
     {
-        return Observable::defer(function () use ($queryString, $parameters) {
+        return Observable::defer(function() use ($queryString, $parameters) {
             $conn = $this->getLeastBusyConnection();
 
             return $conn->executeStatement($queryString, $parameters);
@@ -165,7 +165,7 @@ class PgClient extends BaseObject
      * @return pgConnection
      */
     public function getDedicatedConnection($autoDisconnect = false) {
-        $params = [ 'auto_disconnect' => $autoDisconnect ];
+        $params = ['auto_disconnect' => $autoDisconnect];
         return $this->createNewConnection(false, $params);
     }
 
@@ -186,8 +186,8 @@ class PgClient extends BaseObject
 
         $this->connections[] = $connection;
 
-        $connection->on('close', function () use ($connection) {
-            $this->connections = array_filter($this->connections, function ($c) use ($connection) {
+        $connection->on('close', function() use ($connection) {
+            $this->connections = array_filter($this->connections, function($c) use ($connection) {
                 return $connection !== $c;
             });
             $this->connections = array_values($this->connections);

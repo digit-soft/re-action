@@ -171,7 +171,7 @@ abstract class BaseMigrateController extends Controller
                 }
 
                 $total = count($migrations);
-                $limit = (int) $limit;
+                $limit = (int)$limit;
                 if ($limit > 0) {
                     $migrations = array_slice($migrations, 0, $limit);
                 }
@@ -249,7 +249,7 @@ abstract class BaseMigrateController extends Controller
         if ($limit === 'all') {
             $limit = null;
         } else {
-            $limit = (int) $limit;
+            $limit = (int)$limit;
             if ($limit < 1) {
                 throw new Exception('The step argument must be greater than 0.');
             }
@@ -323,7 +323,7 @@ abstract class BaseMigrateController extends Controller
         if ($limit === 'all') {
             $limit = null;
         } else {
-            $limit = (int) $limit;
+            $limit = (int)$limit;
             if ($limit < 1) {
                 throw new Exception('The step argument must be greater than 0.');
             }
@@ -409,7 +409,7 @@ abstract class BaseMigrateController extends Controller
             return $this->migrateToVersion($app, $namespaceVersion);
         } elseif (($migrationName = $this->extractMigrationVersion($version)) !== false) {
             return $this->migrateToVersion($app, $migrationName);
-        } elseif ((string) (int) $version == $version) {
+        } elseif ((string)(int)$version == $version) {
             return $this->migrateToTime($app, $version);
         } elseif (($time = strtotime($version)) !== false) {
             return $this->migrateToTime($app, $time);
@@ -560,7 +560,7 @@ abstract class BaseMigrateController extends Controller
         if ($limit === 'all') {
             $limit = null;
         } else {
-            $limit = (int) $limit;
+            $limit = (int)$limit;
             if ($limit < 1) {
                 throw new Exception('The limit must be greater than 0.');
             }
@@ -609,7 +609,7 @@ abstract class BaseMigrateController extends Controller
         if ($limit === 'all') {
             $limit = null;
         } else {
-            $limit = (int) $limit;
+            $limit = (int)$limit;
             if ($limit < 1) {
                 throw new Exception('The limit must be greater than 0.');
             }

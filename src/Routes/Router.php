@@ -87,7 +87,7 @@ class Router extends RouterAbstract implements RouterInterface
     protected function publishRoutes() {
         $routes = $this->routes;
         $this->parseRoutesData();
-        $this->dispatcher = $this->createDispatcher(function (\FastRoute\RouteCollector $r) use ($routes) {
+        $this->dispatcher = $this->createDispatcher(function(\FastRoute\RouteCollector $r) use ($routes) {
             foreach ($routes as $routeRow) {
                 $r->addRoute($routeRow['httpMethod'], $routeRow['route'], $routeRow['handler']);
             }
@@ -105,7 +105,7 @@ class Router extends RouterAbstract implements RouterInterface
         }
         foreach ($this->_routePaths as &$routePaths) {
             $prevCnt = 0;
-            ArrayHelper::multisort($routePaths, function ($row) use (&$prevCnt) {
+            ArrayHelper::multisort($routePaths, function($row) use (&$prevCnt) {
                 return count($row['params']);
             }, SORT_DESC);
         }
@@ -133,7 +133,7 @@ class Router extends RouterAbstract implements RouterInterface
                     }
                 } elseif (is_array($segment)) {
                     $staticPartEnded = true;
-                    $expression .= '{'.$segment[0].'}';
+                    $expression .= '{' . $segment[0] . '}';
                     $params[] = $segment[0];
                 }
             }

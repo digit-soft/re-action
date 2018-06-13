@@ -61,13 +61,13 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
     public $withLineNum = false;
 
     protected static $LOG_COLORS = [
-        LogLevel::ERROR => [ self::FG_RED ],
-        LogLevel::ALERT => [ self::FG_WHITE, self::BG_RED ],
-        LogLevel::INFO => [ self::FG_BLUE, self::ITALIC ],
-        LogLevel::NOTICE => [ self::FG_BLUE, self::ITALIC ],
-        LogLevel::CRITICAL => [ self::FG_WHITE, self::BG_RED, self::BOLD ],
-        LogLevel::EMERGENCY => [ self::FG_WHITE, self::BG_RED, self::BOLD ],
-        LogLevel::WARNING => [ self::FG_YELLOW, self::BOLD ],
+        LogLevel::ERROR => [self::FG_RED],
+        LogLevel::ALERT => [self::FG_WHITE, self::BG_RED],
+        LogLevel::INFO => [self::FG_BLUE, self::ITALIC],
+        LogLevel::NOTICE => [self::FG_BLUE, self::ITALIC],
+        LogLevel::CRITICAL => [self::FG_WHITE, self::BG_RED, self::BOLD],
+        LogLevel::EMERGENCY => [self::FG_WHITE, self::BG_RED, self::BOLD],
+        LogLevel::WARNING => [self::FG_YELLOW, self::BOLD],
     ];
 
     /** @var WritableStreamInterface Writable stream interface */
@@ -272,7 +272,7 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
      * @return null|string
      */
     public function profile($message = null, $endId = null, $traceShift = 0) {
-        if(!isset($endId)) {
+        if (!isset($endId)) {
             $timeStart = microtime(true);
             $endId = ceil($timeStart * 100000) . mt_rand(11111, 99999);
             $this->profilerData[$endId] = [
@@ -328,7 +328,7 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
         $this->checkCorrectLogLevel($level);
         $message = $this->convertMessageToString($message);
         $message = $this->processPlaceHolders($message, $context);
-        if(strlen($message) > 0 && mb_substr($message, -1) !== "\n" && !$this->newLine) {
+        if (strlen($message) > 0 && mb_substr($message, -1) !== "\n" && !$this->newLine) {
             $message .= self::NEW_LINE;
         }
         if ($this->hideLevel === false) {
@@ -344,11 +344,11 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
             $message .= self::NEW_LINE;
         }
         //Add script and line number
-        if($this->withLineNum) {
+        if ($this->withLineNum) {
             $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
             $lineNum = $this->getCalleeData($trace, $traceShift + 1);
             $unixTime = microtime(true);
-            $micro = substr(sprintf("%06d",($unixTime - floor($unixTime)) * 1000000), 0, 3);
+            $micro = substr(sprintf("%06d", ($unixTime - floor($unixTime)) * 1000000), 0, 3);
             $time = date('H:i:s') . '.' . $micro;
             $message .= $this->colorizeText('^^^ ' . $time . ' - ' . $lineNum, static::FG_BLACK) . self::NEW_LINE;
         }
@@ -369,7 +369,7 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
             $messageStr = $this->convertErrorToString($message);
         } elseif (is_bool($message)) {
             $messageStr = $message ? 'TRUE' : 'FALSE';
-        } elseif(!is_scalar($message)) {
+        } elseif (!is_scalar($message)) {
             $messageStr = print_r($message, true);
         }
         return $messageStr;
@@ -384,7 +384,7 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
     protected function convertErrorToString(\Throwable $e, $withTrace = true) {
         $message = [
             $e->getMessage(),
-            !empty($e->getFile()) ? $e->getFile()  . ' #' . $e->getLine() : "",
+            !empty($e->getFile()) ? $e->getFile() . ' #' . $e->getLine() : "",
             $e->getTraceAsString(),
         ];
         if ($withTrace) {
@@ -420,11 +420,11 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
     protected function _colorizeTextInternal($text, $color) {
         $off = static::STYLE_OFF;
         $newLineEnd = substr($text, -1) === "\n";
-        if($newLineEnd) {
+        if ($newLineEnd) {
             $text = substr($text, 0, -1);
         }
-        $text = "\033[" . $color . "m" . $text . "\033[" . $off. "m";
-        if($newLineEnd) {
+        $text = "\033[" . $color . "m" . $text . "\033[" . $off . "m";
+        if ($newLineEnd) {
             $text .= "\n";
         }
         return $text;
@@ -460,9 +460,9 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
                 } elseif ($val instanceof \DateTimeInterface) {
                     $replacements["{{$key}}"] = $val->format(\DateTime::RFC3339);
                 } elseif (\is_object($val)) {
-                    $replacements["{{$key}}"] = '[object '.\get_class($val).']';
+                    $replacements["{{$key}}"] = '[object ' . \get_class($val) . ']';
                 } else {
-                    $replacements["{{$key}}"] = '['.\gettype($val).']';
+                    $replacements["{{$key}}"] = '[' . \gettype($val) . ']';
                 }
             }
 
@@ -487,7 +487,7 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
 
         $replacements = [];
         foreach ($context as $key => $value) {
-            $replacements['{'.$key.'}'] = $this->formatValue($value);
+            $replacements['{' . $key . '}'] = $this->formatValue($value);
         }
 
         return strtr($message, $replacements);
@@ -503,7 +503,7 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
         $levels = static::LOG_LEVELS;
         if (!isset($levels[$level])) {
             throw new InvalidArgumentException(
-                'Level "' . $level . '" is not defined, use one of: '.implode(', ', array_keys(static::LOG_LEVELS))
+                'Level "' . $level . '" is not defined, use one of: ' . implode(', ', array_keys(static::LOG_LEVELS))
             );
         }
 
@@ -522,9 +522,9 @@ class StdioLogger extends AbstractLogger implements LoggerInterface
         }
 
         if (is_object($value)) {
-            return '[object '.get_class($value).']';
+            return '[object ' . get_class($value) . ']';
         }
 
-        return '['.gettype($value).']';
+        return '[' . gettype($value) . ']';
     }
 }

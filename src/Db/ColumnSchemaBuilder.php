@@ -320,7 +320,7 @@ class ColumnSchemaBuilder extends BaseObject
         $string = ' DEFAULT ';
         switch (gettype($this->default)) {
             case 'integer':
-                $string .= (string) $this->default;
+                $string .= (string)$this->default;
                 break;
             case 'double':
                 // ensure type cast always has . as decimal separator in all locales
@@ -330,7 +330,7 @@ class ColumnSchemaBuilder extends BaseObject
                 $string .= $this->default ? 'TRUE' : 'FALSE';
                 break;
             case 'object':
-                $string .= (string) $this->default;
+                $string .= (string)$this->default;
                 break;
             default:
                 $string .= "'{$this->default}'";

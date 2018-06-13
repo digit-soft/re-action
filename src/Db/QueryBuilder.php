@@ -625,14 +625,14 @@ class QueryBuilder extends BaseObject implements QueryBuilderInterface
         $uniques = $schema->getTableUniques($name);
         $constraints = array_merge($constraints, $uniques);
         // Remove duplicates
-        $constraints = array_combine(array_map(function (Constraint $constraint) {
+        $constraints = array_combine(array_map(function(Constraint $constraint) {
             $columns = $constraint->columnNames;
             sort($columns, SORT_STRING);
             return json_encode($columns);
         }, $constraints), $constraints);
         $columnNames = [];
         // Remove all constraints which do not cover the specified column list
-        $constraints = array_values(array_filter($constraints, function (Constraint $constraint) use ($schema, $columns, &$columnNames) {
+        $constraints = array_values(array_filter($constraints, function(Constraint $constraint) use ($schema, $columns, &$columnNames) {
             $constraintColumnNames = array_map([$schema, 'quoteColumnName'], $constraint->columnNames);
             $result = !array_diff($constraintColumnNames, $columns);
             if ($result) {
@@ -1312,7 +1312,7 @@ class QueryBuilder extends BaseObject implements QueryBuilderInterface
             }
             // 0:join type, 1:join table, 2:on-condition (optional)
             list($joinType, $table) = $join;
-            $tables = $this->quoteTableNames((array) $table, $params);
+            $tables = $this->quoteTableNames((array)$table, $params);
             $table = reset($tables);
             $joins[$i] = "$joinType $table";
             if (isset($join[2])) {
@@ -1468,7 +1468,7 @@ class QueryBuilder extends BaseObject implements QueryBuilderInterface
      */
     protected function hasLimit($limit)
     {
-        return ($limit instanceof ExpressionInterface) || ctype_digit((string) $limit);
+        return ($limit instanceof ExpressionInterface) || ctype_digit((string)$limit);
     }
 
     /**
@@ -1478,7 +1478,7 @@ class QueryBuilder extends BaseObject implements QueryBuilderInterface
      */
     protected function hasOffset($offset)
     {
-        return ($offset instanceof ExpressionInterface) || ctype_digit((string) $offset) && (string) $offset !== '0';
+        return ($offset instanceof ExpressionInterface) || ctype_digit((string)$offset) && (string)$offset !== '0';
     }
 
     /**
@@ -1557,7 +1557,7 @@ class QueryBuilder extends BaseObject implements QueryBuilderInterface
             return $this->buildExpression($condition, $params);
         }
 
-        return (string) $condition;
+        return (string)$condition;
     }
 
     /**

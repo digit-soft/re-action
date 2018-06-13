@@ -257,7 +257,7 @@ class ActiveField extends \Reaction\Widgets\ActiveField
         if (!isset($options['item'])) {
             $isInline = $this->inline;
             $itemOptions = isset($options['itemOptions']) ? $options['itemOptions'] : [];
-            $options['item'] = function ($index, $label, $name, $checked, $value) use ($itemOptions, $isInline) {
+            $options['item'] = function($index, $label, $name, $checked, $value) use ($itemOptions, $isInline) {
                 $options = array_merge(['label' => $label, 'value' => $value], $itemOptions);
                 return $isInline
                     ? '<div class="form-check form-check-inline">' . Html::checkbox($name, $checked, $options) . '</div>'
@@ -290,7 +290,7 @@ class ActiveField extends \Reaction\Widgets\ActiveField
         if (!isset($options['item'])) {
             $isInline = $this->inline;
             $itemOptions = isset($options['itemOptions']) ? $options['itemOptions'] : [];
-            $options['item'] = function ($index, $label, $name, $checked, $value) use ($itemOptions, $isInline) {
+            $options['item'] = function($index, $label, $name, $checked, $value) use ($itemOptions, $isInline) {
                 $options = array_merge(['label' => $label, 'value' => $value], $itemOptions);
                 return $isInline ? '<div class="form-check form-check-inline">' . Html::radio($name, $checked, $options) . '</div>'
                     : '<div class="form-check">' . Html::radio($name, $checked, $options) . '</div>';
@@ -343,7 +343,7 @@ class ActiveField extends \Reaction\Widgets\ActiveField
      */
     public function inline($value = true)
     {
-        $this->inline = (bool) $value;
+        $this->inline = (bool)$value;
         return $this;
     }
 

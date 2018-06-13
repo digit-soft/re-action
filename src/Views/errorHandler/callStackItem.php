@@ -11,10 +11,10 @@
 /* @var $handler \Reaction\Web\ErrorHandler */
 ?>
 <li class="<?= ($index === 1 || !$handler->isCoreFile($file)) ? 'application' : '' ?> call-stack-item"
-    data-line="<?= (int) ($line - $begin) ?>">
+    data-line="<?= (int)($line - $begin) ?>">
     <div class="element-wrap">
         <div class="element">
-            <span class="item-number"><?= (int) $index ?>.</span>
+            <span class="item-number"><?= (int)$index ?>.</span>
             <span class="text"><?= $file !== null ? 'in ' . $handler->htmlEncode($file) : '' ?></span>
             <span class="at">
                 <?= $line !== null ? 'at line' : '' ?>
@@ -33,7 +33,7 @@
             <div class="error-line"></div>
             <?php for ($i = $begin; $i <= $end; ++$i): ?><div class="hover-line"></div><?php endfor; ?>
             <div class="code">
-                <?php for ($i = $begin; $i <= $end; ++$i): ?><span class="lines-item"><?= (int) ($i + 1) ?></span><?php endfor; ?>
+                <?php for ($i = $begin; $i <= $end; ++$i): ?><span class="lines-item"><?= (int)($i + 1) ?></span><?php endfor; ?>
                 <pre>
                     <?php
                     // fill empty lines with a whitespace to avoid rendering problems in opera

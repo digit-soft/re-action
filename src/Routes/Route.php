@@ -106,12 +106,12 @@ class Route extends RequestAppComponent implements RouteInterface
         $callable = [$this->_controller, $this->_controllerMethod];
         $args = $this->_params;
         array_unshift($args, $this->app, $this->_action);
-        $promise = new Promise(function ($r) use ($callable, $args) {
+        $promise = new Promise(function($r) use ($callable, $args) {
             $result = call_user_func_array($callable, $args);
             $r($result);
         });
         return $promise->then(
-            function ($response) {
+            function($response) {
                 return $this->processResponse($response);
             }
         );

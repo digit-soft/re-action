@@ -33,7 +33,7 @@ class ConfigReader extends BaseObject
      * @inheritdoc
      */
     public function init() {
-        if(isset($this->path)) {
+        if (isset($this->path)) {
             $this->data = $this->readData();
         }
     }
@@ -90,7 +90,7 @@ class ConfigReader extends BaseObject
             if (!isset($this->data[$key])) {
                 $this->data[$key] = $data;
             } else {
-                if(is_array($this->data[$key])) {
+                if (is_array($this->data[$key])) {
                     $this->data[$key] = ArrayHelper::merge($this->data[$key], $data);
                 } else {
                     $this->data[$key] = $data;
@@ -109,7 +109,7 @@ class ConfigReader extends BaseObject
         }
         //Add default configs
         $defaultPath = dirname(__DIR__) . DIRECTORY_SEPARATOR . $this->configPathDefault;
-        $paths = [ $defaultPath, $this->path ];
+        $paths = [$defaultPath, $this->path];
         $confData = [];
         foreach ($paths as $basePath) {
             foreach ($this->names as $_name_) {
@@ -172,7 +172,7 @@ class ConfigReader extends BaseObject
                 } elseif ($v instanceof ReplaceArrayValue) {
                     $res[$k] = $v->value;
                 } elseif ($v instanceof IgnoreArrayValue) {
-                    if(!array_key_exists($k, $res)) {
+                    if (!array_key_exists($k, $res)) {
                         $res[$k] = $v->value;
                     }
                 } elseif (is_array($v) && isset($res[$k]) && is_array($res[$k])) {

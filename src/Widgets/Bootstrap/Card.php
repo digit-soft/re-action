@@ -70,7 +70,7 @@ class Card extends Widget
         if (!isset($this->header)) {
             return '';
         }
-        if(isset($this->headerOptions)) {
+        if (isset($this->headerOptions)) {
             Html::addCssClass($this->headerOptions, ['widget' => 'card-header']);
             $tag = ArrayHelper::remove($this->headerOptions, 'tag', 'div');
             $header = Html::tag($tag, $this->header, $this->headerOptions);
@@ -126,7 +126,7 @@ class Card extends Widget
         $body = isset($body) ? $body : $this->body;
         $bodyContent = '';
         $bodyTag = 'div';
-        if(is_array($body)) {
+        if (is_array($body)) {
             $bodyRows = [];
             foreach ($body as $bodyRow) {
                 $bodyRowContent = $this->renderBody($bodyRow);
@@ -137,8 +137,8 @@ class Card extends Widget
             }
             $bodyContent = implode("\n", $bodyRows);
         } else {
-            if(isset($this->bodyOptions)) {
-                if(isset($this->overlayImage)) {
+            if (isset($this->bodyOptions)) {
+                if (isset($this->overlayImage)) {
                     Html::addCssClass($this->bodyOptions, ['widget' => 'card-img-overlay']);
                 } else {
                     Html::addCssClass($this->bodyOptions, ['widget' => 'card-body']);
@@ -146,11 +146,11 @@ class Card extends Widget
                 $bodyTag = ArrayHelper::remove($this->bodyOptions, 'tag', 'div');
                 $bodyOptions = $this->bodyOptions;
             }
-            if(isset($body)) {
+            if (isset($body)) {
                 $bodyContent .= $body;
             }
         }
-        if($includeOb) {
+        if ($includeOb) {
             $bodyContent .= ob_get_clean();
         }
         return isset($bodyOptions) ? $this->htmlHlp->tag($bodyTag, $bodyContent, $bodyOptions) : $bodyContent;
@@ -164,7 +164,7 @@ class Card extends Widget
         if (!isset($this->footer)) {
             return '';
         }
-        if(isset($this->footerOptions)) {
+        if (isset($this->footerOptions)) {
             Html::addCssClass($this->footerOptions, ['widget' => 'card-footer']);
             $tag = ArrayHelper::remove($this->footerOptions, 'tag', 'div');
             $footer = $this->htmlHlp->tag($tag, $this->footer, $this->footerOptions);

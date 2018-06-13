@@ -177,9 +177,9 @@ abstract class ErrorHandler extends RequestAppComponent implements ErrorHandlerI
     protected function handleFallbackExceptionMessage($exception, $previousException)
     {
         $msg = "An Error occurred while handling another error:\n";
-        $msg .= (string) $exception;
+        $msg .= (string)$exception;
         $msg .= "\nPrevious exception:\n";
-        $msg .= (string) $previousException;
+        $msg .= (string)$previousException;
         if (Reaction::isDebug()) {
             if (Reaction::isConsoleApp()) {
                 echo $msg . "\n";

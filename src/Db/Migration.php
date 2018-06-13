@@ -500,7 +500,7 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
      */
     public function addForeignKey($name, $table, $columns, $refTable, $refColumns, $delete = null, $update = null)
     {
-        $description = "add foreign key $name: $table (" . implode(',', (array) $columns) . ") references $refTable (" . implode(',', (array) $refColumns) . ')';
+        $description = "add foreign key $name: $table (" . implode(',', (array)$columns) . ") references $refTable (" . implode(',', (array)$refColumns) . ')';
         $cmdPromise = $this->createCommand()->addForeignKey($name, $table, $columns, $refTable, $refColumns, $delete, $update)->execute();
         return $this->execPromise($cmdPromise, $description);
     }
@@ -529,7 +529,7 @@ class Migration extends Component implements MigrationInterface, ComponentInitBl
      */
     public function createIndex($name, $table, $columns, $unique = false)
     {
-        $description = 'create' . ($unique ? ' unique' : '') . " index $name on $table (" . implode(',', (array) $columns) . ')';
+        $description = 'create' . ($unique ? ' unique' : '') . " index $name on $table (" . implode(',', (array)$columns) . ')';
         $cmdPromise = $this->createCommand()->createIndex($name, $table, $columns, $unique)->execute();
         return $this->execPromise($cmdPromise, $description);
     }

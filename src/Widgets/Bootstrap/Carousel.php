@@ -70,7 +70,7 @@ class Carousel extends Widget
     {
         parent::init();
         Html::addCssClass($this->options, ['widget' => 'carousel slide']);
-        if(isset($this->controls) && empty($this->controls)) {
+        if (isset($this->controls) && empty($this->controls)) {
             $this->controls[] = Html::tag('span', '', ['class' => 'carousel-control-prev-icon'])
                 . $this->htmlHlp->tag('span', $this->controlsLabels[0], ['class' => 'sr-only']);
             $this->controls[] = Html::tag('span', '', ['class' => 'carousel-control-next-icon'])

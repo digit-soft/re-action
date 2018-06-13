@@ -120,9 +120,9 @@ class DbManager extends BaseManager
     public function checkAccess($userId, $permissionName, $params = [])
     {
         //TODO: rewrite static cache of assignments
-        if (isset($this->_checkAccessAssignments[(string) $userId])) {
+        if (isset($this->_checkAccessAssignments[(string)$userId])) {
             $basePromise = new Reaction\Promise\Promise(function($r) use ($userId) {
-                $r($this->_checkAccessAssignments[(string) $userId]);
+                $r($this->_checkAccessAssignments[(string)$userId]);
             });
         } else {
             $basePromise = $this->getAssignments($userId);
@@ -134,7 +134,7 @@ class DbManager extends BaseManager
                 return reject(new Error("Check access - denied"));
             }
             $assignments = $_assignments;
-            $this->_checkAccessAssignments[(string) $userId] = $assignments;
+            $this->_checkAccessAssignments[(string)$userId] = $assignments;
             return $this->loadFromCache();
         })->then(function() use ($userId, $permissionName, $params, &$assignments) {
             if ($this->items !== null) {
@@ -477,7 +477,7 @@ class DbManager extends BaseManager
         $query = (new Query())->select('b.*')
             ->from(['a' => $this->assignmentTable, 'b' => $this->itemTable])
             ->where('{{a}}.[[item_name]]={{b}}.[[name]]')
-            ->andWhere(['a.user_id' => (string) $userId])
+            ->andWhere(['a.user_id' => (string)$userId])
             ->andWhere(['b.type' => Item::TYPE_ROLE]);
 
         $roles = $this->getDefaultRoleInstances();
@@ -586,7 +586,7 @@ class DbManager extends BaseManager
         $query = (new Query())->select('b.*')
             ->from(['a' => $this->assignmentTable, 'b' => $this->itemTable])
             ->where('{{a}}.[[item_name]]={{b}}.[[name]]')
-            ->andWhere(['a.user_id' => (string) $userId])
+            ->andWhere(['a.user_id' => (string)$userId])
             ->andWhere(['b.type' => Item::TYPE_PERMISSION]);
 
         return $query->all($this->db)->then(
@@ -614,7 +614,7 @@ class DbManager extends BaseManager
                 $childrenList = $_childrenList;
                 return (new Query())->select('item_name')
                     ->from($this->assignmentTable)
-                    ->where(['user_id' => (string) $userId])
+                    ->where(['user_id' => (string)$userId])
                     ->column($this->db);
             }
         )->then(
@@ -751,7 +751,7 @@ class DbManager extends BaseManager
         }
 
         return (new Query())->from($this->assignmentTable)
-            ->where(['user_id' => (string) $userId, 'item_name' => $roleName])
+            ->where(['user_id' => (string)$userId, 'item_name' => $roleName])
             ->one($this->db)
             ->then(
                 function($row) {
@@ -778,7 +778,7 @@ class DbManager extends BaseManager
 
         return (new Query())
             ->from($this->assignmentTable)
-            ->where(['user_id' => (string) $userId])
+            ->where(['user_id' => (string)$userId])
             ->all($this->db)
             ->then(
                 function($rows) {
@@ -941,7 +941,7 @@ class DbManager extends BaseManager
             ->execute()
             ->then(
                 function() use ($assignment, $userId) {
-                    unset($this->_checkAccessAssignments[(string) $userId]);
+                    unset($this->_checkAccessAssignments[(string)$userId]);
                     return $assignment;
                 }
             );
@@ -956,9 +956,9 @@ class DbManager extends BaseManager
             return reject(new Error("Empty user ID"));
         }
 
-        unset($this->_checkAccessAssignments[(string) $userId]);
+        unset($this->_checkAccessAssignments[(string)$userId]);
         return $this->db->createCommand()
-            ->delete($this->assignmentTable, ['user_id' => (string) $userId, 'item_name' => $role->name])
+            ->delete($this->assignmentTable, ['user_id' => (string)$userId, 'item_name' => $role->name])
             ->execute()
             ->then(function($count = 0) {
                 return $count > 0;
@@ -974,9 +974,9 @@ class DbManager extends BaseManager
             return reject(new Error("Empty user ID"));
         }
 
-        unset($this->_checkAccessAssignments[(string) $userId]);
+        unset($this->_checkAccessAssignments[(string)$userId]);
         return $this->db->createCommand()
-            ->delete($this->assignmentTable, ['user_id' => (string) $userId])
+            ->delete($this->assignmentTable, ['user_id' => (string)$userId])
             ->execute()
             ->then(function($count = 0) {
                 return $count > 0;

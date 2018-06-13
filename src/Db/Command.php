@@ -365,7 +365,7 @@ class Command extends Component implements CommandInterface
         $returnColumns = $tableSchema->getColumnNames();
         if (!empty($returnColumns)) {
             $returning = [];
-            foreach ((array) $returnColumns as $name) {
+            foreach ((array)$returnColumns as $name) {
                 $returning[] = $this->db->quoteColumnName($name);
             }
             $sql .= ' RETURNING ' . implode(', ', $returning);
@@ -401,7 +401,7 @@ class Command extends Component implements CommandInterface
     public function batchInsert($table, $columns, $rows)
     {
         $table = $this->db->quoteSql($table);
-        $columns = array_map(function ($column) {
+        $columns = array_map(function($column) {
             return $this->db->quoteSql($column);
         }, $columns);
 

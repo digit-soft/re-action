@@ -79,7 +79,7 @@ class TableSchema extends BaseObject
      */
     public function fixPrimaryKey($keys)
     {
-        $keys = (array) $keys;
+        $keys = (array)$keys;
         $this->primaryKey = $keys;
         foreach ($this->columns as $column) {
             $column->isPrimaryKey = false;

@@ -301,11 +301,11 @@ class ResponseBuilder extends RequestAppComponent implements ResponseBuilderInte
     {
         if (is_array($url) && isset($url[0])) {
             // ensure the route is absolute
-            $url[0] = '/'.ltrim($url[0], '/');
+            $url[0] = '/' . ltrim($url[0], '/');
         }
         $url = $this->app->helpers->url->to($url);
         if (strncmp($url, '/', 1) === 0 && strncmp($url, '//', 2) !== 0) {
-            $url = $this->app->reqHelper->getHostInfo().$url;
+            $url = $this->app->reqHelper->getHostInfo() . $url;
         }
 
         if ($checkAjax) {
@@ -345,7 +345,7 @@ class ResponseBuilder extends RequestAppComponent implements ResponseBuilderInte
      */
     public function refresh($anchor = '')
     {
-        return $this->redirect($this->app->reqHelper->getUrl().$anchor);
+        return $this->redirect($this->app->reqHelper->getUrl() . $anchor);
     }
 
     /**
@@ -418,7 +418,7 @@ class ResponseBuilder extends RequestAppComponent implements ResponseBuilderInte
             $request = $this->app->reqHelper;
             if ($request->enableCookieValidation) {
                 if ($request->cookieValidationKey == '') {
-                    throw new InvalidConfigException(get_class($request).'::cookieValidationKey must be configured with a secret key.');
+                    throw new InvalidConfigException(get_class($request) . '::cookieValidationKey must be configured with a secret key.');
                 }
                 $validationKey = $request->cookieValidationKey;
             } else {

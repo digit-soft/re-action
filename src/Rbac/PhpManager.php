@@ -905,7 +905,7 @@ class PhpManager extends BaseManager
         foreach ($this->assignments as $userID => $assignments) {
             foreach ($assignments as $userAssignment) {
                 if ($userAssignment->roleName === $roleName && $userAssignment->userId == $userID) {
-                    $result[] = (string) $userID;
+                    $result[] = (string)$userID;
                 }
             }
         }

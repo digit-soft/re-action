@@ -333,7 +333,7 @@ class Reaction
             }
         }
         static::$app = static::create($config);
-        if(!empty($appLateConfig)) {
+        if (!empty($appLateConfig)) {
             static::configure(static::$app, $appLateConfig);
         }
     }
