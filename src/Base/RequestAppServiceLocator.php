@@ -5,13 +5,14 @@ namespace Reaction\Base;
 use Reaction\DI\ServiceLocator;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Helpers\ArrayHelper;
+use Reaction\I18n\RequestLanguageGetterInterface;
 use Reaction\RequestApplicationInterface;
 
 /**
  * Class RequestAppServiceLocator
  * @package Reaction\Base
  */
-class RequestAppServiceLocator extends ServiceLocator implements RequestAppComponentInterface
+class RequestAppServiceLocator extends ServiceLocator implements RequestAppComponentInterface, RequestLanguageGetterInterface
 {
     /** @var RequestApplicationInterface An request application instance reference */
     public $app;
@@ -64,5 +65,14 @@ class RequestAppServiceLocator extends ServiceLocator implements RequestAppCompo
         } else {
             throw new InvalidConfigException("Unexpected configuration type for the \"$id\" component: ".gettype($definition));
         }
+    }
+
+    /**
+     * Get language for current request
+     * @return string
+     */
+    public function getRequestLanguage()
+    {
+        return $this->app->language;
     }
 }

@@ -117,20 +117,36 @@ class Reaction
     /**
      * Translates a message to the specified language.
      *
-     * @param string $domain
-     * @param string $message
-     * @param array  $params
-     * @param string $language
+     * @param string $category Message category
+     * @param string $message  Message for translation
+     * @param array  $params   Parameters array
+     * @param string $language Language translate to
      * @return string
      */
-    public static function t($domain, $message, $params = [], $language = null)
+    public static function t($category, $message, $params = [], $language = null)
     {
         if (static::$app !== null && static::$app->getI18n() !== null) {
-            return static::$app->getI18n()->translate($domain, $message, $params, $language ?: static::$app->language);
+            return static::$app->getI18n()->translate($category, $message, $params, $language ?: static::$app->language);
         }
         $_params = [];
         foreach ($params as $key => $value) { $_params['{' . $key . '}'] = $value; }
         return !empty($params) ? strtr($message, $_params) : $message;
+    }
+
+    /**
+     * Translates a message to the specified language.
+     * Looks like a ::t() method but returns a TranslationPromise for further translation when request language will known
+     *
+     * @param string $category Message category
+     * @param string $message  Message for translation
+     * @param array  $params   Parameters array
+     * @param string $language Language translate to
+     * @return \Reaction\I18n\TranslationPromise
+     */
+    public static function tp($category, $message, $params = [], $language = null)
+    {
+        $translationPromise = new \Reaction\I18n\TranslationPromise($category, $message, $params, $language);
+        return $translationPromise;
     }
 
     /**
@@ -139,7 +155,7 @@ class Reaction
      */
     public static function getVersion()
     {
-        return '0.2.3';
+        return '0.2.4';
     }
 
     /**
