@@ -2,6 +2,8 @@
 
 namespace Reaction\Base;
 
+use Reaction\DI\BaseInjectionPossibleTrait;
+use Reaction\DI\InjectionPossibleInterface;
 use Reaction\Events\EventEmitterWildcardInterface;
 use Reaction\Events\EventEmitterWildcardTrait;
 use Reaction\Exceptions\InvalidCallException;
@@ -11,13 +13,13 @@ use Reaction\Exceptions\UnknownPropertyException;
  * Class Component
  * @package Reaction\Base
  */
-class Component extends BaseObject implements EventEmitterWildcardInterface
+class Component extends BaseObject implements EventEmitterWildcardInterface, InjectionPossibleInterface
 {
     use EventEmitterWildcardTrait;
+    use BaseInjectionPossibleTrait;
 
     /** @var string Base path of component */
     protected $_basePath;
-
 
     /**
      * Returns the root directory of the component.
