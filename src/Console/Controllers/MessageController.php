@@ -62,7 +62,7 @@ class MessageController extends Reaction\Console\Routes\Controller
      * translated. You may use a string for single function name or an array for
      * multiple function names.
      */
-    public $translator = ['Reaction::t', '$this->app->t', '$app->t'];
+    public $translator = ['Reaction::t', 'Reaction::tp', '$this->app->t', '$app->t'];
     /**
      * @var bool whether to sort messages by keys when merging new messages
      * with the existing ones. Defaults to false, which means the new (untranslated)
