@@ -105,7 +105,7 @@ abstract class ExpiringCache extends ExtendedCache implements ExpiringCacheInter
         $tsKey = $this->timestampKey;
         $dtKey = $this->dataKey;
         $data = $record;
-        $record = [ ];
+        $record = [];
         $record[$dtKey] = $data;
         $record[$tsKey] = time();
         return $record;

@@ -257,7 +257,7 @@ class Security extends Component
     public function hkdf($algo, $inputKey, $salt = '', $info = '', $length = 0)
     {
         if (function_exists('hash_hkdf')) {
-            $outputKey = hash_hkdf($algo, $inputKey, (int) $length, $info, $salt);
+            $outputKey = hash_hkdf($algo, $inputKey, (int)$length, $info, $salt);
             if ($outputKey === false) {
                 throw new InvalidArgumentException('Invalid parameters to hash_hkdf()');
             }
@@ -271,7 +271,7 @@ class Security extends Component
         }
         $hashLength = StringHelper::byteLength($test);
         if (is_string($length) && preg_match('{^\d{1,16}$}', $length)) {
-            $length = (int) $length;
+            $length = (int)$length;
         }
         if (!is_int($length) || $length < 0 || $length > 255 * $hashLength) {
             throw new InvalidArgumentException('Invalid length');
@@ -328,13 +328,13 @@ class Security extends Component
             throw new InvalidArgumentException('Failed to generate HMAC with hash algorithm: ' . $algo);
         }
         if (is_string($iterations) && preg_match('{^\d{1,16}$}', $iterations)) {
-            $iterations = (int) $iterations;
+            $iterations = (int)$iterations;
         }
         if (!is_int($iterations) || $iterations < 1) {
             throw new InvalidArgumentException('Invalid iterations');
         }
         if (is_string($length) && preg_match('{^\d{1,16}$}', $length)) {
-            $length = (int) $length;
+            $length = (int)$length;
         }
         if (!is_int($length) || $length < 0) {
             throw new InvalidArgumentException('Invalid length');
@@ -661,7 +661,7 @@ class Security extends Component
      */
     protected function generateSalt($cost = 13)
     {
-        $cost = (int) $cost;
+        $cost = (int)$cost;
         if ($cost < 4 || $cost > 31) {
             throw new InvalidArgumentException('Cost must be between 4 and 31.');
         }

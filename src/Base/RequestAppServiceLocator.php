@@ -63,7 +63,7 @@ class RequestAppServiceLocator extends ServiceLocator implements RequestAppCompo
                 throw new InvalidConfigException("The configuration for the \"$id\" component must contain a \"class\" element.");
             }
         } else {
-            throw new InvalidConfigException("Unexpected configuration type for the \"$id\" component: ".gettype($definition));
+            throw new InvalidConfigException("Unexpected configuration type for the \"$id\" component: " . gettype($definition));
         }
     }
 
