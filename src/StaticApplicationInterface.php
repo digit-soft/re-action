@@ -36,6 +36,7 @@ use Reaction\Web\Sessions\SessionHandlerInterface;
  * @property FilesystemInterface              $fs
  * @property UrlManager                       $urlManager
  * @property DatabaseInterface                $db
+ * @property I18N                             $i18n
  * @property ExtendedPromiseInterface         $initPromise
  * @property bool                             $initialized
  */
