@@ -71,6 +71,14 @@ class I18N extends Component implements ComponentAutoloadInterface, ComponentIni
      */
     public $languages = [];
     /**
+     * @var array List of language prefixes used for UrlManager.
+     * Key is url prefix without start or end slash and the value is language, that will be used.
+     * For example:
+     * ```
+     *  [ 'en' => 'en-US', 'ua' => 'uk' ]
+     */
+    public $languagePrefixes = ['' => 'uk'];
+    /**
      * @var bool
      */
     protected $_initialized = false;
@@ -85,6 +93,7 @@ class I18N extends Component implements ComponentAutoloadInterface, ComponentIni
         if (empty($this->languages)) {
             $this->languages = [Reaction::$app->language];
         }
+        $this->initUrlLanguagePrefixes();
         if (!isset($this->translations['rct']) && !isset($this->translations['rct*'])) {
             $this->translations['rct'] = [
                 'class' => 'Reaction\I18n\PhpMessageSource',
@@ -100,6 +109,24 @@ class I18N extends Component implements ComponentAutoloadInterface, ComponentIni
                 'basePath' => '@app/Messages',
             ];
         }
+    }
+
+    /**
+     * Fill url language prefixes
+     */
+    protected function initUrlLanguagePrefixes()
+    {
+        $prefixes = $this->languagePrefixes;
+        $defaultLanguage = isset($prefixes['']) ? $prefixes[''] : reset($this->languages);
+        $prefixes[''] = $defaultLanguage;
+        foreach ($this->languages as $language) {
+            if (in_array($language, $prefixes)) {
+                continue;
+            }
+            $prefix = Reaction\Helpers\Inflector::slug($language);
+            $prefixes[$prefix] = $language;
+        }
+        $this->languagePrefixes = $prefixes;
     }
 
     /**
