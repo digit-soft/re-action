@@ -195,12 +195,11 @@ class GettextMoFile extends GettextFile
                 $context = substr($id, 0, $separatorPosition);
                 $id = substr($id, $separatorPosition + 1);
             }
-            if (!isset($context)) {
-                continue;
+            //Use new context or previously detected but avoid null
+            if (isset($context)) {
+                $message = $this->readString($fileHandle, $targetLengths[$i], $targetOffsets[$i]);
+                $this->_messages[$context][$id] = $message;
             }
-
-            $message = $this->readString($fileHandle, $targetLengths[$i], $targetOffsets[$i]);
-            $this->_messages[$context][$id] = $message;
         }
 
         @flock($fileHandle, LOCK_UN);

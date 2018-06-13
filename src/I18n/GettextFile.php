@@ -46,7 +46,7 @@ abstract class GettextFile extends Component
         if (!isset($this->_messages)) {
             $this->loadAll();
         }
-        $categories = array_keys($this->_messages);
+        $categories = is_array($this->_messages) ? array_keys($this->_messages) : [];
         sort($categories);
         return $categories;
     }
