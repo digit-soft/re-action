@@ -57,6 +57,8 @@ class Database extends \Reaction\Db\Database
                     'password' => $this->password,
                     'database' => $this->database,
                 ],
+                //'autoDisconnect' => true,
+                //'maxConnections' => 5,
                 'loop' => Reaction::$app->loop
             ];
             $this->_pgClient = new PgClient($config);
