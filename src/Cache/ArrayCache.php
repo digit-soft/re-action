@@ -21,15 +21,16 @@ class ArrayCache extends ExtendedCache
     /**
      * Get data from cache
      * @param string|array $key
+     * @param mixed        $default Default value to return for cache miss or null if not given.
      * @return ExtendedPromiseInterface  with data then finished
      */
-    public function get($key)
+    public function get($key, $default = null)
     {
         $key = $this->processKey($key);
         if ($this->existInternal($key)) {
             return resolve($this->storage[$key]);
         }
-        return reject(null);
+        return resolve($default);
     }
 
     /**
@@ -51,7 +52,7 @@ class ArrayCache extends ExtendedCache
      * @param string|array $key
      * @return ExtendedPromiseInterface  with bool 'true' then finished
      */
-    public function remove($key)
+    public function delete($key)
     {
         $key = $this->processKey($key);
         if ($this->existInternal($key)) {
@@ -70,14 +71,14 @@ class ArrayCache extends ExtendedCache
      * @param string $tag
      * @return ExtendedPromiseInterface  with bool 'true' then finished
      */
-    public function removeByTag($tag)
+    public function deleteByTag($tag)
     {
         if (!isset($this->tags[$tag])) {
             return resolve(true);
         }
         $keys = $this->tags[$tag];
         unset($this->tags[$tag]);
-        return !empty($keys) ? $this->removeMultiple($keys) : resolve(true);
+        return !empty($keys) ? $this->deleteMultiple($keys) : resolve(true);
     }
 
     /**

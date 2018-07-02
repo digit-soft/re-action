@@ -15,37 +15,39 @@ abstract class ExtendedCache extends BaseObject implements ExtendedCacheInterfac
     /**
      * Get data from cache
      * @param string|array $key
+     * @param mixed        $default Default value to return for cache miss or null if not given.
      * @return ExtendedPromiseInterface  with data then finished
      */
-    abstract public function get($key);
+    abstract public function get($key, $default = null);
 
     /**
      * Write data to cache
      * @param string|array $key
      * @param mixed        $value
-     * @param array        $tags  Possible data tags
+     * @param int          $ttl
+     * @param array        $tags Possible data tags
      * @return ExtendedPromiseInterface  with bool then finished
      */
-    abstract public function set($key, $value, $tags = []);
+    abstract public function set($key, $value, $ttl = null, $tags = []);
 
     /**
      * Remove data from cache
      * @param string|array $key
      * @return ExtendedPromiseInterface  with bool 'true' then finished
      */
-    abstract public function remove($key);
+    abstract public function delete($key);
 
     /**
      * Remove data from cache for multiple keys
      * @param array $keys
      * @return ExtendedPromiseInterface  with bool 'true' then finished
      */
-    public function removeMultiple($keys)
+    public function deleteMultiple($keys)
     {
         $promises = [];
         foreach ($keys as $key) {
             //Ensure that Promise is always fulfilled
-            $promises[] = $this->remove($key)->otherwise(function() { return true; });
+            $promises[] = $this->delete($key)->otherwise(function() { return true; });
         }
         return \Reaction\Promise\all($promises);
     }
@@ -62,7 +64,7 @@ abstract class ExtendedCache extends BaseObject implements ExtendedCacheInterfac
      * @param string $tag
      * @return mixed
      */
-    abstract public function removeByTag($tag);
+    abstract public function deleteByTag($tag);
 
     /**
      * Process key. Ensure that key is string

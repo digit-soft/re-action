@@ -3,6 +3,7 @@
 namespace Reaction\Cache;
 
 use React\Promise\ExtendedPromiseInterface;
+use Reaction\Exceptions\Exception;
 use Reaction\Helpers\ArrayHelper;
 use function Reaction\Promise\reject;
 use function Reaction\Promise\resolve;
@@ -17,30 +18,31 @@ class ArrayExpiringCache extends ExpiringCache
     /**
      * Get data from cache
      * @param string|array $key
+     * @param mixed        $default Default value to return for cache miss or null if not given.
      * @return ExtendedPromiseInterface  with data then finished
      */
-    public function get($key)
+    public function get($key, $default = null)
     {
         $key = $this->processKey($key);
         if ($this->existInternal($key)) {
             $data = $this->unpackRecord($this->storage[$key]);
             return resolve($data);
         }
-        return reject(null);
+        return resolve($default);
     }
 
     /**
      * Write data to cache
      * @param string|array $key Cache key
      * @param mixed        $value Data
-     * @param integer|null $lifetime Cache lifetime in seconds
+     * @param integer|null $ttl Cache lifetime in seconds
      * @param array        $tags  Possible data tags
      * @return ExtendedPromiseInterface  with bool then finished
      */
-    public function set($key, $value, $lifetime = null, $tags = [])
+    public function set($key, $value, $ttl = null, $tags = [])
     {
-        $lifetime = isset($lifetime) ? $lifetime : $this->lifetimeDefault;
-        $expire = time() + $lifetime;
+        $ttl = isset($ttl) ? $ttl : $this->lifetimeDefault;
+        $expire = time() + $ttl;
         $key = $this->processKey($key);
         $record = $this->packRecord($value);
         $this->addKeyTags($key, $record, $tags);
@@ -54,7 +56,7 @@ class ArrayExpiringCache extends ExpiringCache
      * @param string|array $key
      * @return ExtendedPromiseInterface  with bool 'true' then finished
      */
-    public function remove($key)
+    public function delete($key)
     {
         $key = $this->processKey($key);
         if ($this->existInternal($key)) {
@@ -73,14 +75,14 @@ class ArrayExpiringCache extends ExpiringCache
      * @param string $tag
      * @return ExtendedPromiseInterface  with bool 'true' then finished
      */
-    public function removeByTag($tag)
+    public function deleteByTag($tag)
     {
         if (!isset($this->tags[$tag])) {
             return resolve(true);
         }
         $keys = $this->tags[$tag];
         unset($this->tags[$tag]);
-        return !empty($keys) ? $this->removeMultiple($keys) : resolve(true);
+        return !empty($keys) ? $this->deleteMultiple($keys) : resolve(true);
     }
 
     /**
@@ -94,7 +96,7 @@ class ArrayExpiringCache extends ExpiringCache
         if ($this->existInternal($key)) {
             return resolve(true);
         }
-        return resolve(false);
+        return reject(new Exception(sprintf('Cache for key "%s" not exists', $key)));
     }
 
     /**
