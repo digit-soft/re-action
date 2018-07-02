@@ -1099,7 +1099,7 @@ class DbManager extends BaseManager
             $this->items = null;
             $this->rules = null;
             $this->parents = null;
-            return $this->cache->remove($this->cacheKey)
+            return $this->cache->delete($this->cacheKey)
                 ->then(function() {
                     return true;
                 }, function() {
@@ -1119,8 +1119,7 @@ class DbManager extends BaseManager
             return resolve(true);
         }
 
-        return $this->cache->get($this->cacheKey)
-            ->otherwise(function() { return []; })
+        return $this->cache->get($this->cacheKey, [])
             ->then(function($data) {
                 if (is_array($data) && isset($data[0], $data[1], $data[2])) {
                     list($this->items, $this->rules, $this->parents) = $data;

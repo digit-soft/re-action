@@ -7,6 +7,7 @@ use React\Promise\PromiseInterface;
 use Reaction\Cache\ExtendedCacheInterface;
 use Reaction\Exceptions\SessionException;
 use Reaction\Promise\Promise;
+use function Reaction\Promise\reject;
 
 /**
  * Class CachedSessionHandler
@@ -109,7 +110,7 @@ class CachedSessionHandler extends SessionHandlerAbstract
             unset($this->keys[$id]);
         }
         $key = $this->getSessionKey($id);
-        return $this->cache->remove($key)->then(
+        return $this->cache->delete($key)->then(
             function() use ($id) { return $id; },
             function($error = null) use ($id) {
                 $message = sprintf('Failed to destroy session "%s"', $id);
@@ -227,15 +228,16 @@ class CachedSessionHandler extends SessionHandlerAbstract
     protected function getDataFromCache($key) {
         $self = $this;
         return (new Promise(function($r, $c) use ($self, $key) {
-            $self->cache->get($key)->then(
-                function($data) use ($r, $c) {
+            $self->cache
+                ->get($key)
+                ->then(function($data) {
+                    return $data !== null ? $data : reject(null);
+                })->then(function($data) use ($r) {
                     $r($data);
-                },
-                function($error = null) use (&$c, $key) {
+                }, function($error = null) use ($c, $key) {
                     $message = sprintf('Failed to get session data from cache for "%s"', $key);
                     $c(new SessionException($message));
-                }
-            );
+                });
         }));
     }
 

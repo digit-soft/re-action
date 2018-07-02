@@ -119,7 +119,9 @@ class DbMessageSource extends MessageSource
             ];
             return $this->cache
                 ->get($cacheKey)
-                ->otherwise(function() use ($category, $language, $cacheKey) {
+                ->then(function($data) {
+                    return $data !== null ? $data : Reaction\Promise\reject(null);
+                })->otherwise(function() use ($category, $language, $cacheKey) {
                     $messages = [];
                     return $this->loadMessagesFromDb($category, $language)
                         ->then(function($messagesDb) use (&$messages, $cacheKey) {
