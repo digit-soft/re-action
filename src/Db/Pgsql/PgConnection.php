@@ -128,10 +128,7 @@ class PgConnection extends EventEmitter implements ClientInterface
 
     public function __construct(array $parameters, LoopInterface $loop, ConnectorInterface $connector = null)
     {
-        if (!is_array($parameters) ||
-            !isset($parameters['user']) ||
-            !isset($parameters['database'])
-        ) {
+        if (!isset($parameters['user']) || !isset($parameters['database'])) {
             throw new \InvalidArgumentException("Parameters must be an associative array with at least 'database' and 'user' set.");
         }
 
@@ -158,6 +155,7 @@ class PgConnection extends EventEmitter implements ClientInterface
 
     /**
      * Start connection
+     * @throws \Exception
      */
     private function start()
     {
@@ -353,6 +351,10 @@ class PgConnection extends EventEmitter implements ClientInterface
         }
     }
 
+    /**
+     * @param DataRow $dataRow
+     * @throws \Exception
+     */
     private function handleDataRow(DataRow $dataRow)
     {
         if ($this->queryState === $this::STATE_BUSY && $this->currentCommand instanceof CommandInterface) {
@@ -382,6 +384,10 @@ class PgConnection extends EventEmitter implements ClientInterface
         }
     }
 
+    /**
+     * @param Authentication $message
+     * @throws \Exception
+     */
     private function handleAuthentication(Authentication $message)
     {
         $this->lastError = 'Unhandled authentication message: ' . $message->getAuthCode();
@@ -415,11 +421,17 @@ class PgConnection extends EventEmitter implements ClientInterface
         $this->disconnect();
     }
 
+    /**
+     * @param BackendKeyData $message
+     */
     private function handleBackendKeyData(BackendKeyData $message)
     {
         $this->backendKeyData = $message;
     }
 
+    /**
+     * @param CommandComplete $message
+     */
     private function handleCommandComplete(CommandComplete $message)
     {
         if ($this->currentCommand instanceof CommandInterface) {
@@ -430,18 +442,31 @@ class PgConnection extends EventEmitter implements ClientInterface
         $this->debug('Command complete.');
     }
 
+    /**
+     * @param CopyInResponse $message
+     */
     private function handleCopyInResponse(CopyInResponse $message)
     {
     }
 
+    /**
+     * @param CopyOutResponse $message
+     */
     private function handleCopyOutResponse(CopyOutResponse $message)
     {
     }
 
+    /**
+     * @param EmptyQueryResponse $message
+     */
     private function handleEmptyQueryResponse(EmptyQueryResponse $message)
     {
     }
 
+    /**
+     * @param ErrorResponse $message
+     * @throws \Exception
+     */
     private function handleErrorResponse(ErrorResponse $message)
     {
         $this->lastError = $message;
@@ -471,19 +496,31 @@ class PgConnection extends EventEmitter implements ClientInterface
         }
     }
 
+    /**
+     * @param NoticeResponse $message
+     */
     private function handleNoticeResponse(NoticeResponse $message)
     {
     }
 
+    /**
+     * @param ParameterStatus $message
+     */
     private function handleParameterStatus(ParameterStatus $message)
     {
         $this->debug($message->getParameterName() . ': ' . $message->getParameterValue());
     }
 
+    /**
+     * @param ParseComplete $message
+     */
     private function handleParseComplete(ParseComplete $message)
     {
     }
 
+    /**
+     * @param ReadyForQuery $message
+     */
     private function handleReadyForQuery(ReadyForQuery $message)
     {
         $this->setConnStatus(static::CONNECTION_OK);
@@ -492,11 +529,17 @@ class PgConnection extends EventEmitter implements ClientInterface
         $this->processQueue();
     }
 
+    /**
+     * @param RowDescription $message
+     */
     private function handleRowDescription(RowDescription $message)
     {
         $this->addColumns($message->getColumns());
     }
 
+    /**
+     * @param \Throwable|null $e
+     */
     private function failAllCommandsWith(\Throwable $e = null)
     {
         $e = $e ?: new \Exception('unknown error');
@@ -509,6 +552,9 @@ class PgConnection extends EventEmitter implements ClientInterface
         }
     }
 
+    /**
+     * Process current queue
+     */
     public function processQueue()
     {
         if (count($this->commandQueue) === 0 && $this->queryState === static::STATE_READY && $this->autoDisconnect) {
@@ -557,6 +603,11 @@ class PgConnection extends EventEmitter implements ClientInterface
         }
     }
 
+    /**
+     * Execute simple query
+     * @param string $query
+     * @return Observable
+     */
     public function query($query): Observable
     {
         return new AnonymousObservable(
@@ -587,6 +638,12 @@ class PgConnection extends EventEmitter implements ClientInterface
 
     }
 
+    /**
+     * Execute statement
+     * @param string $queryString
+     * @param array  $parameters
+     * @return Observable
+     */
     public function executeStatement(string $queryString, array $parameters = []): Observable
     {
         /**
@@ -669,8 +726,15 @@ class PgConnection extends EventEmitter implements ClientInterface
         }, $this->columns);
     }
 
+    /**
+     * Print debug message
+     * @param string $string
+     */
     private function debug($string)
     {
+        if (!\Reaction::isDebug()) {
+            return;
+        }
         //echo "DEBUG: " . $string . "\n";
     }
 
