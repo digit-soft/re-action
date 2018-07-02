@@ -34,7 +34,7 @@ use React\EventLoop\LoopInterface;
 use React\Socket\Connector;
 use React\Socket\ConnectorInterface;
 use React\Stream\DuplexStreamInterface;
-use Reaction\ClientsPool\ClientInterface;
+use Reaction\ClientsPool\PoolClientInterface;
 use Reaction\ClientsPool\PoolClientTrait;
 use Reaction\Helpers\ArrayHelper;
 use Rx\Disposable\CallbackDisposable;
@@ -44,7 +44,7 @@ use Rx\Observable\AnonymousObservable;
 use Rx\ObserverInterface;
 use Rx\SchedulerInterface;
 
-class PgConnection extends EventEmitter implements ClientInterface
+class PgConnection extends EventEmitter implements PoolClientInterface
 {
     use PoolClientTrait;
 
@@ -753,7 +753,7 @@ class PgConnection extends EventEmitter implements ClientInterface
     public function clientClose()
     {
         $this->disconnect();
-        $this->emit(ClientInterface::CLIENT_POOL_EVENT_CLOSE);
+        $this->emit(PoolClientInterface::CLIENT_POOL_EVENT_CLOSE);
     }
 
     /**
