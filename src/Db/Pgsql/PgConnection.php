@@ -491,7 +491,7 @@ class PgConnection extends EventEmitter implements PoolClientInterface
                     'query_string' => $this->currentCommand->getQueryString()
                 ];
             }
-            $this->currentCommand->error(new ErrorException($message, $extraInfo));
+            $this->currentCommand->error(new \PgAsync\ErrorException($message, $extraInfo));
             $this->currentCommand = null;
         }
     }
