@@ -19,10 +19,7 @@ class ArrayCache extends ExtendedCache
     protected $tags = [];
 
     /**
-     * Get data from cache
-     * @param string|array $key
-     * @param mixed        $default Default value to return for cache miss or null if not given.
-     * @return ExtendedPromiseInterface  with data then finished
+     * @inheritdoc
      */
     public function get($key, $default = null)
     {
@@ -34,13 +31,9 @@ class ArrayCache extends ExtendedCache
     }
 
     /**
-     * Write data to cache
-     * @param string|array $key
-     * @param mixed        $value
-     * @param array        $tags  Possible data tags
-     * @return ExtendedPromiseInterface  with bool then finished
+     * @inheritdoc
      */
-    public function set($key, $value, $tags = [])
+    public function set($key, $value, $ttl = null, $tags = [])
     {
         $key = $this->processKey($key);
         $this->storage[$key] = $value;
@@ -49,8 +42,7 @@ class ArrayCache extends ExtendedCache
     }
 
     /**
-     * @param string|array $key
-     * @return ExtendedPromiseInterface  with bool 'true' then finished
+     * @inheritdoc
      */
     public function delete($key)
     {
@@ -67,9 +59,7 @@ class ArrayCache extends ExtendedCache
     }
 
     /**
-     * Remove cache data by tag
-     * @param string $tag
-     * @return ExtendedPromiseInterface  with bool 'true' then finished
+     * @inheritdoc
      */
     public function deleteByTag($tag)
     {
@@ -82,9 +72,7 @@ class ArrayCache extends ExtendedCache
     }
 
     /**
-     * Checks that key exists in cache
-     * @param string|array $key
-     * @return ExtendedPromiseInterface  with bool
+     * @inheritdoc
      */
     public function exists($key)
     {

@@ -2,7 +2,6 @@
 
 namespace Reaction\Cache;
 
-use React\Promise\ExtendedPromiseInterface;
 use Reaction\Base\BaseObject;
 use Reaction\Helpers\Json;
 
@@ -13,34 +12,22 @@ use Reaction\Helpers\Json;
 abstract class ExtendedCache extends BaseObject implements ExtendedCacheInterface
 {
     /**
-     * Get data from cache
-     * @param string|array $key
-     * @param mixed        $default Default value to return for cache miss or null if not given.
-     * @return ExtendedPromiseInterface  with data then finished
+     * @inheritdoc
      */
     abstract public function get($key, $default = null);
 
     /**
-     * Write data to cache
-     * @param string|array $key
-     * @param mixed        $value
-     * @param int          $ttl
-     * @param array        $tags Possible data tags
-     * @return ExtendedPromiseInterface  with bool then finished
+     * @inheritdoc
      */
     abstract public function set($key, $value, $ttl = null, $tags = []);
 
     /**
-     * Remove data from cache
-     * @param string|array $key
-     * @return ExtendedPromiseInterface  with bool 'true' then finished
+     * @inheritdoc
      */
     abstract public function delete($key);
 
     /**
-     * Remove data from cache for multiple keys
-     * @param array $keys
-     * @return ExtendedPromiseInterface  with bool 'true' then finished
+     * @inheritdoc
      */
     public function deleteMultiple($keys)
     {
@@ -53,16 +40,12 @@ abstract class ExtendedCache extends BaseObject implements ExtendedCacheInterfac
     }
 
     /**
-     * Checks that key exists in cache
-     * @param string|array $key
-     * @return ExtendedPromiseInterface  with bool
+     * @inheritdoc
      */
     abstract public function exists($key);
 
     /**
-     * Remove cache data by tag
-     * @param string $tag
-     * @return mixed
+     * @inheritdoc
      */
     abstract public function deleteByTag($tag);
 

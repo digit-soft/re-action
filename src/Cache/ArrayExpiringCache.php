@@ -2,7 +2,6 @@
 
 namespace Reaction\Cache;
 
-use React\Promise\ExtendedPromiseInterface;
 use Reaction\Exceptions\Exception;
 use Reaction\Helpers\ArrayHelper;
 use function Reaction\Promise\reject;
@@ -16,10 +15,7 @@ class ArrayExpiringCache extends ExpiringCache
     protected $tags = [];
 
     /**
-     * Get data from cache
-     * @param string|array $key
-     * @param mixed        $default Default value to return for cache miss or null if not given.
-     * @return ExtendedPromiseInterface  with data then finished
+     * @inheritdoc
      */
     public function get($key, $default = null)
     {
@@ -32,12 +28,7 @@ class ArrayExpiringCache extends ExpiringCache
     }
 
     /**
-     * Write data to cache
-     * @param string|array $key Cache key
-     * @param mixed        $value Data
-     * @param integer|null $ttl Cache lifetime in seconds
-     * @param array        $tags  Possible data tags
-     * @return ExtendedPromiseInterface  with bool then finished
+     * @inheritdoc
      */
     public function set($key, $value, $ttl = null, $tags = [])
     {
@@ -52,9 +43,7 @@ class ArrayExpiringCache extends ExpiringCache
     }
 
     /**
-     * Remove data from cache
-     * @param string|array $key
-     * @return ExtendedPromiseInterface  with bool 'true' then finished
+     * @inheritdoc
      */
     public function delete($key)
     {
@@ -71,9 +60,7 @@ class ArrayExpiringCache extends ExpiringCache
     }
 
     /**
-     * Remove cache data by tag
-     * @param string $tag
-     * @return ExtendedPromiseInterface  with bool 'true' then finished
+     * @inheritdoc
      */
     public function deleteByTag($tag)
     {
@@ -86,9 +73,7 @@ class ArrayExpiringCache extends ExpiringCache
     }
 
     /**
-     * Checks that key exists in cache
-     * @param string|array $key
-     * @return ExtendedPromiseInterface  with bool
+     * @inheritdoc
      */
     public function exists($key)
     {

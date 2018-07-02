@@ -3,7 +3,6 @@
 namespace Reaction\Cache;
 
 use React\EventLoop\Timer\TimerInterface;
-use React\Promise\ExtendedPromiseInterface;
 use Reaction\Helpers\ArrayHelper;
 
 /**
@@ -49,37 +48,6 @@ abstract class ExpiringCache extends ExtendedCache implements ExpiringCacheInter
         $this->createCleanupTimer();
         parent::init();
     }
-
-    /**
-     * Get data from cache
-     * @param string|array $key
-     * @param mixed        $default Default value to return for cache miss or null if not given.
-     * @return ExtendedPromiseInterface  with data then finished
-     */
-    abstract public function get($key, $default = null);
-
-    /**
-     * Write data to cache
-     * @param string|array $key Cache key
-     * @param mixed        $value Data
-     * @param integer|null $ttl Cache lifetime in seconds
-     * @param array        $tags Possible tags
-     * @return ExtendedPromiseInterface  with bool then finished
-     */
-    abstract public function set($key, $value, $ttl = null, $tags = []);
-
-    /**
-     * @param string|array $key
-     * @return ExtendedPromiseInterface  with bool 'true' then finished
-     */
-    abstract public function delete($key);
-
-    /**
-     * Checks that key exists in cache
-     * @param string|array $key
-     * @return ExtendedPromiseInterface  with bool
-     */
-    abstract public function exists($key);
 
     /**
      * Cleanup callback for timer
