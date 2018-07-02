@@ -5,11 +5,12 @@ namespace Reaction\Db\Pgsql;
 use React\EventLoop\LoopInterface;
 use React\Socket\ConnectorInterface;
 use Reaction\Base\BaseObject;
+use Reaction\ClientsPool\Pool;
 use Reaction\Exceptions\Exception;
 use Reaction\Exceptions\InvalidArgumentException;
 use Reaction\Helpers\ArrayHelper;
 use Rx\Observable;
-use PgAsync\Connection as pgConnection;
+use Reaction\Db\Pgsql\PgConnection as pgConnection;
 
 /**
  * Class PgClient
@@ -22,7 +23,7 @@ class PgClient extends BaseObject
     /** @var ConnectorInterface */
     public $connector;
     /** @var int Max simultaneously opened connections count in pool */
-    public $maxConnections = 5;
+    public $maxConnections = 30;
     /** @var bool Automatically close connection on idle */
     public $autoDisconnect = false;
     /**
@@ -43,8 +44,12 @@ class PgClient extends BaseObject
      * @var array Parameters for connection creation
      */
     protected $connectionParams = [
-        'auto_disconnect' => false,
+        'autoDisconnect' => false,
     ];
+    /**
+     * @var Pool|null
+     */
+    protected $_pool;
 
     /**
      * PgClient constructor.
@@ -61,13 +66,40 @@ class PgClient extends BaseObject
     public function init()
     {
         $this->connectionParams = ArrayHelper::merge($this->connectionParams, $this->dbCredentials);
-        $this->connectionParams['auto_disconnect'] = !empty($this->autoDisconnect);
+        $this->connectionParams['autoDisconnect'] = !empty($this->autoDisconnect);
 
         if (!is_int($this->maxConnections) || $this->maxConnections < 1) {
             throw new InvalidArgumentException('Property `maxConnections` must an be integer greater than zero.');
         }
 
         parent::init();
+    }
+
+    /**
+     * Get pool of connections
+     * @return Pool|null
+     */
+    public function getPool()
+    {
+        if (!isset($this->_pool)) {
+            $poolConfig = [
+                'loop' => $this->loop,
+                'maxCount' => $this->maxConnections,
+                'maxQueueCount' => null,
+                'clientTtl' => 5,
+            ];
+            $connectionParams = [
+                ['class' => pgConnection::class],
+                [
+                    $this->connectionParams,
+                    $this->loop,
+                    $this->connector
+                ]
+            ];
+            $poolConfig['clientConfig'] = $connectionParams;
+            $this->_pool = new Pool($poolConfig);
+        }
+        return $this->_pool;
     }
 
     /**
@@ -102,9 +134,120 @@ class PgClient extends BaseObject
     /**
      * Get least busy connection, with idle state or at least with minimum queued queries count
      * @return pgConnection
-     * @throws Exception
      */
     private function getLeastBusyConnection() : pgConnection
+    {
+        /** @var pgConnection $client */
+        $client = $this->getPool()->getClient();
+        return $client;
+    }
+
+    /**
+     * Get connection ready for query execution
+     * @return pgConnection|null
+     */
+    public function getIdleConnection(): pgConnection
+    {
+        if(($connection = $this->getPool()->getClientIdle()) !== null) {
+            return $connection;
+        } elseif (!$this->getPool()->isReachedMaxClients()) {
+            return $this->getPool()->createClient();
+        }
+        return null;
+    }
+
+    /**
+     * Create new connection without adding it to shared pool
+     * @return pgConnection
+     */
+    public function getDedicatedConnection() {
+        return $this->getPool()->createClient(false);
+    }
+
+    /**
+     * Get opened connections count
+     * @return int
+     */
+    public function getConnectionCount(): int
+    {
+        return count($this->connections);
+    }
+
+    /**
+     * This is here temporarily so that the tests can disconnect
+     * Will be setup better/more gracefully at some point hopefully
+     *
+     * @internal
+     */
+    public function closeNow()
+    {
+        foreach ($this->connections as $connection) {
+            $connection->disconnect();
+        }
+    }
+
+    /**
+     * Create new connection
+     * @param bool  $addToPool
+     * @param array $params
+     * @return pgConnection
+     * @deprecated Since Pool is used
+     * @see getPool()
+     */
+    private function createNewConnection($addToPool = true, $params = [])
+    {
+        // no idle connections were found - spin up new one
+        $params = ArrayHelper::merge($this->connectionParams, $params);
+        $connection = new pgConnection($params, $this->loop, $this->connector);
+        if (!$addToPool || $this->autoDisconnect) {
+            return $connection;
+        }
+
+        $this->connections[] = $connection;
+
+        $connection->on('close', function() use ($connection) {
+            $this->connections = array_filter($this->connections, function($c) use ($connection) {
+                return $connection !== $c;
+            });
+            $this->connections = array_values($this->connections);
+        });
+
+        return $connection;
+    }
+
+    /**
+     * Get connection ready for query execution
+     * @return pgConnection
+     * @deprecated
+     * @see getIdleConnection()
+     */
+    private function getIdleConnectionOld(): pgConnection
+    {
+        // we want to get the first available one
+        // this will keep the connections at the front the busiest
+        // and then we can add an idle timer to the connections
+        foreach ($this->connections as $connection) {
+            // need to figure out different states (in trans etc.)
+            if ($connection->getState() === pgConnection::STATE_READY) {
+                return $connection;
+            }
+        }
+
+        if (count($this->connections) >= $this->maxConnections) {
+            return null;
+        }
+
+        return $this->createNewConnection();
+    }
+
+    /**
+     * Get least busy connection, with idle state or at least with minimum queued queries count
+     * @return pgConnection
+     * @throws Exception
+     * @deprecated
+     * @see getLeastBusyConnection()
+     */
+    private function getLeastBusyConnectionOld() : pgConnection
     {
         if (count($this->connections) === 0) {
             // try to spin up another connection to return
@@ -134,87 +277,5 @@ class PgClient extends BaseObject
         }
 
         return $min;
-    }
-
-    /**
-     * Get connection ready for query execution
-     * @return pgConnection
-     */
-    public function getIdleConnection(): pgConnection
-    {
-        // we want to get the first available one
-        // this will keep the connections at the front the busiest
-        // and then we can add an idle timer to the connections
-        foreach ($this->connections as $connection) {
-            // need to figure out different states (in trans etc.)
-            if ($connection->getState() === pgConnection::STATE_READY) {
-                return $connection;
-            }
-        }
-
-        if (count($this->connections) >= $this->maxConnections) {
-            return null;
-        }
-
-        return $this->createNewConnection();
-    }
-
-    /**
-     * Create new connection without adding it to shared pool
-     * @param bool $autoDisconnect
-     * @return pgConnection
-     */
-    public function getDedicatedConnection($autoDisconnect = false) {
-        $params = ['auto_disconnect' => $autoDisconnect];
-        return $this->createNewConnection(false, $params);
-    }
-
-    /**
-     * Create new connection
-     * @param bool  $addToPool
-     * @param array $params
-     * @return pgConnection
-     */
-    private function createNewConnection($addToPool = true, $params = [])
-    {
-        // no idle connections were found - spin up new one
-        $params = ArrayHelper::merge($this->connectionParams, $params);
-        $connection = new pgConnection($params, $this->loop, $this->connector);
-        if (!$addToPool || $this->autoDisconnect) {
-            return $connection;
-        }
-
-        $this->connections[] = $connection;
-
-        $connection->on('close', function() use ($connection) {
-            $this->connections = array_filter($this->connections, function($c) use ($connection) {
-                return $connection !== $c;
-            });
-            $this->connections = array_values($this->connections);
-        });
-
-        return $connection;
-    }
-
-    /**
-     * Get opened connections count
-     * @return int
-     */
-    public function getConnectionCount(): int
-    {
-        return count($this->connections);
-    }
-
-    /**
-     * This is here temporarily so that the tests can disconnect
-     * Will be setup better/more gracefully at some point hopefully
-     *
-     * @internal
-     */
-    public function closeNow()
-    {
-        foreach ($this->connections as $connection) {
-            $connection->disconnect();
-        }
     }
 }
