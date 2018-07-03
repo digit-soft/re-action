@@ -22,8 +22,6 @@ class PgClient extends BaseObject
     public $loop;
     /** @var ConnectorInterface */
     public $connector;
-    /** @var int Max simultaneously opened connections count in pool */
-    public $maxConnections = 30;
     /** @var bool Automatically close connection on idle */
     public $autoDisconnect = false;
     /**
@@ -37,6 +35,19 @@ class PgClient extends BaseObject
      * ]
      */
     public $dbCredentials = [];
+    /**
+     * @var array Pool config
+     * @see Pool
+     */
+    public $poolConfig = [];
+    /**
+     * @var array Default Pool config
+     */
+    public $poolConfigDefault = [
+        'clientTtl' => 40,      //Max connection time-to-live
+        'maxCount' => 90,       //Max simultaneously opened connections count in pool
+        'maxQueueCount' => 10,  //Max queue count
+    ];
 
     /** @var pgConnection[] Connections pool */
     protected $connections = [];
@@ -50,6 +61,13 @@ class PgClient extends BaseObject
      * @var Pool|null
      */
     protected $_pool;
+
+    /**
+     * @var int Max simultaneously opened connections count in pool
+     * @deprecated Not used at this time
+     * @todo Remove later
+     */
+    private $maxConnections = 90;
 
     /**
      * PgClient constructor.
@@ -68,10 +86,6 @@ class PgClient extends BaseObject
         $this->connectionParams = ArrayHelper::merge($this->connectionParams, $this->dbCredentials);
         $this->connectionParams['autoDisconnect'] = !empty($this->autoDisconnect);
 
-        if (!is_int($this->maxConnections) || $this->maxConnections < 1) {
-            throw new InvalidArgumentException('Property `maxConnections` must an be integer greater than zero.');
-        }
-
         parent::init();
     }
 
@@ -84,19 +98,16 @@ class PgClient extends BaseObject
         if (!isset($this->_pool)) {
             $poolConfig = [
                 'loop' => $this->loop,
-                'maxCount' => $this->maxConnections,
-                'maxQueueCount' => null,
-                'clientTtl' => 5,
-            ];
-            $connectionParams = [
-                ['class' => pgConnection::class],
-                [
-                    $this->connectionParams,
-                    $this->loop,
-                    $this->connector
+                'clientConfig' => [
+                    ['class' => pgConnection::class],
+                    [
+                        $this->connectionParams,
+                        $this->loop,
+                        $this->connector
+                    ]
                 ]
             ];
-            $poolConfig['clientConfig'] = $connectionParams;
+            $poolConfig = ArrayHelper::merge($this->poolConfigDefault, $this->poolConfig, $poolConfig);
             $this->_pool = new Pool($poolConfig);
         }
         return $this->_pool;
