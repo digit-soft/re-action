@@ -3,10 +3,10 @@
 namespace Reaction\Web\Sessions;
 
 use Reaction\Promise\ExtendedPromiseInterface;
-use React\Promise\PromiseInterface;
 use Reaction\Cache\ExtendedCacheInterface;
 use Reaction\Exceptions\SessionException;
 use Reaction\Promise\Promise;
+use function Reaction\Promise\all;
 use function Reaction\Promise\reject;
 
 /**
@@ -148,14 +148,14 @@ class CachedSessionHandler extends SessionHandlerAbstract
                         function() use ($id) {
                             return $this->destroy($id, false);
                         }
-                    );
+                    )->otherwise(function() { return true; });
                     $promises[] = $promise;
                 }
             }
             $promises[] = $this->archive->gc($this->gcArchiveLifetime);
         }
         if (!empty($promises)) {
-            \Reaction\Promise\all($promises)->always(
+            all($promises)->always(
                 function() {
                     $this->_gcIsRunning = false;
                 }
@@ -191,16 +191,6 @@ class CachedSessionHandler extends SessionHandlerAbstract
     }
 
     /**
-     * Get cache session key
-     * @param string $sessionId
-     * @return string
-     */
-    protected function getSessionKey($sessionId) {
-        return $this->keyPrefix . trim($sessionId);
-    }
-
-
-    /**
      * Extract session data from record
      * @param array $sessionRecord
      * @param bool  $unserialize
@@ -216,8 +206,17 @@ class CachedSessionHandler extends SessionHandlerAbstract
      * @param array $record
      * @return integer|null
      */
-    public function extractTimestamp($record = []) {
+    protected function extractTimestamp($record = []) {
         return isset($record[$this->timestampKey]) ? $record[$this->timestampKey] : null;
+    }
+
+    /**
+     * Get cache session key
+     * @param string $sessionId
+     * @return string
+     */
+    protected function getSessionKey($sessionId) {
+        return $this->keyPrefix . trim($sessionId);
     }
 
     /**
@@ -234,7 +233,7 @@ class CachedSessionHandler extends SessionHandlerAbstract
                     return $data !== null ? $data : reject(null);
                 })->then(function($data) use ($r) {
                     $r($data);
-                }, function($error = null) use ($c, $key) {
+                }, function() use ($c, $key) {
                     $message = sprintf('Failed to get session data from cache for "%s"', $key);
                     $c(new SessionException($message));
                 });
@@ -256,7 +255,7 @@ class CachedSessionHandler extends SessionHandlerAbstract
                 function() use ($r) {
                     $r(true);
                 },
-                function($error = null) use (&$c, $key) {
+                function() use (&$c, $key) {
                     $message = sprintf('Failed to write session data to cache for "%s"', $key);
                     $c(new SessionException($message));
                 }
