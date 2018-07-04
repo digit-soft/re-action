@@ -4,7 +4,7 @@ namespace Reaction\Cache;
 
 use Reaction\Base\BaseObject;
 use Reaction\Helpers\Json;
-use Zumba\JsonSerializer\JsonSerializer;
+use Reaction\Helpers\VarDumper;
 use function Reaction\Promise\all;
 
 /**
@@ -72,8 +72,7 @@ abstract class ExtendedCache extends BaseObject implements ExtendedCacheInterfac
      */
     protected function serializeData($data)
     {
-        $serializer = new JsonSerializer();
-        return $serializer->serialize($data);
+        return VarDumper::serialize($data);
     }
 
     /**
@@ -83,7 +82,6 @@ abstract class ExtendedCache extends BaseObject implements ExtendedCacheInterfac
      */
     protected function unserializeData($dataSerialized)
     {
-        $serializer = new JsonSerializer();
-        return $serializer->unserialize($dataSerialized);
+        return VarDumper::unserialize($dataSerialized);
     }
 }
