@@ -27,6 +27,7 @@ use PgAsync\Message\NoticeResponse;
 use PgAsync\Message\ParameterStatus;
 use PgAsync\Message\ParseComplete;
 use PgAsync\Command\Query;
+use PgAsync\Message\ParserInterface;
 use PgAsync\Message\ReadyForQuery;
 use PgAsync\Message\RowDescription;
 use PgAsync\Command\StartupMessage;
@@ -153,46 +154,6 @@ class PgConnection extends EventEmitter implements PoolClientInterface
         $this->uri          = 'tcp://' . $this->parameters['host'] . ':' . $this->parameters['port'];
     }
 
-    /**
-     * Start connection
-     * @throws \Exception
-     */
-    private function start()
-    {
-        if ($this->connStatus !== static::CONNECTION_NEEDED) {
-            throw new \Exception('Connection not in startable state');
-        }
-
-        $this->setConnStatus(static::CONNECTION_STARTED);
-
-        $this->socket->connect($this->uri)->then(
-            function (DuplexStreamInterface $stream) {
-                $this->stream     = $stream;
-                $this->setConnStatus(static::CONNECTION_MADE);
-
-                $stream->on('close', [$this, 'onClose']);
-
-                $stream->on('data', [$this, 'onData']);
-
-                //  $ssl = new SSLRequest();
-                //  $stream->write($ssl->encodedMessage());
-
-                $startupParameters = $this->parameters;
-                unset($startupParameters['host'], $startupParameters['port']);
-
-                $startup = new StartupMessage();
-                $startup->setParameters($startupParameters);
-                $stream->write($startup->encodedMessage());
-            },
-            function ($e) {
-                // connection error
-                $this->failAllCommandsWith($e);
-                $this->setConnStatus(static::CONNECTION_BAD);
-                $this->emit('error', [$e]);
-            }
-        );
-    }
-
     public function getState()
     {
         return $this->queryState;
@@ -242,6 +203,307 @@ class PgConnection extends EventEmitter implements PoolClientInterface
     }
 
     /**
+     * Handler for `close` event
+     */
+    public function onClose()
+    {
+        $this->setConnStatus(static::CONNECTION_CLOSED);
+        $this->emit('close');
+        $this->clientClose();
+    }
+
+    /**
+     * Get connection status
+     * @return int
+     */
+    public function getConnectionStatus()
+    {
+        return $this->connStatus;
+    }
+
+    /**
+     * Process current queue
+     */
+    public function processQueue()
+    {
+        if (count($this->commandQueue) === 0 && $this->queryState === static::STATE_READY && $this->autoDisconnect) {
+            $this->commandQueue[] = new Terminate();
+        }
+
+        if (count($this->commandQueue) === 0) {
+            return;
+        }
+
+        if ($this->connStatus === $this::CONNECTION_BAD) {
+            $this->failAllCommandsWith(new \Exception('Bad connection: ' . $this->lastError));
+            if ($this->stream) {
+                $this->stream->end();
+                $this->stream = null;
+            }
+            return;
+        }
+
+        while (count($this->commandQueue) > 0 && $this->queryState === static::STATE_READY) {
+            /** @var CommandInterface $c */
+            $c = array_shift($this->commandQueue);
+            if (!$c->isActive()) {
+                continue;
+            }
+            $this->debug('Sending ' . get_class($c));
+            if ($c instanceof Query) {
+                $this->debug('Sending simple query: ' . $c->getQueryString());
+            }
+            $this->stream->write($c->encodedMessage());
+            if ($c instanceof Terminate) {
+                $this->stream->end();
+            }
+            if ($c->shouldWaitForComplete()) {
+                $this->setState($this::STATE_BUSY);
+                if ($c instanceof Query) {
+                    $this->queryType = $this::QUERY_SIMPLE;
+                } elseif ($c instanceof Sync) {
+                    $this->queryType = $this::QUERY_EXTENDED;
+                }
+
+                $this->currentCommand = $c;
+
+                return;
+            }
+        }
+    }
+
+    /**
+     * Execute simple query
+     * @param string $query
+     * @return Observable
+     */
+    public function query($query): Observable
+    {
+        return new AnonymousObservable(
+            function (ObserverInterface $observer, SchedulerInterface $scheduler = null) use ($query) {
+                if ($this->connStatus === $this::CONNECTION_NEEDED) {
+                    $this->start();
+                }
+                if ($this->connStatus === $this::CONNECTION_BAD) {
+                    $observer->onError(new \Exception('Connection failed'));
+                    return new EmptyDisposable();
+                }
+
+                $q = new Query($query, $observer);
+                $this->commandQueue[] = $q;
+                $this->changeQueueCountInc();
+
+                $this->processQueue();
+
+                return new CallbackDisposable(function() use ($q) {
+                    $this->changeQueueCountDec();
+                    if ($this->currentCommand === $q && $q->isActive()) {
+                        $this->cancelRequest();
+                    }
+                    $q->cancel();
+                });
+            }
+        );
+
+    }
+
+    /**
+     * Execute statement
+     * @param string $queryString
+     * @param array  $parameters
+     * @return Observable
+     */
+    public function executeStatement(string $queryString, array $parameters = []): Observable
+    {
+        /**
+         * http://git.postgresql.org/gitweb/?p=postgresql.git;a=blob;f=src/interfaces/libpq/fe-exec.c;h=828f18e1110119efc3bf99ecf16d98ce306458ea;hb=6bcce25801c3fcb219e0d92198889ec88c74e2ff#l1381
+         *
+         * Should make this return a Statement object
+         *
+         * To use prepared statements, looks like we need to:
+         * - Parse (if needed?) (P)
+         * - Bind (B)
+         *   - Parameter Stuff
+         * - Describe portal (D)
+         * - Execute (E)
+         * - Sync (S)
+         *
+         * Expect back
+         * - Parse Complete (1)
+         * - Bind Complete (2)
+         * - Row Description (T)
+         * - Row Data (D) 0..n
+         * - Command Complete (C)
+         * - Ready for Query (Z)
+         */
+
+        return new AnonymousObservable(
+            function (ObserverInterface $observer, SchedulerInterface $scheduler = null) use ($queryString, $parameters) {
+                if ($this->connStatus === $this::CONNECTION_NEEDED) {
+                    $this->start();
+                }
+                if ($this->connStatus === $this::CONNECTION_BAD) {
+                    $observer->onError(new \Exception('Connection failed'));
+                    return new EmptyDisposable();
+                }
+
+                $name = 'somestatement';
+
+                $close = new Close($name);
+                $this->commandQueue[] = $close;
+
+                $prepare = new Parse($name, $queryString);
+                $this->commandQueue[] = $prepare;
+
+                $bind = new Bind($parameters, $name);
+                $this->commandQueue[] = $bind;
+
+                $describe = new Describe();
+                $this->commandQueue[] = $describe;
+
+                $execute = new Execute();
+                $this->commandQueue[] = $execute;
+
+                $sync = new Sync($queryString, $observer);
+                $this->commandQueue[] = $sync;
+
+                $this->changeQueueCountInc();
+
+                $this->processQueue();
+
+                return new CallbackDisposable(function () use ($sync) {
+                    $this->changeQueueCountDec();
+                    if ($this->currentCommand === $sync && $sync->isActive()) {
+                        $this->cancelRequest();
+                    }
+                    $sync->cancel();
+                });
+            }
+        );
+    }
+
+    /**
+     * https://www.postgresql.org/docs/9.2/static/protocol-flow.html#AEN95792
+     */
+    public function disconnect()
+    {
+        $this->commandQueue[] = new Terminate();
+        $this->processQueue();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function clientClose()
+    {
+        $this->disconnect();
+        $this->emit(PoolClientInterface::CLIENT_POOL_EVENT_CLOSE);
+    }
+
+    /**
+     * Set connection status
+     * @param int $status
+     */
+    protected function setConnStatus($status)
+    {
+        $this->connStatus = $status;
+        $map = [
+            static::CONNECTION_BAD => static::CLIENT_POOL_STATE_CLOSING,
+            static::CONNECTION_CLOSED => static::CLIENT_POOL_STATE_CLOSING,
+            static::CONNECTION_OK => static::CLIENT_POOL_STATE_READY,
+        ];
+        if (isset($map[$status])) {
+            $this->changeState($map[$status]);
+        }
+    }
+
+    /**
+     * Handle message response callback
+     * @param ParserInterface $message
+     * @throws \Exception
+     */
+    protected function handleMessage(ParserInterface $message)
+    {
+        $this->debug('Handling ' . get_class($message));
+        if ($message instanceof DataRow) {
+            $this->handleDataRow($message);
+        } elseif ($message instanceof Authentication) {
+            $this->handleAuthentication($message);
+        } elseif ($message instanceof BackendKeyData) {
+            $this->handleBackendKeyData($message);
+        } elseif ($message instanceof CommandComplete) {
+            $this->handleCommandComplete($message);
+        } elseif ($message instanceof CopyInResponse) {
+            $this->handleCopyInResponse($message);
+        } elseif ($message instanceof CopyOutResponse) {
+            $this->handleCopyOutResponse($message);
+        } elseif ($message instanceof EmptyQueryResponse) {
+            $this->handleEmptyQueryResponse($message);
+        } elseif ($message instanceof ErrorResponse) {
+            $this->handleErrorResponse($message);
+        } elseif ($message instanceof NoticeResponse) {
+            $this->handleNoticeResponse($message);
+        } elseif ($message instanceof ParameterStatus) {
+            $this->handleParameterStatus($message);
+        } elseif ($message instanceof ParseComplete) {
+            $this->handleParseComplete($message);
+        } elseif ($message instanceof ReadyForQuery) {
+            $this->handleReadyForQuery($message);
+        } elseif ($message instanceof RowDescription) {
+            $this->handleRowDescription($message);
+        }
+    }
+
+    /**
+     * Get pool client ID prefix
+     * @return string
+     */
+    protected static function getClientIdPrefix()
+    {
+        return 'pgc_';
+    }
+
+    /**
+     * Start connection
+     * @throws \Exception
+     */
+    private function start()
+    {
+        if ($this->connStatus !== static::CONNECTION_NEEDED) {
+            throw new \Exception('Connection not in startable state');
+        }
+
+        $this->setConnStatus(static::CONNECTION_STARTED);
+
+        $this->socket->connect($this->uri)->then(
+            function (DuplexStreamInterface $stream) {
+                $this->stream     = $stream;
+                $this->setConnStatus(static::CONNECTION_MADE);
+
+                $stream->on('close', [$this, 'onClose']);
+
+                $stream->on('data', [$this, 'onData']);
+
+                //  $ssl = new SSLRequest();
+                //  $stream->write($ssl->encodedMessage());
+
+                $startupParameters = $this->parameters;
+                unset($startupParameters['host'], $startupParameters['port']);
+
+                $startup = new StartupMessage();
+                $startup->setParameters($startupParameters);
+                $stream->write($startup->encodedMessage());
+            },
+            function ($e) {
+                // connection error
+                $this->failAllCommandsWith($e);
+                $this->setConnStatus(static::CONNECTION_BAD);
+                $this->emit('error', [$e]);
+            }
+        );
+    }
+
+    /**
      * Data processing callback
      * @param mixed $data
      * @return bool|string
@@ -283,72 +545,6 @@ class PgConnection extends EventEmitter implements PoolClientInterface
 //        } else {
 //            echo "Unhandled message \"".$type."\"";
 //        }
-    }
-
-    /**
-     * Handler for `close` event
-     */
-    public function onClose()
-    {
-        $this->setConnStatus(static::CONNECTION_CLOSED);
-        $this->emit('close');
-        $this->clientClose();
-    }
-
-    /**
-     * Get connection status
-     * @return int
-     */
-    public function getConnectionStatus()
-    {
-        return $this->connStatus;
-    }
-
-    /**
-     * Set connection status
-     * @param int $status
-     */
-    protected function setConnStatus($status)
-    {
-        $this->connStatus = $status;
-        $map = [
-            static::CONNECTION_CLOSED => static::CLIENT_POOL_STATE_CLOSING,
-            static::CONNECTION_OK => static::CLIENT_POOL_STATE_READY,
-        ];
-        $state = isset($map[$status]) ? $map[$status] : static::CLIENT_POOL_STATE_NOT_READY;
-        $this->changeState($state);
-    }
-
-    public function handleMessage($message)
-    {
-        $this->debug('Handling ' . get_class($message));
-        if ($message instanceof DataRow) {
-            $this->handleDataRow($message);
-        } elseif ($message instanceof Authentication) {
-            $this->handleAuthentication($message);
-        } elseif ($message instanceof BackendKeyData) {
-            $this->handleBackendKeyData($message);
-        } elseif ($message instanceof CommandComplete) {
-            $this->handleCommandComplete($message);
-        } elseif ($message instanceof CopyInResponse) {
-            $this->handleCopyInResponse($message);
-        } elseif ($message instanceof CopyOutResponse) {
-            $this->handleCopyOutResponse($message);
-        } elseif ($message instanceof EmptyQueryResponse) {
-            $this->handleEmptyQueryResponse($message);
-        } elseif ($message instanceof ErrorResponse) {
-            $this->handleErrorResponse($message);
-        } elseif ($message instanceof NoticeResponse) {
-            $this->handleNoticeResponse($message);
-        } elseif ($message instanceof ParameterStatus) {
-            $this->handleParameterStatus($message);
-        } elseif ($message instanceof ParseComplete) {
-            $this->handleParseComplete($message);
-        } elseif ($message instanceof ReadyForQuery) {
-            $this->handleReadyForQuery($message);
-        } elseif ($message instanceof RowDescription) {
-            $this->handleRowDescription($message);
-        }
     }
 
     /**
@@ -553,167 +749,6 @@ class PgConnection extends EventEmitter implements PoolClientInterface
     }
 
     /**
-     * Process current queue
-     */
-    public function processQueue()
-    {
-        if (count($this->commandQueue) === 0 && $this->queryState === static::STATE_READY && $this->autoDisconnect) {
-            $this->commandQueue[] = new Terminate();
-        }
-
-        if (count($this->commandQueue) === 0) {
-            return;
-        }
-
-        if ($this->connStatus === $this::CONNECTION_BAD) {
-            $this->failAllCommandsWith(new \Exception('Bad connection: ' . $this->lastError));
-            if ($this->stream) {
-                $this->stream->end();
-                $this->stream = null;
-            }
-            return;
-        }
-
-        while (count($this->commandQueue) > 0 && $this->queryState === static::STATE_READY) {
-            /** @var CommandInterface $c */
-            $c = array_shift($this->commandQueue);
-            if (!$c->isActive()) {
-                continue;
-            }
-            $this->debug('Sending ' . get_class($c));
-            if ($c instanceof Query) {
-                $this->debug('Sending simple query: ' . $c->getQueryString());
-            }
-            $this->stream->write($c->encodedMessage());
-            if ($c instanceof Terminate) {
-                $this->stream->end();
-            }
-            if ($c->shouldWaitForComplete()) {
-                $this->setState($this::STATE_BUSY);
-                if ($c instanceof Query) {
-                    $this->queryType = $this::QUERY_SIMPLE;
-                } elseif ($c instanceof Sync) {
-                    $this->queryType = $this::QUERY_EXTENDED;
-                }
-
-                $this->currentCommand = $c;
-
-                return;
-            }
-        }
-    }
-
-    /**
-     * Execute simple query
-     * @param string $query
-     * @return Observable
-     */
-    public function query($query): Observable
-    {
-        return new AnonymousObservable(
-            function (ObserverInterface $observer, SchedulerInterface $scheduler = null) use ($query) {
-                if ($this->connStatus === $this::CONNECTION_NEEDED) {
-                    $this->start();
-                }
-                if ($this->connStatus === $this::CONNECTION_BAD) {
-                    $observer->onError(new \Exception('Connection failed'));
-                    return new EmptyDisposable();
-                }
-
-                $q = new Query($query, $observer);
-                $this->commandQueue[] = $q;
-                $this->changeQueueCountInc();
-
-                $this->processQueue();
-
-                return new CallbackDisposable(function() use ($q) {
-                    $this->changeQueueCountDec();
-                    if ($this->currentCommand === $q && $q->isActive()) {
-                        $this->cancelRequest();
-                    }
-                    $q->cancel();
-                });
-            }
-        );
-
-    }
-
-    /**
-     * Execute statement
-     * @param string $queryString
-     * @param array  $parameters
-     * @return Observable
-     */
-    public function executeStatement(string $queryString, array $parameters = []): Observable
-    {
-        /**
-         * http://git.postgresql.org/gitweb/?p=postgresql.git;a=blob;f=src/interfaces/libpq/fe-exec.c;h=828f18e1110119efc3bf99ecf16d98ce306458ea;hb=6bcce25801c3fcb219e0d92198889ec88c74e2ff#l1381
-         *
-         * Should make this return a Statement object
-         *
-         * To use prepared statements, looks like we need to:
-         * - Parse (if needed?) (P)
-         * - Bind (B)
-         *   - Parameter Stuff
-         * - Describe portal (D)
-         * - Execute (E)
-         * - Sync (S)
-         *
-         * Expect back
-         * - Parse Complete (1)
-         * - Bind Complete (2)
-         * - Row Description (T)
-         * - Row Data (D) 0..n
-         * - Command Complete (C)
-         * - Ready for Query (Z)
-         */
-
-        return new AnonymousObservable(
-            function (ObserverInterface $observer, SchedulerInterface $scheduler = null) use ($queryString, $parameters) {
-                if ($this->connStatus === $this::CONNECTION_NEEDED) {
-                    $this->start();
-                }
-                if ($this->connStatus === $this::CONNECTION_BAD) {
-                    $observer->onError(new \Exception('Connection failed'));
-                    return new EmptyDisposable();
-                }
-
-                $name = 'somestatement';
-
-                $close = new Close($name);
-                $this->commandQueue[] = $close;
-
-                $prepare = new Parse($name, $queryString);
-                $this->commandQueue[] = $prepare;
-
-                $bind = new Bind($parameters, $name);
-                $this->commandQueue[] = $bind;
-
-                $describe = new Describe();
-                $this->commandQueue[] = $describe;
-
-                $execute = new Execute();
-                $this->commandQueue[] = $execute;
-
-                $sync = new Sync($queryString, $observer);
-                $this->commandQueue[] = $sync;
-
-                $this->changeQueueCountInc();
-
-                $this->processQueue();
-
-                return new CallbackDisposable(function () use ($sync) {
-                    $this->changeQueueCountDec();
-                    if ($this->currentCommand === $sync && $sync->isActive()) {
-                        $this->cancelRequest();
-                    }
-                    $sync->cancel();
-                });
-            }
-        );
-    }
-
-    /**
      * Add Column information (from T)
      *
      * @param $columns
@@ -724,36 +759,6 @@ class PgConnection extends EventEmitter implements PoolClientInterface
         $this->columnNames = array_map(function ($column) {
             return $column->name;
         }, $this->columns);
-    }
-
-    /**
-     * Print debug message
-     * @param string $string
-     */
-    private function debug($string)
-    {
-        if (!\Reaction::isDebug()) {
-            return;
-        }
-        //echo "DEBUG: " . $string . "\n";
-    }
-
-    /**
-     * https://www.postgresql.org/docs/9.2/static/protocol-flow.html#AEN95792
-     */
-    public function disconnect()
-    {
-        $this->commandQueue[] = new Terminate();
-        $this->processQueue();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function clientClose()
-    {
-        $this->disconnect();
-        $this->emit(PoolClientInterface::CLIENT_POOL_EVENT_CLOSE);
     }
 
     /**
@@ -769,5 +774,17 @@ class PgConnection extends EventEmitter implements PoolClientInterface
                 $this->debug("Error connecting for cancellation... " . $e->getMessage() . "\n");
             });
         }
+    }
+
+    /**
+     * Print debug message
+     * @param string $string
+     */
+    private function debug($string)
+    {
+        if (!\Reaction::isDebug()) {
+            return;
+        }
+        //echo "DEBUG: " . $string . "\n";
     }
 }
