@@ -7,6 +7,7 @@ use React\EventLoop\LoopInterface;
 use React\Http\Server as Http;
 use React\Socket\Server as Socket;
 use Reaction;
+use Reaction\Base\Logger\Debugger;
 use Reaction\Db\DatabaseInterface;
 use Reaction\DI\ServiceLocator;
 use Reaction\DI\ServiceLocatorAutoloadInterface;
@@ -404,10 +405,7 @@ abstract class StaticApplicationAbstract extends ServiceLocator implements Stati
             $format = is_array($format) ? $format : [$format];
             $reportMessage = Console::ansiFormat('[' . strtoupper($level) . '] ' . $reportMessage, $format);
             if (Reaction::isDebug()) {
-                $trace = Reaction\Base\Logger\Debugger::reduceBacktrace(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS));
-                $trace = array_filter($trace, function($row) {
-                    return isset($row['file']) && isset($row['line']);
-                });
+                $trace = Debugger::reduceBacktrace(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS), true);
                 $num = count($trace);
                 foreach ($trace as $row) {
                     $reportMessage .= "\n $num - " . $row['file'] . ":" . $row['line'];

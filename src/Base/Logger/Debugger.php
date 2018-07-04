@@ -96,11 +96,17 @@ class Debugger
     /**
      * Reduce backtrace
      * @param array $trace
+     * @param bool  $withLineNum
      * @return array
      */
-    public static function reduceBacktrace($trace = [])
+    public static function reduceBacktrace($trace = [], $withLineNum = false)
     {
         $traceNew = [];
+        if ($withLineNum) {
+            $trace = array_filter($trace, function($row) {
+                return isset($row['file']) && isset($row['line']);
+            });
+        }
         foreach ($trace as $row) {
             if (isset($row['class']) && isset($exclude[$row['class']])) {
                 if (empty($exclude[$row['class']])) {
