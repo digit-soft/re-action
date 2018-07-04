@@ -403,6 +403,17 @@ abstract class StaticApplicationAbstract extends ServiceLocator implements Stati
             list($level, $format) = $this->getErrorLogLevel($code);
             $format = is_array($format) ? $format : [$format];
             $reportMessage = Console::ansiFormat('[' . strtoupper($level) . '] ' . $reportMessage, $format);
+            if (Reaction::isDebug()) {
+                $trace = Reaction\Base\Logger\Debugger::reduceBacktrace(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS));
+                $trace = array_filter($trace, function($row) {
+                    return isset($row['file']) && isset($row['line']);
+                });
+                $num = count($trace);
+                foreach ($trace as $row) {
+                    $reportMessage .= "\n $num - " . $row['file'] . ":" . $row['line'];
+                    --$num;
+                }
+            }
             $logger->logRaw($reportMessage, [], 1);
         }
     }
