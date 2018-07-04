@@ -52,6 +52,11 @@ abstract class ExtendedCache extends BaseObject implements ExtendedCacheInterfac
     abstract public function deleteByTag($tag);
 
     /**
+     * @inheritdoc
+     */
+    abstract public function flush();
+
+    /**
      * Process key. Ensure that key is string
      * @param string|array $key
      * @return string

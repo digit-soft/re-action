@@ -85,6 +85,17 @@ class ArrayExpiringCache extends ExpiringCache
     }
 
     /**
+     * @inheritdoc
+     */
+    public function flush()
+    {
+        $this->storage = [];
+        $this->tags = [];
+        $this->_timestamps = [];
+        return resolve(true);
+    }
+
+    /**
      * Check that data exists in storage array
      * @param string $key
      * @return bool

@@ -84,6 +84,16 @@ class ArrayCache extends ExtendedCache
     }
 
     /**
+     * @inheritdoc
+     */
+    public function flush()
+    {
+        $this->storage = [];
+        $this->tags = [];
+        return resolve(true);
+    }
+
+    /**
      * Internal check that record exists in storage
      * @internal
      * @param string $key

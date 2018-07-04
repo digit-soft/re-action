@@ -109,4 +109,10 @@ interface ExtendedCacheInterface extends CacheInterface
      * @return ExtendedPromiseInterface  with bool
      */
     public function exists($key);
+
+    /**
+     * Flush all cache
+     * @return ExtendedPromiseInterface with bool 'true' then finished
+     */
+    public function flush();
 }
