@@ -25,25 +25,11 @@ class Debugger
             $trace = array_slice($trace, $traceShift);
         }
         $called = array_shift($trace);
-        $exclude = [
-            'React\Http\Io\MiddlewareRunner' => [],
-            'React\Promise\Promise' => ['settle'],
-            'Reaction\Promise\Promise' => ['settle'],
-            'Rx\Observer\AutoDetachObserver' => [],
-            'Rx\Observer\AbstractObserver' => [],
-            'Rx\Observer\CallbackObserver' => [],
-        ];
+        $trace = static::reduceBacktrace($trace);
         $functions = [];
         $padLn = 12;
         $traceNum = 0;
         foreach ($trace as $row) {
-            if (isset($row['class']) && isset($exclude[$row['class']])) {
-                if (empty($exclude[$row['class']])) {
-                    continue;
-                } elseif (!empty($row['function']) && in_array($row['function'], $exclude[$row['class']])) {
-                    continue;
-                }
-            }
             $function = $row['function'];
             $functionStr = isset($row['class'])
                 ? $row['class'] . $row['type'] . $function
@@ -105,6 +91,27 @@ class Debugger
             $stream = \Reaction::create('stdoutWriteStream');
             $stream->write($str . "\n");
         }
+    }
+
+    /**
+     * Reduce backtrace
+     * @param array $trace
+     * @return array
+     */
+    public static function reduceBacktrace($trace = [])
+    {
+        $traceNew = [];
+        foreach ($trace as $row) {
+            if (isset($row['class']) && isset($exclude[$row['class']])) {
+                if (empty($exclude[$row['class']])) {
+                    continue;
+                } elseif (!empty($row['function']) && in_array($row['function'], $exclude[$row['class']])) {
+                    continue;
+                }
+            }
+            $traceNew[] = $row;
+        }
+        return $traceNew;
     }
 
     /**
