@@ -4,6 +4,8 @@ namespace Reaction\Cache;
 
 use Reaction\Base\BaseObject;
 use Reaction\Helpers\Json;
+use Zumba\JsonSerializer\JsonSerializer;
+use function Reaction\Promise\all;
 
 /**
  * Class ExtendedCache to extend from
@@ -36,7 +38,7 @@ abstract class ExtendedCache extends BaseObject implements ExtendedCacheInterfac
             //Ensure that Promise is always fulfilled
             $promises[] = $this->delete($key)->otherwise(function() { return true; });
         }
-        return \Reaction\Promise\all($promises);
+        return all($promises)->then(function() { return true; });
     }
 
     /**
@@ -61,5 +63,27 @@ abstract class ExtendedCache extends BaseObject implements ExtendedCacheInterfac
             $keyStr = Json::encode($key);
             return md5($keyStr);
         }
+    }
+
+    /**
+     * Serialize data to string
+     * @param array $data
+     * @return string
+     */
+    protected function serializeData($data)
+    {
+        $serializer = new JsonSerializer();
+        return $serializer->serialize($data);
+    }
+
+    /**
+     * Unserialize data from string
+     * @param string $dataSerialized
+     * @return mixed
+     */
+    protected function unserializeData($dataSerialized)
+    {
+        $serializer = new JsonSerializer();
+        return $serializer->unserialize($dataSerialized);
     }
 }

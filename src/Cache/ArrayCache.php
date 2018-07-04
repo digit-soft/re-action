@@ -2,7 +2,7 @@
 
 namespace Reaction\Cache;
 
-use React\Promise\ExtendedPromiseInterface;
+use Reaction\Exceptions\Exception;
 use Reaction\Helpers\ArrayHelper;
 use function Reaction\Promise\reject;
 use function Reaction\Promise\resolve;
@@ -80,7 +80,7 @@ class ArrayCache extends ExtendedCache
         if ($this->existInternal($key)) {
             return resolve(true);
         }
-        return resolve(false);
+        return reject(new Exception(sprintf('Cache for key "%s" not exists', $key)));
     }
 
     /**
