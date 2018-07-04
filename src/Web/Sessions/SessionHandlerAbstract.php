@@ -27,7 +27,7 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
      * After that time GC will remove data from storage and archive it for '$sessionLifetime' seconds
      * @see $gcArchiveLifetime
      */
-    public $gcLifetime = 60;
+    public $gcLifetime = 3600;
     /**
      * @var integer Session lifetime in seconds (default 1 day).
      * Time for archive session life from where it can be restored
@@ -36,7 +36,7 @@ abstract class SessionHandlerAbstract extends Component implements SessionHandle
     /**
      * @var integer GC timer interval in seconds
      */
-    public $timerInterval = 10;
+    public $timerInterval = 30;
     /**
      * @var bool Whenever do not use internal garbage collector
      */
