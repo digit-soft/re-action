@@ -4,6 +4,7 @@ namespace Reaction\Helpers;
 
 use Reaction\Base\Arrayable;
 use Reaction\Exceptions\InvalidValueException;
+use Zumba\JsonSerializer\JsonSerializer;
 
 /**
  * VarDumper is intended to replace the buggy PHP function var_dump and print_r.
@@ -22,6 +23,7 @@ class VarDumper
     private static $_objects;
     private static $_output;
     private static $_depth;
+    private static $_serializer;
 
 
     /**
@@ -267,5 +269,41 @@ class VarDumper
         }
 
         return implode('', $closureTokens);
+    }
+
+    /**
+     * Serialize any data
+     * @param mixed $data
+     * @return string
+     * @see VarDumper::unserialize()
+     */
+    public static function serialize($data)
+    {
+        return static::getSerializer()->serialize($data);
+    }
+
+    /**
+     * Unserialize string previously serialized with VarDumper::serialize()
+     * @param string $dataStr
+     * @return mixed
+     * @see VarDumper::serialize()
+     */
+    public static function unserialize($dataStr)
+    {
+        return static::getSerializer()->unserialize($dataStr);
+    }
+
+    /**
+     * Get serializer instance
+     * @return JsonSerializer
+     * @see VarDumper::serialize()
+     * @see VarDumper::unserialize()
+     */
+    private static function getSerializer()
+    {
+        if (!isset(static::$_serializer)) {
+            static::$_serializer = new JsonSerializer();
+        }
+        return static::$_serializer;
     }
 }
