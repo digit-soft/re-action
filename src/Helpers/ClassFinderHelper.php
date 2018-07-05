@@ -11,6 +11,8 @@ class ClassFinderHelper
     const DS = DIRECTORY_SEPARATOR; //Directory separator
     const CS = '\\';                //Class namespace separator
 
+    protected static $_loader;
+
     /**
      * Find class names inside given namespace
      * @param string|array $namespace
@@ -190,6 +192,18 @@ class ClassFinderHelper
      * @return \Composer\Autoload\ClassLoader
      */
     protected static function getLoader() {
-        return \Reaction::$composer;
+        if (!isset(static::$_loader)) {
+            static::$_loader = \Reaction::$composer;
+        }
+        return static::$_loader;
+    }
+
+    /**
+     * Set loader (composer)
+     * @param \Composer\Autoload\ClassLoader $loader
+     */
+    public static function setLoader($loader)
+    {
+        static::$_loader = $loader;
     }
 }
