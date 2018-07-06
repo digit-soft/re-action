@@ -42,6 +42,7 @@ class StartCommand extends Command
         $application = $this->getApplication();
         $configsPath = $this->getConfigPath($input);
         \Reaction::init($application->loader, $configsPath, $appType);
+        \Reaction::$app->initRouter();
         \Reaction::$app->initHttp();
         \Reaction::$app->run();
     }
