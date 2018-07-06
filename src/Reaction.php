@@ -41,7 +41,7 @@ class Reaction
         }
         static::$configsPath = $configsPath;
         static::$appType = $appType;
-        static::$config = static::getConfigReader();
+        static::initConfigReader();
         static::initAnnotationReader();
         static::initContainer();
         static::initStaticApp();
@@ -296,15 +296,19 @@ class Reaction
 
     /**
      * Get instance of config reader
+     * @param bool $flush
      * @return \Reaction\Base\ConfigReader
      */
-    protected static function getConfigReader()
+    protected static function getConfigReader($flush = false)
     {
-        $conf = [
-            'path' => static::$configsPath,
-            'appType' => static::$appType,
-        ];
-        return new \Reaction\Base\ConfigReader($conf);
+        if ($flush || !isset(static::$config)) {
+            $conf = [
+                'path' => static::$configsPath,
+                'appType' => static::$appType,
+            ];
+            static::$config = new \Reaction\Base\ConfigReader($conf);
+        }
+        return static::$config;
     }
 
     /**
@@ -312,7 +316,7 @@ class Reaction
      */
     protected static function initContainer()
     {
-        $config = static::$config->get('container');
+        $config = static::getConfigReader()->get('container');
         static::$di = new \Reaction\DI\Container($config);
     }
 
@@ -321,7 +325,7 @@ class Reaction
      */
     protected static function initStaticApp()
     {
-        $config = static::$config->get('appStatic');
+        $config = static::getConfigReader()->get('appStatic');
         $config['class'] = StaticApplicationInterface::class;
         //Use config after creation, so Reaction::$app will be available inside StaticApplicationInterface components
         $appLateConfig = [];
@@ -336,6 +340,14 @@ class Reaction
         if (!empty($appLateConfig)) {
             static::configure(static::$app, $appLateConfig);
         }
+    }
+
+    /**
+     * Initialize config reader
+     */
+    protected static function initConfigReader()
+    {
+        static::getConfigReader();
     }
 
     /**
