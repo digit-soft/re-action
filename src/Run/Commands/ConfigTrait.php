@@ -35,11 +35,11 @@ trait ConfigTrait
         $defaultConfPath = getcwd() . '/' . $this->confDir;
         $command->addArgument('working-directory', InputOption::VALUE_REQUIRED, 'Working directory', getcwd());
         $command
-            ->addOption('type', null, InputOption::VALUE_REQUIRED, 'Application type', StaticApplicationInterface::APP_TYPE_WEB)
-            ->addOption('host', null, InputOption::VALUE_REQUIRED, 'Host to run', '127.0.0.1')
-            ->addOption('port', null, InputOption::VALUE_REQUIRED, 'Port to run', 4000)
-            ->addOption('debug', null, InputOption::VALUE_REQUIRED, 'Enable debug', true)
-            ->addOption('config', null, InputOption::VALUE_REQUIRED, 'Configs dir path', $defaultConfPath);
+            ->addOption('app-type', null, InputOption::VALUE_REQUIRED, 'Application type', StaticApplicationInterface::APP_TYPE_WEB)
+            ->addOption('app-host', null, InputOption::VALUE_REQUIRED, 'Host to run', '127.0.0.1')
+            ->addOption('app-port', null, InputOption::VALUE_REQUIRED, 'Port to run', 4000)
+            ->addOption('app-debug', null, InputOption::VALUE_REQUIRED, 'Enable debug', true)
+            ->addOption('app-config', null, InputOption::VALUE_REQUIRED, 'Configs dir path', $defaultConfPath);
     }
 
     /**
@@ -52,9 +52,11 @@ trait ConfigTrait
      */
     protected function optionOrConfigValue(InputInterface $input, $config, $optionName, $configName = null)
     {
-        $optionValue = $this->getOptionWithTypeCast($input, $optionName);
-        if ($optionValue !== null) {
-            return $optionValue;
+        if ($input->hasParameterOption('--' . $optionName)) {
+            return $this->getOptionWithTypeCast($input, $optionName);
+        }
+        if (!isset($configName)) {
+            $configName = $this->normalizeConfigArrayPath($optionName);
         }
 
         $configValue = ArrayHelper::getValue($config, $configName, null);
@@ -66,10 +68,9 @@ trait ConfigTrait
      * Get option with typecast
      * @param InputInterface $input
      * @param string         $optionName
-     * @param mixed          $defaultValue
      * @return mixed
      */
-    protected function getOptionWithTypeCast(InputInterface $input, $optionName, $defaultValue = null)
+    protected function getOptionWithTypeCast(InputInterface $input, $optionName)
     {
         $optionNameExp = explode(':', $optionName);
         if (count($optionNameExp) > 1) {
@@ -110,7 +111,7 @@ trait ConfigTrait
      */
     protected function getConfigPath(InputInterface $input)
     {
-        $configOption = $input->getOption('config');
+        $configOption = $input->getOption('app-config');
         if ($configOption && !file_exists($configOption)) {
             throw new \Exception(sprintf('Config file not found: "%s"', $configOption));
         }
@@ -139,16 +140,16 @@ trait ConfigTrait
     protected function loadConfig(InputInterface $input, OutputInterface $output, $saveConfig = true)
     {
         $configsPath = $this->getConfigPath($input);
-        $appType = $input->getOption('type');
+        $appType = $input->getOption('app-type');
         $config = $this->loadConfigFromFile($configsPath, $appType);
         /**
          * Array format
          * [ 'OPTION_NAME:TYPE' => 'CONFIG_ARRAY_PATH', ]
          */
         $configOptions = [
-            'host' => 'appStatic.hostname',
-            'port:int' => 'appStatic.port',
-            'debug:bool' => 'appStatic.debug',
+            'app-host' => 'appStatic.hostname',
+            'app-port:int' => 'appStatic.port',
+            'app-debug:bool' => 'appStatic.debug',
         ];
 
         foreach ($configOptions as $optionName => $configName) {
@@ -271,5 +272,19 @@ trait ConfigTrait
             default: $valueStr = $value;
         }
         return $valueStr;
+    }
+
+    /**
+     * Normalize config array key path
+     * @param string $configPath
+     * @return string
+     */
+    private function normalizeConfigArrayPath($configPath)
+    {
+        if (!strpos($configPath, ':')) {
+            return $configPath;
+        }
+        $configPathExp = explode(':', $configPath);
+        return reset($configPathExp);
     }
 }
