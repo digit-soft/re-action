@@ -25,7 +25,7 @@ class StartCommand extends Command
         $this->setName('start')
             ->setDescription('Start web application');
         $this->configDefaultOptions($this);
-        $this->addOption('printConfig', null, InputOption::VALUE_REQUIRED, 'Print config', true);
+        $this->addOption('print-config', null, InputOption::VALUE_REQUIRED, 'Print config', true);
     }
 
     /**
@@ -33,8 +33,8 @@ class StartCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $printConfig = $this->getOptionWithTypeCast($input,'printConfig');
-        $appType = $input->getOption('type');
+        $printConfig = $this->getOptionWithTypeCast($input,'print-config');
+        $appType = $input->getOption('app-type');
         $this->initializeConfig($input, $output, $printConfig);
         $output->writeln('start app');
 
@@ -44,6 +44,5 @@ class StartCommand extends Command
         \Reaction::init($application->loader, $configsPath, $appType);
         \Reaction::$app->initHttp();
         \Reaction::$app->run();
-        //TODO: START CODE MUST BE HERE
     }
 }
