@@ -33,18 +33,56 @@ class Reaction
      * @param string                         $configsPath Path where to look for config files
      * @param string                         $appType Application type (web|console)
      */
-    public static function init(Composer\Autoload\ClassLoader $composer, $configsPath = null, $appType = StaticApplicationInterface::APP_TYPE_WEB)
+    public static function init(Composer\Autoload\ClassLoader $composer = null, $configsPath = null, $appType = StaticApplicationInterface::APP_TYPE_WEB)
     {
-        static::$composer = $composer;
+        if (!isset($composer)) {
+            $composer = static::locateClassLoader();
+        }
+        if (!isset($configsPath)) {
+            $configsPath = static::locateConfigsPath();
+        }
+        if (!isset($composer)) {
+            throw new \Reaction\Exceptions\InvalidArgumentException("Missing \$composer option");
+        }
         if (!isset($configsPath)) {
             throw new \Reaction\Exceptions\InvalidArgumentException("Missing \$configsPath option");
         }
+        static::$composer = $composer;
         static::$configsPath = $configsPath;
         static::$appType = $appType;
         static::initConfigReader();
         static::initAnnotationReader();
         static::initContainer();
         static::initStaticApp();
+    }
+
+    /**
+     * Locate configs path
+     * @return null|string
+     */
+    protected static function locateConfigsPath()
+    {
+        $cwd = getcwd();
+        $defaultDir = DIRECTORY_SEPARATOR . 'Config';
+        $path = $cwd . $defaultDir;
+        if (!file_exists($path) || !is_dir($path)) {
+            return null;
+        }
+        return $path;
+    }
+
+    /**
+     * Get composer class loader
+     * @return null|\Composer\Autoload\ClassLoader
+     */
+    protected static function locateClassLoader()
+    {
+        $cwd = getcwd();
+        $path = $cwd . DIRECTORY_SEPARATOR . 'vendor/autoload.php';
+        if (!file_exists($path) || !is_file($path)) {
+            return null;
+        }
+        return include $path;
     }
 
     /**
