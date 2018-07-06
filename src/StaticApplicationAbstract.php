@@ -5,6 +5,7 @@ namespace Reaction;
 use Psr\Http\Message\ServerRequestInterface;
 use React\EventLoop\LoopInterface;
 use React\Http\Server as Http;
+use React\Socket\ServerInterface as SocketServerInterface;
 use React\Socket\Server as Socket;
 use Reaction;
 use Reaction\Base\Logger\Debugger;
@@ -69,6 +70,23 @@ abstract class StaticApplicationAbstract extends ServiceLocator implements Stati
         }
         set_error_handler([$this, 'handleError']);
         $this->loop = Reaction::create(\React\EventLoop\LoopInterface::class);
+    }
+
+    /**
+     * Initialize with React HTTP and Socket servers
+     * Used in web application
+     */
+    public function initHttp()
+    {
+        $this->router->initRoutes();
+        $this->addMiddleware([$this, 'processRequest']);
+        $this->socket = Reaction::create(SocketServerInterface::class);
+        $this->http = Reaction::create(Http::class, [$this->middleware]);
+        $this->http->listen($this->socket);
+        //Exception handler
+        $this->http->on('error', function(\Throwable $error) {
+            $this->logger->alert($error);
+        });
     }
 
     /**

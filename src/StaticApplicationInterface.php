@@ -54,6 +54,11 @@ interface StaticApplicationInterface extends EventEmitterWildcardInterface
     public function run();
 
     /**
+     * Initialize with React HTTP and Sockets
+     */
+    public function initHttp();
+
+    /**
      * Add middleware to application
      * @param callable|array $middleware
      */
@@ -62,7 +67,7 @@ interface StaticApplicationInterface extends EventEmitterWildcardInterface
     /**
      * Process React request
      * @param ServerRequestInterface $request
-     * @return PromiseInterface
+     * @return ExtendedPromiseInterface
      */
     public function processRequest(ServerRequestInterface $request);
 
