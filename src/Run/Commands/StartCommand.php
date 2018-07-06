@@ -2,6 +2,7 @@
 
 namespace Reaction\Run\Commands;
 
+use Reaction\Run\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -32,9 +33,17 @@ class StartCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $printConfig = !empty($this->getOptionWithTypeCast($input,'printConfig'));
+        $printConfig = $this->getOptionWithTypeCast($input,'printConfig');
+        $appType = $input->getOption('type');
         $this->initializeConfig($input, $output, $printConfig);
         $output->writeln('start app');
+
+        /** @var Application $application */
+        $application = $this->getApplication();
+        $configsPath = $this->getConfigPath($input);
+        \Reaction::init($application->loader, $configsPath, $appType);
+        \Reaction::$app->initHttp();
+        \Reaction::$app->run();
         //TODO: START CODE MUST BE HERE
     }
 }

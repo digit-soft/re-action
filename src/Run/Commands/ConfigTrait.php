@@ -1,13 +1,6 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: digit
- * Date: 05.07.18
- * Time: 17:05
- */
 
 namespace Reaction\Run\Commands;
-
 
 use Reaction\Base\ConfigReader;
 use Reaction\Helpers\ArrayHelper;
@@ -18,6 +11,10 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
+/**
+ * Trait ConfigTrait
+ * @package Reaction\Run\Commands
+ */
 trait ConfigTrait
 {
     /**
@@ -78,9 +75,6 @@ trait ConfigTrait
         if (count($optionNameExp) > 1) {
             $optionName = $optionNameExp[0];
             $optionType = $optionNameExp[1];
-        }
-        if (!$input->hasParameterOption('--' . $optionName)) {
-            return $defaultValue;
         }
         $optionValue = $input->getOption($optionName);
         if (isset($optionType) && function_exists($optionType . 'val')) {
@@ -145,7 +139,7 @@ trait ConfigTrait
     protected function loadConfig(InputInterface $input, OutputInterface $output, $saveConfig = true)
     {
         $configsPath = $this->getConfigPath($input);
-        $appType = $input->getOption('config');
+        $appType = $input->getOption('type');
         $config = $this->loadConfigFromFile($configsPath, $appType);
         /**
          * Array format
@@ -164,6 +158,7 @@ trait ConfigTrait
 
         if ($saveConfig) {
             $this->_reader->data = $config;
+            \Reaction::$config = $this->_reader;
         }
 
         return $config;
@@ -217,16 +212,26 @@ trait ConfigTrait
         }
         $rowsNew = [];
         foreach ($rows as $key => $value) {
-            $keyStr = !is_numeric($key) ? $prefix . $key : '';
+            $keyStr = !is_numeric($key) ? $prefix . $key : $prefix . $key;
             $valueArray = null;
             if (is_array($value)) {
+                $isSimpleArray = false;
                 if (ArrayHelper::isIndexed($value)) {
+                    $isSimpleArray = true;
+                    foreach ($value as $valueChild) {
+                        if (!is_scalar($valueChild)) {
+                            $isSimpleArray = false;
+                            break;
+                        }
+                    }
+                }
+                if ($isSimpleArray) {
                     foreach ($value as &$valueChild) {
                         $valueChild = $this->renderValue($valueChild);
                     }
                     $valueStr = '[' . implode(', ', $value) . ']';
                 } else {
-                    $valueStr = '';
+                    $valueStr = '↓ []';
                     $valueArray = $this->renderConfigRows($value, $cardinality + 1);
                 }
             } else {

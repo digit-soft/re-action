@@ -10,7 +10,9 @@ class Application extends \Symfony\Component\Console\Application
      * @var \Composer\Autoload\ClassLoader
      */
     public $loader;
-
+    /**
+     * @var array Commands namespaces
+     */
     public $commandsNamespaces = [
         'Reaction\Run\Commands',
     ];
