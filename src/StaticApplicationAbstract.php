@@ -73,13 +73,20 @@ abstract class StaticApplicationAbstract extends ServiceLocator implements Stati
     }
 
     /**
+     * Initialize router
+     */
+    public function initRouter()
+    {
+        $this->router->initRoutes();
+        $this->addMiddleware([$this, 'processRequest']);
+    }
+
+    /**
      * Initialize with React HTTP and Socket servers
      * Used in web application
      */
     public function initHttp()
     {
-        $this->router->initRoutes();
-        $this->addMiddleware([$this, 'processRequest']);
         $this->socket = Reaction::create(SocketServerInterface::class);
         $this->http = Reaction::create(Http::class, [$this->middleware]);
         $this->http->listen($this->socket);

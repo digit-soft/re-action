@@ -54,6 +54,11 @@ interface StaticApplicationInterface extends EventEmitterWildcardInterface
     public function run();
 
     /**
+     * Initialize router
+     */
+    public function initRouter();
+
+    /**
      * Initialize with React HTTP and Sockets
      */
     public function initHttp();
