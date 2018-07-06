@@ -48,7 +48,7 @@ class StartPmCommand extends Command
         $handler->setAppBootstrap($config['bootstrap']);
         $handler->setMaxRequests($config['max-requests']);
         $handler->setTtl($config['ttl']);
-        $handler->setPhpCgiExecutable($config['cgi-path']);
+        $handler->setPhpExecutable($config['cli-path']);
         $handler->setSocketPath($config['socket-path']);
         $handler->setPIDFile($config['pidfile']);
         $handler->setPopulateServer($config['populate-server-var']);

@@ -37,7 +37,7 @@ trait ConfigPmTrait
             ->addOption('ttl', null, InputOption::VALUE_REQUIRED, 'Time to live for a worker until it will be restarted', null)
             ->addOption('populate-server-var', null, InputOption::VALUE_REQUIRED, 'If a worker application uses $_SERVER var it needs to be populated by request data 1|0', 1)
             ->addOption('bootstrap', null, InputOption::VALUE_REQUIRED, 'Class responsible for bootstrapping the application', 'Reaction\PM\Bootstraps\Symfony')
-            ->addOption('cgi-path', null, InputOption::VALUE_REQUIRED, 'Full path to the php-cgi executable', false)
+            ->addOption('cli-path', null, InputOption::VALUE_REQUIRED, 'Full path to the php-cli executable', false)
             ->addOption('socket-path', null, InputOption::VALUE_REQUIRED, 'Path to a folder where socket files will be placed. Relative to working-directory or cwd()', '.pm/run/')
             ->addOption('pidfile', null, InputOption::VALUE_REQUIRED, 'Path to a file where the pid of the master process is going to be stored', '.pm/pm.pid')
             ->addOption('reload-timeout', null, InputOption::VALUE_REQUIRED, 'The number of seconds to wait before force closing a worker during a reload, or -1 to disable. Default: 30', 30)
@@ -107,28 +107,16 @@ trait ConfigPmTrait
         $config['pidfile'] = $this->optionOrConfigValue($input, $config, 'pidfile');
         $config['reload-timeout'] = $this->optionOrConfigValue($input, $config, 'reload-timeout');
 
-        $config['cgi-path'] = $this->optionOrConfigValue($input, $config, 'cgi-path');
+        $config['cli-path'] = $this->optionOrConfigValue($input, $config, 'cli-path');
 
-        if (false === $config['cgi-path']) {
+        if (false === $config['cli-path']) {
             //not set in config nor in command options -> autodetect path
             $executableFinder = new PhpExecutableFinder();
             $binary = $executableFinder->find();
+            $config['cli-path'] = $binary;
 
-            $cgiPaths = [
-                $binary . '-cgi', //php7.0 -> php7.0-cgi
-                str_replace('php', 'php-cgi', $binary), //php7.0 => php-cgi7.0
-            ];
-
-            foreach ($cgiPaths as $cgiPath) {
-                $path = trim(`which $cgiPath`);
-                if ($path) {
-                    $config['cgi-path'] = $path;
-                    break;
-                }
-            }
-
-            if (false === $config['cgi-path']) {
-                $output->writeln('<error>PPM could find a php-cgi path. Please specify by --cgi-path=</error>');
+            if (false === $config['cli-path']) {
+                $output->writeln('<error>PPM could find a php-cli path. Please specify by --cli-path=</error>');
                 exit(1);
             }
         }
