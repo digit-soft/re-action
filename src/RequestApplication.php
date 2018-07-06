@@ -7,6 +7,7 @@ use Reaction;
 use Reaction\DI\ServiceLocator;
 use Reaction\Exceptions\InvalidConfigException;
 use Reaction\Helpers\ArrayHelper;
+use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\Routes\RouteInterface;
 
 /**
@@ -82,6 +83,33 @@ class RequestApplication extends ServiceLocator implements RequestApplicationInt
             $this->_route = $route;
         }
         return $route;
+    }
+
+    /**
+     * Handle incoming request
+     * @return ExtendedPromiseInterface
+     */
+    public function handleRequest()
+    {
+        //Wait for static application initialization
+        $staticInitPromise = !Reaction::$app->initialized ? Reaction::$app->initPromise : Reaction\Promise\resolve(true);
+        return $staticInitPromise
+            //Load Request app components
+            ->then(function() {
+                return $this->loadComponents();
+            //Try to resolve request action
+            })->then(function() {
+                return $this->resolveAction();
+            //Handle exceptions
+            })->otherwise(function($exception) use (&$app) {
+                if ($exception instanceof Reaction\Exceptions\Http\NotFoundException && Reaction::isConsoleApp()) {
+                    $exception = new Reaction\Console\UnknownCommandException($app->reqHelper->getUrl(), $app, $exception->getCode(), $exception);
+                }
+                return $app->errorHandler->handleException($exception);
+            //Emit EVENT_REQUEST_END event
+            })->always(function() use (&$app) {
+                return $this->emitAndWait(static::EVENT_REQUEST_END, [$app]);
+            });
     }
 
     /**

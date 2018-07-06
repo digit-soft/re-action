@@ -130,31 +130,8 @@ abstract class StaticApplicationAbstract extends ServiceLocator implements Stati
     public function processRequest(ServerRequestInterface $request)
     {
         /** @var RequestApplicationInterface $app */
-        $app = null;
-        //Request app creation
-        return (new Reaction\Promise\Promise(function($r, $c) use (&$app, $request) {
-            $app = $this->createRequestApplication($request);
-            $r($app);
-        //Handle Static app init promise
-        }))->then(function() {
-            return !$this->initialized ? $this->initPromise : \Reaction\Promise\resolve(true);
-        //Load Request app components
-        })->then(function() use (&$app) {
-            return $app->loadComponents();
-        //Try to resolve request action
-        })->then(function() use (&$app) {
-            //throw new Reaction\Exceptions\Exception("Test exception");
-            return $app->resolveAction();
-        //Handle exceptions
-        })->otherwise(function($exception) use (&$app) {
-            if ($exception instanceof Reaction\Exceptions\Http\NotFoundException && Reaction::isConsoleApp()) {
-                $exception = new Reaction\Console\UnknownCommandException($app->reqHelper->getUrl(), $app, $exception->getCode(), $exception);
-            }
-            return $app->errorHandler->handleException($exception);
-        //Emit EVENT_REQUEST_END event
-        })->always(function() use (&$app) {
-            return $app->emitAndWait(RequestApplicationInterface::EVENT_REQUEST_END, [$app]);
-        });
+        $app = $this->createRequestApplication($request);
+        return $app->handleRequest();
     }
 
     /**

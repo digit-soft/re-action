@@ -9,6 +9,7 @@ use Reaction\DI\ServiceLocator;
 use Reaction\Events\EventEmitterWildcardInterface;
 use Reaction\Helpers\Request\HelpersGroup;
 use Reaction\I18n\TranslatorInterface;
+use Reaction\Promise\ExtendedPromiseInterface;
 use Reaction\Routes\RouteInterface;
 use Reaction\Web\AssetManager;
 use Reaction\Web\RequestHelper;
@@ -40,6 +41,12 @@ interface RequestApplicationInterface extends EventEmitterWildcardInterface, Tra
 {
     const EVENT_REQUEST_INIT    = 'requestInit';
     const EVENT_REQUEST_END     = 'requestEnd';
+
+    /**
+     * Handle incoming request
+     * @return ExtendedPromiseInterface
+     */
+    public function handleRequest();
 
     /**
      * Resolve app action
