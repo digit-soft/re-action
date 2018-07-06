@@ -52,11 +52,12 @@ trait ConfigTrait
      */
     protected function optionOrConfigValue(InputInterface $input, $config, $optionName, $configName = null)
     {
-        if ($input->hasParameterOption('--' . $optionName)) {
+        $optionNameRaw = $this->normalizeConfigArrayPath($optionName);
+        if ($input->hasParameterOption('--' . $optionNameRaw)) {
             return $this->getOptionWithTypeCast($input, $optionName);
         }
         if (!isset($configName)) {
-            $configName = $this->normalizeConfigArrayPath($optionName);
+            $configName = $optionNameRaw;
         }
 
         $configValue = ArrayHelper::getValue($config, $configName, null);
