@@ -23,21 +23,30 @@ use Reaction\Promise\ExtendedPromiseInterface;
  */
 abstract class StaticApplicationAbstract extends ServiceLocator implements StaticApplicationInterface, ServiceLocatorAutoloadInterface
 {
-
-    /** @var LoopInterface */
+    /**
+     * @var LoopInterface Event loop
+     */
     public $loop;
-    /** @var Http */
+    /**
+     * @var bool Flag that event loop is external and there is no need start it again
+     */
+    public $loopIsExternal = false;
+    /**
+     * @var Http HTTP server
+     */
     public $http;
-    /** @var Socket */
+    /**
+     * @var Socket Socket server
+     */
     public $socket;
 
-    /** @var string */
+    /** @var string Environment type */
     public $envType = self::APP_ENV_DEV;
-    /** @var bool */
+    /** @var bool Debug flag */
     public $debug = false;
-    /** @var bool */
+    /** @var bool Testing flag */
     public $test = false;
-    /** @var string */
+    /** @var string Default charset */
     public $charset = 'UTF-8';
     /** @var string Default language */
     public $language = 'en-US';
@@ -114,7 +123,10 @@ abstract class StaticApplicationAbstract extends ServiceLocator implements Stati
                 return true;
             }
         );
-        $this->loop->run();
+        //Kickstart loop if it is not external
+        if (!$this->loopIsExternal) {
+            $this->loop->run();
+        }
     }
 
     /**
