@@ -54,7 +54,7 @@ class ConfigReader extends BaseObject
      * @param mixed  $value
      */
     public function set($key, $value) {
-        $this->data[$key] = $value;
+        ArrayHelper::setValue($this->data, $key, $value);
     }
 
     /**
