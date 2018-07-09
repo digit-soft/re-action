@@ -35,6 +35,18 @@ class Reaction
      */
     public static function init(Composer\Autoload\ClassLoader $composer = null, $configsPath = null, $appType = StaticApplicationInterface::APP_TYPE_WEB)
     {
+        static::initBasic($composer, $configsPath, $appType);
+        static::initStaticApp();
+    }
+
+    /**
+     * Initialize basic components
+     * @param \Composer\Autoload\ClassLoader|null $composer
+     * @param string|null                         $configsPath
+     * @param string                              $appType
+     */
+    public static function initBasic(Composer\Autoload\ClassLoader $composer = null, $configsPath = null, $appType = StaticApplicationInterface::APP_TYPE_WEB)
+    {
         if (!isset($composer)) {
             $composer = static::locateClassLoader();
         }
@@ -53,7 +65,6 @@ class Reaction
         static::initConfigReader();
         static::initAnnotationReader();
         static::initContainer();
-        static::initStaticApp();
     }
 
     /**
@@ -361,7 +372,7 @@ class Reaction
     /**
      * Initialize application object
      */
-    protected static function initStaticApp()
+    public static function initStaticApp()
     {
         $config = static::getConfigReader()->get('appStatic');
         $config['class'] = StaticApplicationInterface::class;
