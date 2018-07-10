@@ -53,6 +53,7 @@ class StartPmCommand extends Command
         $handler->setPIDFile($config['pidfile']);
         $handler->setPopulateServer($config['populate-server-var']);
         $handler->setStaticDirectory($config['static-directory']);
+        $handler->setMaxMemoryUsage($config['max-memory-usage']);
         $handler->run();
 
         return null;

@@ -41,6 +41,7 @@ trait ConfigPmTrait
             ->addOption('socket-path', null, InputOption::VALUE_REQUIRED, 'Path to a folder where socket files will be placed. Relative to working-directory or cwd()', '.pm/run/')
             ->addOption('pidfile', null, InputOption::VALUE_REQUIRED, 'Path to a file where the pid of the master process is going to be stored', '.pm/pm.pid')
             ->addOption('reload-timeout', null, InputOption::VALUE_REQUIRED, 'The number of seconds to wait before force closing a worker during a reload, or -1 to disable. Default: 30', 30)
+            ->addOption('max-memory-usage', null, InputOption::VALUE_REQUIRED, 'The number of slave memory usage in bytes until it will be restarted, or 0 to disable. Default: 0', 0)
             ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'Path to config file', '');
     }
 
@@ -106,6 +107,7 @@ trait ConfigPmTrait
         $config['socket-path'] = $this->optionOrConfigValue($input, $config, 'socket-path');
         $config['pidfile'] = $this->optionOrConfigValue($input, $config, 'pidfile');
         $config['reload-timeout'] = $this->optionOrConfigValue($input, $config, 'reload-timeout');
+        $config['max-memory-usage'] = $this->optionOrConfigValue($input, $config, 'max-memory-usage');
 
         $config['cli-path'] = $this->optionOrConfigValue($input, $config, 'cli-path');
 
