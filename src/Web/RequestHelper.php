@@ -1596,9 +1596,14 @@ class RequestHelper extends RequestAppComponent
      * @return array
      */
     protected function getDefaultServerParams() {
+        $scriptName = realpath($_SERVER['SCRIPT_FILENAME']);
+        //Default script name fallback
+        if (!$scriptName) {
+            $scriptName = getcwd() . DIRECTORY_SEPARATOR . 'app';
+        }
         $params = [
             'DOCUMENT_ROOT' => getcwd(),
-            'SCRIPT_FILENAME' => getcwd() . DIRECTORY_SEPARATOR . $_SERVER['SCRIPT_FILENAME'],
+            'SCRIPT_FILENAME' => $scriptName,
         ];
 
         return $params;

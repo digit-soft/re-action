@@ -102,7 +102,7 @@ class RequestApplication extends ServiceLocator implements RequestApplicationInt
                 return $this->resolveAction();
             //Handle exceptions
             })->otherwise(function($exception) {
-                if ($exception instanceof Reaction\Exceptions\Http\NotFoundException && Reaction::isConsoleApp()) {
+                if (Reaction::isConsoleApp() && $exception instanceof Reaction\Exceptions\Http\NotFoundException) {
                     $exception = new Reaction\Console\UnknownCommandException($this->reqHelper->getUrl(), $this, $exception->getCode(), $exception);
                 }
                 return $this->errorHandler->handleException($exception);
