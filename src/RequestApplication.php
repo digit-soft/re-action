@@ -101,14 +101,14 @@ class RequestApplication extends ServiceLocator implements RequestApplicationInt
             })->then(function() {
                 return $this->resolveAction();
             //Handle exceptions
-            })->otherwise(function($exception) use (&$app) {
+            })->otherwise(function($exception) {
                 if ($exception instanceof Reaction\Exceptions\Http\NotFoundException && Reaction::isConsoleApp()) {
-                    $exception = new Reaction\Console\UnknownCommandException($app->reqHelper->getUrl(), $app, $exception->getCode(), $exception);
+                    $exception = new Reaction\Console\UnknownCommandException($this->reqHelper->getUrl(), $this, $exception->getCode(), $exception);
                 }
-                return $app->errorHandler->handleException($exception);
+                return $this->errorHandler->handleException($exception);
             //Emit EVENT_REQUEST_END event
-            })->always(function() use (&$app) {
-                return $this->emitAndWait(static::EVENT_REQUEST_END, [$app]);
+            })->always(function() {
+                return $this->emitAndWait(static::EVENT_REQUEST_END, [$this]);
             });
     }
 
