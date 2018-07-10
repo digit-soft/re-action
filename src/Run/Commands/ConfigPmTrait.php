@@ -24,8 +24,9 @@ trait ConfigPmTrait
      */
     protected function configurePMOptions(Command $command)
     {
+        $iniMemLimit = ceil($this->getIniMemoryLimit() * 0.9);
         $command
-            ->addOption('bridge', null, InputOption::VALUE_REQUIRED, 'Bridge for converting React Psr7 requests to target framework.', 'HttpKernel')
+            ->addOption('bridge', null, InputOption::VALUE_REQUIRED, 'Bridge for converting React Psr7 requests to target framework.', 'ReactionBridge')
             ->addOption('host', null, InputOption::VALUE_REQUIRED, 'Load-Balancer host. Default is 127.0.0.1', '127.0.0.1')
             ->addOption('port', null, InputOption::VALUE_REQUIRED, 'Load-Balancer port. Default is 8080', 8080)
             ->addOption('workers', null, InputOption::VALUE_REQUIRED, 'Worker count. Default is 8. Should be minimum equal to the number of CPU cores.', 8)
@@ -36,12 +37,12 @@ trait ConfigPmTrait
             ->addOption('max-requests', null, InputOption::VALUE_REQUIRED, 'Max requests per worker until it will be restarted', 1000)
             ->addOption('ttl', null, InputOption::VALUE_REQUIRED, 'Time to live for a worker until it will be restarted', null)
             ->addOption('populate-server-var', null, InputOption::VALUE_REQUIRED, 'If a worker application uses $_SERVER var it needs to be populated by request data 1|0', 1)
-            ->addOption('bootstrap', null, InputOption::VALUE_REQUIRED, 'Class responsible for bootstrapping the application', 'Reaction\PM\Bootstraps\Symfony')
+            ->addOption('bootstrap', null, InputOption::VALUE_REQUIRED, 'Class responsible for bootstrapping the application', 'Reaction\PM\Bootstraps\ReactionBootstrap')
             ->addOption('cli-path', null, InputOption::VALUE_REQUIRED, 'Full path to the php-cli executable', false)
             ->addOption('socket-path', null, InputOption::VALUE_REQUIRED, 'Path to a folder where socket files will be placed. Relative to working-directory or cwd()', '.pm/run/')
             ->addOption('pidfile', null, InputOption::VALUE_REQUIRED, 'Path to a file where the pid of the master process is going to be stored', '.pm/pm.pid')
             ->addOption('reload-timeout', null, InputOption::VALUE_REQUIRED, 'The number of seconds to wait before force closing a worker during a reload, or -1 to disable. Default: 30', 30)
-            ->addOption('max-memory-usage', null, InputOption::VALUE_REQUIRED, 'The number of slave memory usage in bytes until it will be restarted, or 0 to disable. Default: 0', 0)
+            ->addOption('max-memory-usage', null, InputOption::VALUE_REQUIRED, 'The number of slave memory usage in bytes until it will be restarted, or 0 to disable.', $iniMemLimit)
             ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'Path to config file', '');
     }
 
@@ -155,5 +156,22 @@ trait ConfigPmTrait
             $this->renderConfig($output, $config);
         }
         return $config;
+    }
+
+    /**
+     * Get memory_limit directive in bytes
+     * @return int
+     */
+    private function getIniMemoryLimit()
+    {
+        $iniMemLimit = ini_get('memory_limit');
+        if (!is_numeric($iniMemLimit)) {
+            $iniSuffix = strtoupper(substr($iniMemLimit, -1));
+            $iniMemLimit = substr($iniMemLimit, 0, -1);
+            $iniMultiplier = 1024; //K
+            $iniMultiplier = $iniSuffix === 'M' ? $iniMultiplier * 1024 : $iniMultiplier * 1024 * 1024; //M || G
+            $iniMemLimit *= $iniMultiplier;
+        }
+        return (int)$iniMemLimit;
     }
 }
