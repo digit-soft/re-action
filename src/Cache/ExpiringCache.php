@@ -36,12 +36,12 @@ abstract class ExpiringCache extends ExtendedCache implements ExpiringCacheInter
      */
     protected $_timestamps = [];
     /**
-     * @var TimerInterface
+     * @var TimerInterface Timer for GC
      */
     protected $_timer;
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function init()
     {

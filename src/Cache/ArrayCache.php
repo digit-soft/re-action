@@ -19,7 +19,7 @@ class ArrayCache extends ExtendedCache
     protected $tags = [];
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function get($key, $default = null)
     {
@@ -31,7 +31,7 @@ class ArrayCache extends ExtendedCache
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function set($key, $value, $ttl = null, $tags = [])
     {
@@ -42,7 +42,7 @@ class ArrayCache extends ExtendedCache
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function delete($key)
     {
@@ -59,7 +59,7 @@ class ArrayCache extends ExtendedCache
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function deleteByTag($tag)
     {
@@ -72,7 +72,7 @@ class ArrayCache extends ExtendedCache
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function exists($key)
     {
@@ -84,7 +84,7 @@ class ArrayCache extends ExtendedCache
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function flush()
     {

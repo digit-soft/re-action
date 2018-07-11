@@ -14,22 +14,22 @@ use function Reaction\Promise\all;
 abstract class ExtendedCache extends BaseObject implements ExtendedCacheInterface
 {
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     abstract public function get($key, $default = null);
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     abstract public function set($key, $value, $ttl = null, $tags = []);
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     abstract public function delete($key);
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function deleteMultiple($keys)
     {
@@ -42,17 +42,17 @@ abstract class ExtendedCache extends BaseObject implements ExtendedCacheInterfac
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     abstract public function exists($key);
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     abstract public function deleteByTag($tag);
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     abstract public function flush();
 

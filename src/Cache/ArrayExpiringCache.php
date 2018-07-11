@@ -7,6 +7,10 @@ use Reaction\Helpers\ArrayHelper;
 use function Reaction\Promise\reject;
 use function Reaction\Promise\resolve;
 
+/**
+ * Class ArrayExpiringCache
+ * @package Reaction\Cache
+ */
 class ArrayExpiringCache extends ExpiringCache
 {
     /** @var array Data storage */
@@ -15,7 +19,7 @@ class ArrayExpiringCache extends ExpiringCache
     protected $tags = [];
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function get($key, $default = null)
     {
@@ -28,7 +32,7 @@ class ArrayExpiringCache extends ExpiringCache
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function set($key, $value, $ttl = null, $tags = [])
     {
@@ -43,7 +47,7 @@ class ArrayExpiringCache extends ExpiringCache
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function delete($key)
     {
@@ -60,7 +64,7 @@ class ArrayExpiringCache extends ExpiringCache
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function deleteByTag($tag)
     {
@@ -73,7 +77,7 @@ class ArrayExpiringCache extends ExpiringCache
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function exists($key)
     {
@@ -85,7 +89,7 @@ class ArrayExpiringCache extends ExpiringCache
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function flush()
     {

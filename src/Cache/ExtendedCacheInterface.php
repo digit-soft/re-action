@@ -29,7 +29,7 @@ interface ExtendedCacheInterface extends CacheInterface
      * `var_dump` function. You can use any of the composition provided by
      * [promises](https://github.com/reactphp/promise).
      *
-     * @param string|array $key
+     * @param string|array $key String key
      * @param mixed        $default Default value to return for cache miss or null if not given.
      * @return ExtendedPromiseInterface  with data
      */
@@ -83,14 +83,14 @@ interface ExtendedCacheInterface extends CacheInterface
      * provide guarantees whether or not the item has been removed from cache.
      *
      * @param string|array $key
-     * @return ExtendedPromiseInterface  with bool 'true' then finished
+     * @return ExtendedPromiseInterface  with `bool` then finished
      */
     public function delete($key);
 
     /**
      * Delete data from cache for multiple keys
      * @param array $keys
-     * @return ExtendedPromiseInterface  with bool 'true' then finished
+     * @return ExtendedPromiseInterface  with `bool` then finished
      * @see delete()
      */
     public function deleteMultiple($keys);
@@ -98,7 +98,7 @@ interface ExtendedCacheInterface extends CacheInterface
     /**
      * Delete cache data by tag
      * @param string $tag
-     * @return ExtendedPromiseInterface  with bool 'true' then finished
+     * @return ExtendedPromiseInterface  with `bool` then finished
      * @see delete()
      */
     public function deleteByTag($tag);
@@ -106,13 +106,13 @@ interface ExtendedCacheInterface extends CacheInterface
     /**
      * Checks that key exists in cache
      * @param string|array $key
-     * @return ExtendedPromiseInterface  with bool
+     * @return ExtendedPromiseInterface  with `bool`
      */
     public function exists($key);
 
     /**
      * Flush all cache
-     * @return ExtendedPromiseInterface with bool 'true' then finished
+     * @return ExtendedPromiseInterface with `bool` then finished
      */
     public function flush();
 }
