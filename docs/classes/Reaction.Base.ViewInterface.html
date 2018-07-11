@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
+    <meta charset="utf-8"/>
+    <title>Re-action documentation</title>
+    <meta name="author" content=""/>
+    <meta name="description" content=""/>
+
+    <link href="../css/bootstrap-combined.no-icons.min.css" rel="stylesheet">
+    <link href="../css/font-awesome.min.css" rel="stylesheet">
+    <link href="../css/prism.css" rel="stylesheet" media="all"/>
+    <link href="../css/template.css" rel="stylesheet" media="all"/>
+    
+    <!--[if lt IE 9]>
+    <script src="../js/html5.js"></script>
+    <![endif]-->
+    <script src="../js/jquery-1.11.0.min.js"></script>
+    <script src="../js/ui/1.10.4/jquery-ui.min.js"></script>
+    <script src="../js/bootstrap.min.js"></script>
+    <script src="../js/jquery.smooth-scroll.js"></script>
+    <script src="../js/prism.min.js"></script>
+    <!-- TODO: Add http://jscrollpane.kelvinluck.com/ to style the scrollbars for browsers not using webkit-->
+        <script type="text/javascript">
+        function loadExternalCodeSnippets() {
+            Array.prototype.slice.call(document.querySelectorAll('pre[data-src]')).forEach(function (pre) {
+                var src = pre.getAttribute('data-src');
+                var extension = (src.match(/\.(\w+)$/) || [, ''])[1];
+                var language = 'php';
+
+                var code = document.createElement('code');
+                code.className = 'language-' + language;
+
+                pre.textContent = '';
+
+                code.textContent = 'Loading…';
+
+                pre.appendChild(code);
+
+                var xhr = new XMLHttpRequest();
+
+                xhr.open('GET', src, true);
+
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState == 4) {
+
+                        if (xhr.status < 400 && xhr.responseText) {
+                            code.textContent = xhr.responseText;
+
+                            Prism.highlightElement(code);
+                        }
+                        else if (xhr.status >= 400) {
+                            code.textContent = '✖ Error ' + xhr.status + ' while fetching file: ' + xhr.statusText;
+                        }
+                        else {
+                            code.textContent = '✖ Error: File does not exist or is empty';
+                        }
+                    }
+                };
+
+                xhr.send(null);
+            });
+        }
+
+        $(document).ready(function(){
+            loadExternalCodeSnippets();
+        });
+        $('#source-view').on('shown', function () {
+            loadExternalCodeSnippets();
+        })
+    </script>
+
+    <link rel="shortcut icon" href="../images/favicon.ico"/>
+    <link rel="apple-touch-icon" href="../images/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon" sizes="72x72" href="../images/apple-touch-icon-72x72.png"/>
+    <link rel="apple-touch-icon" sizes="114x114" href="../images/apple-touch-icon-114x114.png"/>
+</head>
+<body>
+
+<div class="navbar navbar-fixed-top">
+    <div class="navbar-inner">
+        <div class="container">
+            <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                <i class="icon-ellipsis-vertical"></i>
+            </a>
+            <a class="brand" href="../index.html">Re-action documentation</a>
+
+            <div class="nav-collapse">
+                <ul class="nav pull-right">
+                                        <li class="dropdown">
+                        <a href="../index.html" class="dropdown-toggle" data-toggle="dropdown">
+                            API Documentation <b class="caret"></b>
+                        </a>
+                        <ul class="dropdown-menu">
+                                                        <li><a href="../namespaces/Reaction.html">\Reaction</a></li>
+                                                    </ul>
+                    </li>
+                                        <li class="dropdown" id="charts-menu">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                            Charts <b class="caret"></b>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a href="../graphs/class.html">
+                                    <i class="icon-list-alt"></i>&#160;Class hierarchy diagram
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="dropdown" id="reports-menu">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                            Reports <b class="caret"></b>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a href="../reports/errors.html">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <i class="icon-list-alt"></i>&#160;Errors <span class="label label-info pull-right">116</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="../reports/markers.html">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <i class="icon-list-alt"></i>&#160;Markers <span class="label label-info pull-right">1</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="../reports/deprecated.html">
+                                                                                                            <i class="icon-list-alt"></i>&#160;Deprecated <span class="label label-info pull-right">0</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!--<div class="go_to_top">-->
+    <!--<a href="#___" style="color: inherit">Back to top&#160;&#160;<i class="icon-upload icon-white"></i></a>-->
+    <!--</div>-->
+</div>
+
+<div id="___" class="container-fluid">
+        <section class="row-fluid">
+        <div class="span2 sidebar">
+                                <div class="accordion" style="margin-bottom: 0">
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                                    <a class="accordion-toggle " data-toggle="collapse" data-target="#namespace-1468913754"></a>
+                                <a href="../namespaces/default.html" style="margin-left: 30px; padding-left: 0">\</a>
+            </div>
+            <div id="namespace-1468913754" class="accordion-body collapse in">
+                <div class="accordion-inner">
+
+                                                    <div class="accordion" style="margin-bottom: 0">
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                                    <a class="accordion-toggle collapsed" data-toggle="collapse" data-target="#namespace-541098439"></a>
+                                <a href="../namespaces/Reaction.html" style="margin-left: 30px; padding-left: 0">Reaction</a>
+            </div>
+            <div id="namespace-541098439" class="accordion-body collapse ">
+                <div class="accordion-inner">
+
+                                                    <div class="accordion" style="margin-bottom: 0">
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                                    <a class="accordion-toggle collapsed" data-toggle="collapse" data-target="#namespace-1852330014"></a>
+                                <a href="../namespaces/Reaction.Base.html" style="margin-left: 30px; padding-left: 0">Base</a>
+            </div>
+            <div id="namespace-1852330014" class="accordion-body collapse ">
+                <div class="accordion-inner">
+
+                                                    <div class="accordion" style="margin-bottom: 0">
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                                    <a class="accordion-toggle collapsed" data-toggle="collapse" data-target="#namespace-104403223"></a>
+                                <a href="../namespaces/Reaction.Base.Logger.html" style="margin-left: 30px; padding-left: 0">Logger</a>
+            </div>
+            <div id="namespace-104403223" class="accordion-body collapse ">
+                <div class="accordion-inner">
+
+                    
+                    <ul>
+                                                    <li class="interface"><a href="../classes/Reaction.Base.Logger.LoggerInterface.html">LoggerInterface</a></li>
+                                                                                                    <li class="class"><a href="../classes/Reaction.Base.Logger.Debugger.html">Debugger</a></li>
+                                                    <li class="class"><a href="../classes/Reaction.Base.Logger.StdioLogger.html">StdioLogger</a></li>
+                                            </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+                    
+                    <ul>
+                                                    <li class="interface"><a href="../classes/Reaction.Base.Arrayable.html">Arrayable</a></li>
+                                                    <li class="interface"><a href="../classes/Reaction.Base.ComponentAutoloadInterface.html">ComponentAutoloadInterface</a></li>
+                                                    <li class="interface"><a href="../classes/Reaction.Base.ComponentInitBlockingInterface.html">ComponentInitBlockingInterface</a></li>
+                                                    <li class="interface"><a href="../classes/Reaction.Base.Configurable.html">Configurable</a></li>
+                                                    <li class="interface"><a href="../classes/Reaction.Base.DynamicContentAwareInterface.html">DynamicContentAwareInterface</a></li>
+                                                    <li class="interface"><a href="../classes/Reaction.Base.ErrorHandlerInterface.html">ErrorHandlerInterface</a></li>
+                                                    <li class="interface"><a href="../classes/Reaction.Base.Linkable.html">Linkable</a></li>
+                                                    <li class="interface"><a href="../classes/Reaction.Base.RequestAppComponentInterface.html">RequestAppComponentInterface</a></li>
+                                                    <li class="interface"><a href="../classes/Reaction.Base.StaticInstanceInterface.html">StaticInstanceInterface</a></li>
+                                                    <li class="interface"><a href="../classes/Reaction.Base.ViewContextInterface.html">ViewContextInterface</a></li>
+                                                    <li class="interface"><a href="../classes/Reaction.Base.ViewInterface.html">ViewInterface</a></li>
+                                                                            <li class="trait"><a href="../classes/Reaction.Base.ArrayableTrait.html">ArrayableTrait</a></li>
+                                                    <li class="trait"><a href="../classes/Reaction.Base.ArrayAccessTrait.html">ArrayAccessTrait</a></li>
+                                                    <li class="trait"><a href="../classes/Reaction.Base.DynamicContentAwareTrait.html">DynamicContentAwareTrait</a></li>
+                                                    <li class="trait"><a href="../classes/Reaction.Base.StaticInstanceTrait.html">StaticInstanceTrait</a></li>
+                                                                            <li class="class"><a href="../classes/Reaction.Base.AnnotationsReader.html">AnnotationsReader</a></li>
+                                                    <li class="class"><a href="../classes/Reaction.Base.BaseObject.html">BaseObject</a></li>
+                                                    <li class="class"><a href="../classes/Reaction.Base.Component.html">Component</a></li>
+                                                    <li class="class"><a href="../classes/Reaction.Base.ConfigReader.html">ConfigReader</a></li>
+                                                    <li class="class"><a href="../classes/Reaction.Base.ErrorHandler.html">ErrorHandler</a></li>
+                                                    <li class="class"><a href="../classes/Reaction.Base.ExceptionHandler.html">ExceptionHandler</a></li>
+                                                    <li class="class"><a href="../classes/Reaction.Base.JsExpression.html">JsExpression</a></li>
+                                                    <li class="class"><a href="../classes/Reaction.Base.Link.html">Link</a></li>
+                                                    <li class="class"><a href="../classes/Reaction.Base.Model.html">Model</a></li>
+                                                    <li class="class"><a href="../classes/Reaction.Base.RequestAppComponent.html">RequestAppComponent</a></li>
+                                                    <li class="class"><a href="../classes/Reaction.Base.RequestAppServiceLocator.html">RequestAppServiceLocator</a></li>
+                                                    <li class="class"><a href="../classes/Reaction.Base.Security.html">Security</a></li>
+                                                    <li class="class"><a href="../classes/Reaction.Base.Theme.html">Theme</a></li>
+                                                    <li class="class"><a href="../classes/Reaction.Base.View.html">View</a></li>
+                                                    <li class="class"><a href="../classes/Reaction.Base.ViewRenderer.html">ViewRenderer</a></li>
+                                                    <li class="class"><a href="../classes/Reaction.Base.Widget.html">Widget</a></li>
+                                            </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+                                                    <div class="accordion" style="margin-bottom: 0">
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                                    <a class="accordion-toggle collapsed" data-toggle="collapse" data-target="#namespace-2003639026"></a>
+                                <a href="../namespaces/Reaction.Cache.html" style="margin-left: 30px; padding-left: 0">Cache</a>
+            </div>
+            <div id="namespace-2003639026" class="accordion-body collapse ">
+                <div class="accordion-inner">
+
+                    
+                    <ul>
+                                                    <li class="interface"><a href="../classes/Reaction.Cache.ExpiringCacheInterface.html">ExpiringCacheInterface</a></li>
+                                                    <li class="interface"><a href="../classes/Reaction.Cache.ExtendedCacheInterface.html">ExtendedCacheInterface</a></li>
+                                                                                                    <li class="class"><a href="../classes/Reaction.Cache.ArrayCache.html">ArrayCache</a></li>
+                                                    <li class="class"><a href="../classes/Reaction.Cache.ArrayExpiringCache.html">ArrayExpiringCache</a></li>
+                                                    <li class="class"><a href="../classes/Reaction.Cache.ExpiringCache.html">ExpiringCache</a></li>
+                                                    <li class="class"><a href="../classes/Reaction.Cache.ExtendedCache.html">ExtendedCache</a></li>
+                                            </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+                    
+                    <ul>
+                                                                                            </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+                    
+                    <ul>
+                                                                                            </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        </div>
+    </section>
+    <section class="row-fluid">
+        <div class="span10 offset2">
+            <div class="row-fluid">
+                <div class="span8 content class">
+                    <nav>
+                                                <a href="../namespaces/Reaction.Base.html">\Reaction\Base</a>
+                                            </nav>
+                    <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal"><i class="icon-code"></i></a>
+
+                    <h1><small>\Reaction\Base</small>ViewInterface</h1>
+                    <p><em>Interface ViewInterface</em></p>
+                    
+
+                    <section id="summary">
+                        <h2>Summary</h2>
+                        <section class="row-fluid heading">
+                            <section class="span6">
+                                <a href="#methods">Methods</a>
+                            </section>
+                            <section class="span6">
+                                <a href="#constants">Constants</a>
+                            </section>
+                        </section>
+                        <section class="row-fluid public">
+                            <section class="span6">
+                                                                    <a href="../classes/Reaction.Base.ViewInterface.html#method_render">render()</a><br />
+                                                                    <a href="../classes/Reaction.Base.ViewInterface.html#method_renderFile">renderFile()</a><br />
+                                                                    <a href="../classes/Reaction.Base.ViewInterface.html#method_renderPhpFile">renderPhpFile()</a><br />
+                                                                    <a href="../classes/Reaction.Base.ViewInterface.html#method_renderDynamic">renderDynamic()</a><br />
+                                                                    <a href="../classes/Reaction.Base.ViewInterface.html#method_getViewFile">getViewFile()</a><br />
+                                                                    <a href="../classes/Reaction.Base.ViewInterface.html#method_beginBlock">beginBlock()</a><br />
+                                                                    <a href="../classes/Reaction.Base.ViewInterface.html#method_endBlock">endBlock()</a><br />
+                                                                    <a href="../classes/Reaction.Base.ViewInterface.html#method_beginContent">beginContent()</a><br />
+                                                                    <a href="../classes/Reaction.Base.ViewInterface.html#method_endContent">endContent()</a><br />
+                                                                    <a href="../classes/Reaction.Base.ViewInterface.html#method_beginCache">beginCache()</a><br />
+                                                                    <a href="../classes/Reaction.Base.ViewInterface.html#method_endCache">endCache()</a><br />
+                                                                    <a href="../classes/Reaction.Base.ViewInterface.html#method_beginPage">beginPage()</a><br />
+                                                                    <a href="../classes/Reaction.Base.ViewInterface.html#method_endPage">endPage()</a><br />
+                                                            </section>
+                            <section class="span6">
+                                                                    <em>No constants found</em>
+                                                            </section>
+                        </section>
+                        <section class="row-fluid protected">
+                            <section class="span6">
+                                                                    <em>No protected methods found</em>
+                                                            </section>
+                            <section class="span6">
+                                <em>N/A</em>
+                            </section>
+                        </section>
+                        <section class="row-fluid private">
+                            <section class="span6">
+                                                                    <em>No private methods found</em>
+                                                            </section>
+                            <section class="span6">
+                                <em>N/A</em>
+                            </section>
+                        </section>
+                    </section>
+                </div>
+                <aside class="span4 detailsbar">
+                                        <dl>
+                        <dt>File</dt>
+                            <dd>
+                                <a href="../files/Base.ViewInterface.html"><div class="path-wrapper">Base/ViewInterface.php</div></a>
+                            </dd>
+                                                <dt>Package</dt>
+                            <dd><div class="namespace-wrapper">\Reaction\Base</div></dd>
+                                                
+                                            </dl>
+                    <h2>Tags</h2>
+                    <table class="table table-condensed">
+                                            <tr>
+                            <th>property</th>
+                            <td>
+                                                                    <p>the context under which the [[renderFile()]] method is being invoked.</p>
+                                                                    <p>custom parameters that are shared among view templates.</p>
+                                                                    <p>a list of available renderers indexed by their corresponding supported file extensions.</p>
+                                                                    <p>the default view file extension. This will be appended to view file names if they don't have file extensions.</p>
+                                                                    <p>the theme object or the configuration for creating the theme object. If not set, it means theming is not enabled.</p>
+                                                                    <p>a list of named output blocks. The keys are the block names and the values are the corresponding block content</p>
+                                                                    <p>currently rendered view file</p>
+                                                            </td>
+                        </tr>
+                                        </table>
+                </aside>
+            </div>
+
+            
+                        <div class="row-fluid">
+                <div class="span8 content class">
+                    <h2>Methods</h2>
+                </div>
+                <aside class="span4 detailsbar"></aside>
+            </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_render" name="method_render" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">render()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">render(string  <span class="argument">$view</span>, array  <span class="argument">$params = array()</span>, object  <span class="argument">$context = null</span>) : string</pre>
+                <p><em>Renders a view.</em></p>
+                <p>The view to be rendered can be specified in one of the following formats:</p>
+<ul>
+<li><a href="guide:concept-aliases">path alias</a> (e.g. &quot;@app/views/site/index&quot;);</li>
+<li>absolute path within application (e.g. &quot;//site/index&quot;): the view name starts with double slashes.
+The actual view file will be looked for under the [[Application::viewPath|view path]] of the application.</li>
+<li>absolute path within current module (e.g. &quot;/site/index&quot;): the view name starts with a single slash.
+The actual view file will be looked for under the [[Module::viewPath|view path]] of the [[Controller::module|current module]].</li>
+<li>relative view (e.g. &quot;index&quot;): the view name does not start with <code>@</code> or <code>/</code>. The corresponding view file will be
+looked for under the [[ViewContextInterface::getViewPath()|view path]] of the view <code>$context</code>.
+If <code>$context</code> is not given, it will be looked for under the directory containing the view currently
+being rendered (i.e., this happens when rendering a view within another view).</li>
+</ul>
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>string</td>
+                                <td>$view </td>
+                                <td><p>the view name.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>array</td>
+                                <td>$params </td>
+                                <td><p>the parameters (name-value pairs) that will be extracted and made available in the view file.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>object</td>
+                                <td>$context </td>
+                                <td><p>the context to be assigned to the view and can later be accessed via [[context]]
+in the view. If the context implements [[ViewContextInterface]], it may also be used to locate
+the view file corresponding to a relative view name.</p></td>
+                            </tr>
+                                            </table>
+                
+                                    <h4>Throws</h4>
+                    <dl>
+                                                    <dt>\Reaction\Exceptions\ViewNotFoundException</dt>
+                            <dd><p>if the view file does not exist.</p></dd>
+                                                    <dt>\Reaction\Exceptions\InvalidCallException</dt>
+                            <dd><p>if the view cannot be resolved.</p></dd>
+                                                                    </dl>
+                
+                                    <h4>Returns</h4>
+                    string
+                                            &mdash; <p>the rendering result</p>
+                                    				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                                            <dt>See also</dt>
+                                                                <dd><a href="../classes/Reaction.Base.ViewInterface.html#method_renderFile"><span class="namespace-wrapper">\Reaction\Base\ViewInterface::renderFile()</span></a></dd>
+                                                                </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_renderFile" name="method_renderFile" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">renderFile()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">renderFile(string  <span class="argument">$viewFile</span>, array  <span class="argument">$params = array()</span>, object  <span class="argument">$context = null</span>) : string</pre>
+                <p><em>Renders a view file.</em></p>
+                <p>If [[theme]] is enabled (not null), it will try to render the themed version of the view file as long
+as it is available.</p>
+<p>The method will call [[FileHelper::localize()]] to localize the view file.</p>
+<p>If [[renderers|renderer]] is enabled (not null), the method will use it to render the view file.
+Otherwise, it will simply include the view file as a normal PHP file, capture its output and
+return it as a string.</p>
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>string</td>
+                                <td>$viewFile </td>
+                                <td><p>the view file. This can be either an absolute file path or an alias of it.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>array</td>
+                                <td>$params </td>
+                                <td><p>the parameters (name-value pairs) that will be extracted and made available in the view file.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>object</td>
+                                <td>$context </td>
+                                <td><p>the context that the view should use for rendering the view. If null,
+existing [[context]] will be used.</p></td>
+                            </tr>
+                                            </table>
+                
+                                    <h4>Throws</h4>
+                    <dl>
+                                                    <dt>\Reaction\Exceptions\ViewNotFoundException</dt>
+                            <dd><p>if the view file does not exist</p></dd>
+                                                                    </dl>
+                
+                                    <h4>Returns</h4>
+                    string
+                                            &mdash; <p>the rendering result</p>
+                                    				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_renderPhpFile" name="method_renderPhpFile" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">renderPhpFile()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">renderPhpFile(string  <span class="argument">$_file_</span>, array  <span class="argument">$_params_ = array()</span>) : string</pre>
+                <p><em>Renders a view file as a PHP script.</em></p>
+                <p>This method treats the view file as a PHP script and includes the file.
+It extracts the given parameters and makes them available in the view file.
+The method captures the output of the included view file and returns it as a string.</p>
+<p>This method should mainly be called by view renderer or [[renderFile()]].</p>
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>string</td>
+                                <td>$_file_ </td>
+                                <td><p>the view file.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>array</td>
+                                <td>$_params_ </td>
+                                <td><p>the parameters (name-value pairs) that will be extracted and made available in the view file.</p></td>
+                            </tr>
+                                            </table>
+                
+                                    <h4>Throws</h4>
+                    <dl>
+                                                    <dt>\Throwable</dt>
+                            <dd></dd>
+                                                                    </dl>
+                
+                                    <h4>Returns</h4>
+                    string
+                                            &mdash; <p>the rendering result</p>
+                                    				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_renderDynamic" name="method_renderDynamic" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">renderDynamic()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">renderDynamic(string  <span class="argument">$statements</span>) : string</pre>
+                <p><em>Renders dynamic content returned by the given PHP statements.</em></p>
+                <p>This method is mainly used together with content caching (fragment caching and page caching)
+when some portions of the content (called <em>dynamic content</em>) should not be cached.
+The dynamic content must be returned by some PHP statements.</p>
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>string</td>
+                                <td>$statements </td>
+                                <td><p>the PHP statements for generating the dynamic content.</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    string
+                                            &mdash; <p>the placeholder of the dynamic content, or the dynamic content if there is no
+active content cache currently.</p>
+                                    				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_getViewFile" name="method_getViewFile" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">getViewFile()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">getViewFile() : string|boolean</pre>
+                <p><em></em></p>
+                
+
+                
+                
+                                    <h4>Returns</h4>
+                    string|boolean
+                                            &mdash; <p>the view file currently being rendered. False if no view file is being rendered.</p>
+                                    				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_beginBlock" name="method_beginBlock" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">beginBlock()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">beginBlock(string  <span class="argument">$id</span>, boolean  <span class="argument">$renderInPlace = false</span>) : \Reaction\Widgets\Block</pre>
+                <p><em>Begins recording a block.</em></p>
+                <p>This method is a shortcut to beginning [[Block]].</p>
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>string</td>
+                                <td>$id </td>
+                                <td><p>the block ID.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>boolean</td>
+                                <td>$renderInPlace </td>
+                                <td><p>whether to render the block content in place.
+Defaults to false, meaning the captured block will not be displayed.</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    \Reaction\Widgets\Block
+                                            &mdash; <p>the Block widget instance</p>
+                                    				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_endBlock" name="method_endBlock" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">endBlock()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">endBlock() </pre>
+                <p><em>Ends recording a block.</em></p>
+                
+
+                
+                
+                				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_beginContent" name="method_beginContent" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">beginContent()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">beginContent(string  <span class="argument">$viewFile</span>, array  <span class="argument">$params = array()</span>) : \Reaction\Widgets\ContentDecorator</pre>
+                <p><em>Begins the rendering of content that is to be decorated by the specified view.</em></p>
+                <p>This method can be used to implement nested layout. For example, a layout can be embedded
+in another layout file specified as '@app/views/layouts/base.php' like the following:</p>
+<pre><code class="language-php">&lt;?php $this-&gt;beginContent('@app/views/layouts/base.php'); ?&gt;
+//...layout content here...
+&lt;?php $this-&gt;endContent(); ?&gt;</code></pre>
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>string</td>
+                                <td>$viewFile </td>
+                                <td><p>the view file that will be used to decorate the content enclosed by this widget.
+This can be specified as either the view file path or <a href="guide:concept-aliases">path alias</a>.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>array</td>
+                                <td>$params </td>
+                                <td><p>the variables (name =&gt; value) to be extracted and made available in the decorative view.</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    \Reaction\Widgets\ContentDecorator
+                                            &mdash; <p>the ContentDecorator widget instance</p>
+                                    				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                                            <dt>See also</dt>
+                                                                <dd><a href=""><span class="namespace-wrapper">\Reaction\Base\ContentDecorator</span></a></dd>
+                                                                </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_endContent" name="method_endContent" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">endContent()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">endContent() </pre>
+                <p><em>Ends the rendering of content.</em></p>
+                
+
+                
+                
+                				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_beginCache" name="method_beginCache" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">beginCache()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">beginCache(string  <span class="argument">$id</span>, array  <span class="argument">$properties = array()</span>) : boolean</pre>
+                <p><em>Begins fragment caching.</em></p>
+                <p>This method will display cached content if it is available.
+If not, it will start caching and would expect an [[endCache()]]
+call to end the cache and save the content into cache.
+A typical usage of fragment caching is as follows,</p>
+<pre><code class="language-php">if ($this-&gt;beginCache($id)) {
+    // ...generate content here
+    $this-&gt;endCache();
+}</code></pre>
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>string</td>
+                                <td>$id </td>
+                                <td><p>a unique ID identifying the fragment to be cached.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>array</td>
+                                <td>$properties </td>
+                                <td><p>initial property values for [[FragmentCache]]</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    boolean
+                                            &mdash; <p>whether you should generate the content for caching.
+False if the cached version is available.</p>
+                                    				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_endCache" name="method_endCache" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">endCache()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">endCache() </pre>
+                <p><em>Ends fragment caching.</em></p>
+                
+
+                
+                
+                				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_beginPage" name="method_beginPage" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">beginPage()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">beginPage() </pre>
+                <p><em>Marks the beginning of a page.</em></p>
+                
+
+                
+                
+                				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_endPage" name="method_endPage" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">endPage()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">endPage() </pre>
+                <p><em>Marks the ending of a page.</em></p>
+                
+
+                
+                
+                				
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                                                    </div>
+    </section>
+
+    <div id="source-view" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="source-view-label" aria-hidden="true">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            <h3 id="source-view-label">ViewInterface.php</h3>
+        </div>
+        <div class="modal-body">
+            <pre data-src="../files/Base/ViewInterface.php.txt" class="language-php"></pre>
+        </div>
+    </div>
+
+    <footer class="row-fluid">
+        <section class="span10 offset2">
+            <section class="row-fluid">
+                <section class="span10 offset1">
+                    <section class="row-fluid footer-sections">
+                        <section class="span4">
+                                                        <h1><i class="icon-code"></i></h1>
+                            <div>
+                                <ul>
+                                                                            <li><a href="../namespaces/Reaction.html">\Reaction</a></li>
+                                                                    </ul>
+                            </div>
+                        </section>
+                        <section class="span4">
+                                                        <h1><i class="icon-bar-chart"></i></h1>
+                            <div>
+                                <ul>
+                                    <li><a href="../graphs/class.html">Class Hierarchy Diagram</a></li>
+                                </ul>
+                            </div>
+                        </section>
+                        <section class="span4">
+                                                        <h1><i class="icon-pushpin"></i></h1>
+                            <div>
+                                <ul>
+                                    <li><a href="../reports/errors.html">Errors</a></li>
+                                    <li><a href="../reports/markers.html">Markers</a></li>
+                                </ul>
+                            </div>
+                        </section>
+                    </section>
+                </section>
+            </section>
+            <section class="row-fluid">
+                <section class="span10 offset1">
+                    <hr />
+                    Documentation is powered by <a href="http://www.phpdoc.org/">phpDocumentor </a> and authored
+                    on July 11th, 2018 at 08:42.
+                </section>
+            </section>
+        </section>
+    </footer>
+</div>
+
+</body>
+</html>
