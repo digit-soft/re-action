@@ -24,7 +24,7 @@
         "digit-soft/re-action-promise": "*",
         "digit-soft/re-action-clients-pool": "*",
         "digit-soft/re-action-pm": "*",
-        "digit-soft/re-action-di": "dev-master",
+        "digit-soft/re-action-di": "^1.0",
         "nikic/fast-route": "*",
         "psr/log": "*",
         "cebe/markdown": "~1.2",
