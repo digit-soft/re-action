@@ -1,0 +1,109 @@
+<?php
+
+namespace Reaction\Widgets\Bootstrap;
+
+use Reaction\Helpers\Html;
+use Reaction\Exceptions\InvalidConfigException;
+
+/**
+ * ToggleButtonGroup allows rendering form inputs Checkbox/Radio toggle button groups.
+ *
+ * You can use this widget in an [[Reaction\Widgets\Bootstrap\ActiveForm|ActiveForm]] using the [[Reaction\Widgets\Bootstrap\ActiveField::widget()|widget()]]
+ * method, for example like this:
+ *
+ * ```php
+ * <?= $form->field($model, 'item_id')->widget(\Reaction\Widgets\Bootstrap\ToggleButtonGroup::class, [
+ *     // configure additional widget properties here
+ * ]) ?>
+ * ```
+ *
+ * @see http://getbootstrap.com/javascript/#buttons-checkbox-radio
+ */
+class ToggleButtonGroup extends InputWidget
+{
+    /**
+     * @var string input type, can be:
+     * - 'checkbox'
+     * - 'radio'
+     */
+    public $type;
+    /**
+     * @var array the data item used to generate the checkboxes.
+     * The array values are the labels, while the array keys are the corresponding checkbox or radio values.
+     */
+    public $items = [];
+    /**
+     * @var array, the HTML attributes for the label (button) tag.
+     * @see Html::checkbox()
+     * @see Html::radio()
+     */
+    public $labelOptions = [];
+    /**
+     * @var boolean whether the items labels should be HTML-encoded.
+     */
+    public $encodeLabels = true;
+
+
+    /**
+     * @inheritdoc
+     */
+    public function init()
+    {
+        parent::init();
+        $this->registerPlugin('button');
+        Html::addCssClass($this->options, 'btn-group btn-group-toggle');
+        $this->options['data-toggle'] = 'buttons';
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function run()
+    {
+        if (!isset($this->options['item'])) {
+            $this->options['item'] = [$this, 'renderItem'];
+        }
+        switch ($this->type) {
+            case 'checkbox':
+                if ($this->hasModel()) {
+                    return $this->htmlHlp->activeCheckboxList($this->model, $this->attribute, $this->items, $this->options);
+                } else {
+                    return $this->htmlHlp->checkboxList($this->name, $this->value, $this->items, $this->options);
+                }
+            case 'radio':
+                if ($this->hasModel()) {
+                    return $this->htmlHlp->activeRadioList($this->model, $this->attribute, $this->items, $this->options);
+                } else {
+                    return $this->htmlHlp->radioList($this->name, $this->value, $this->items, $this->options);
+                }
+            default:
+                throw new InvalidConfigException("Unsupported type '{$this->type}'");
+        }
+    }
+
+    /**
+     * Default callback for checkbox/radio list item rendering.
+     * @param int $index item index.
+     * @param string $label item label.
+     * @param string $name input name.
+     * @param bool $checked whether value is checked or not.
+     * @param string $value input value.
+     * @return string generated HTML.
+     * @see Html::checkbox()
+     * @see Html::radio()
+     */
+    public function renderItem($index, $label, $name, $checked, $value)
+    {
+        $labelOptions = $this->labelOptions;
+        Html::addCssClass($labelOptions, 'btn');
+        if ($checked) {
+            Html::addCssClass($labelOptions, 'active');
+        }
+        $type = $this->type;
+        if ($this->encodeLabels) {
+            $label = $this->htmlHlp->encode($label);
+        }
+        return $this->htmlHlp->$type($name, $checked, ['label' => $label, 'labelOptions' => $labelOptions, 'value' => $value]);
+    }
+}
+

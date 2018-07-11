@@ -1,0 +1,39 @@
+<?php
+
+namespace Reaction\Annotations;
+
+use Doctrine\Common\Annotations\Annotation\Target;
+
+/**
+ * @Annotation
+ * @Target({"CLASS"})
+ *
+ * Class CtrlUseAnnotations
+ * @package Reaction\Annotations
+ */
+class Ctrl
+{
+    /** @var array Ignored methods */
+    public $ignore = [];
+    /** @var array Use only this methods */
+    public $only = [];
+    /** @var string Controller group */
+    public $group = '';
+
+    /**
+     * CtrlUseAnnotations constructor.
+     * @param array $values
+     */
+    public function __construct($values = [])
+    {
+        if (isset($values['ignore'])) {
+            $this->ignore = (array)$values['ignore'];
+        }
+        if (isset($values['only'])) {
+            $this->ignore = (array)$values['only'];
+        }
+        if (isset($values['group'])) {
+            $this->group = (string)$values['group'];
+        }
+    }
+}

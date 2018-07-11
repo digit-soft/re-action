@@ -1,0 +1,44 @@
+<?php
+
+namespace Reaction\Run;
+
+use Reaction\Helpers\ClassFinderHelper;
+
+class Application extends \Symfony\Component\Console\Application
+{
+    /**
+     * @var \Composer\Autoload\ClassLoader
+     */
+    public $loader;
+    /**
+     * @var array Commands namespaces
+     */
+    public $commandsNamespaces = [
+        'Reaction\Run\Commands',
+    ];
+
+    /**
+     * Application constructor.
+     * @param \Composer\Autoload\ClassLoader $loader
+     * @param string $name
+     * @param string $version
+     */
+    public function __construct($loader, string $name = 'UNKNOWN', string $version = 'UNKNOWN')
+    {
+        $this->loader = $loader;
+        ClassFinderHelper::setLoader($loader);
+        parent::__construct($name, $version);
+        $this->registerCommands();
+    }
+
+    /**
+     * Register commands
+     */
+    protected function registerCommands()
+    {
+        $commands = ClassFinderHelper::findClassesPsr4($this->commandsNamespaces);
+        foreach ($commands as $commandStr) {
+            $this->add(new $commandStr());
+        }
+    }
+}
