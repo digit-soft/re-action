@@ -1,10 +1,12 @@
 <?php
 
 namespace Reaction\DI;
+
 use Reaction\Events\EventEmitterWildcardInterface;
 
 /**
- * Trait BaseInjectorTrait
+ * Trait can be used by class, that injects some object(s) to other objects
+ * (received in different operations or just processed)
  * @package Reaction\DI
  */
 trait BaseInjectorTrait
@@ -20,7 +22,7 @@ trait BaseInjectorTrait
 
     /**
      * Inject data to children objects.
-     * Children means those objects that will be received from further operations like files find, Db models populate
+     * Children means those objects that will be received from further operations like files find, Db models populate etc.
      * @param array|object $injectObjects
      * @return self
      */
@@ -39,7 +41,7 @@ trait BaseInjectorTrait
     protected function injectTo($object, $injectObjects = null)
     {
         if (!isset($injectObjects)) {
-            $injectObjects = $this->getInjectableProperties();
+            $injectObjects = $this->getInjectableObjects();
         }
         if (!empty($injectObjects) && $object instanceof InjectionPossibleInterface) {
             $object->inject($injectObjects);
@@ -54,7 +56,7 @@ trait BaseInjectorTrait
     protected function injectToMultiple($objects = [], $injectObjects = null)
     {
         if (!isset($injectObjects)) {
-            $injectObjects = $this->getInjectableProperties();
+            $injectObjects = $this->getInjectableObjects();
         }
         if (empty($injectObjects)) {
             return;
@@ -82,7 +84,7 @@ trait BaseInjectorTrait
     }
 
     /**
-     * Get property names of injectable objects
+     * Get property names array of injectable objects. Class must override this method.
      * @return array
      */
     protected function getInjectableProperties()
@@ -106,7 +108,7 @@ trait BaseInjectorTrait
     }
 
     /**
-     * Remove all listeners for event
+     * Remove all listeners for event.
      * Class must implement EventEmitterInterface or EventEmitterWildcardInterface!
      * @param string $event
      * @see EventEmitterWildcardInterface::removeAllListeners()
@@ -114,7 +116,7 @@ trait BaseInjectorTrait
     abstract public function removeAllListeners($event = null);
 
     /**
-     * Register event listener
+     * Register event listener.
      * Class must implement EventEmitterInterface or EventEmitterWildcardInterface!
      * @param string $event
      * @param callable $listener
