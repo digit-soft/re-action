@@ -1,6 +1,6 @@
 <?php
 
-use Reaction\Exceptions\InvalidConfigException;
+use Reaction\DI\Container;
 use Reaction\StaticApplicationInterface;
 
 /**
@@ -13,7 +13,7 @@ class Reaction
 
     /** @var Composer\Autoload\ClassLoader */
     public static $composer;
-    /** @var \Reaction\DI\Container */
+    /** @var Container */
     public static $di;
     /** @var StaticApplicationInterface */
     public static $app;
@@ -116,23 +116,23 @@ class Reaction
      * @param string|array $type Class name or indexed parameters array with key "class"
      * @param array        $params Constructor parameters indexed array
      * @return object|mixed
-     * @throws InvalidConfigException
+     * @throws \Reaction\DI\Exceptions\InvalidConfigException(
      */
     public static function create($type, array $params = [])
     {
         if (is_string($type)) {
-            return static::$di->get($type, $params);
+            return static::$di->getOrCreate($type, $params);
         } elseif (is_array($type) && isset($type['class'])) {
             $class = $type['class'];
             unset($type['class']);
-            return static::$di->get($class, $params, $type);
+            return static::$di->getOrCreate($class, $params, $type);
         } elseif (is_callable($type, true)) {
             return static::$di->invoke($type, $params);
         } elseif (is_array($type)) {
-            throw new InvalidConfigException('Object configuration must be an array containing a "class" element.');
+            throw new \Reaction\DI\Exceptions\InvalidConfigException('Object configuration must be an array containing a "class" element.');
         }
 
-        throw new InvalidConfigException('Unsupported configuration type: ' . gettype($type));
+        throw new \Reaction\DI\Exceptions\InvalidConfigException('Unsupported configuration type: ' . gettype($type));
     }
 
     /**
@@ -140,8 +140,7 @@ class Reaction
      * @param callable $callable
      * @param array    $params
      * @return mixed
-     * @throws InvalidConfigException
-     * @throws \Reaction\Exceptions\NotInstantiableException
+     * @throws \Reaction\DI\Exceptions\InvalidConfigException
      */
     public static function invoke($callable, $params = [])
     {
@@ -366,7 +365,8 @@ class Reaction
     protected static function initContainer()
     {
         $config = static::getConfigReader()->get('container');
-        static::$di = new \Reaction\DI\Container($config);
+        Container::setDefaultContainer(new Container($config));
+        static::$di = Container::getDefaultContainer();
     }
 
     /**
@@ -386,6 +386,7 @@ class Reaction
             }
         }
         static::$app = static::create($config);
+        Container::setDefaultServiceLocator(static::$app);
         if (!empty($appLateConfig)) {
             static::configure(static::$app, $appLateConfig);
         }
